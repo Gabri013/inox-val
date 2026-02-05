@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popular Firestore - ERP Industrial</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        h1 { color: #f97316; }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: #1e293b;
+        }
+        .success { border-color: #10b981; }
+        .error { border-color: #ef4444; }
+        .loading { border-color: #3b82f6; }
+        button {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover { background: #ea580c; }
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-item { margin: 5px 0; }
+        .log-success { color: #10b981; }
+        .log-error { color: #ef4444; }
+        .log-info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Popular Banco de Dados Firestore</h1>
+    
+    <div class="status loading" id="status">
+        <strong>👉 Clique no botão abaixo para criar todas as coleções do banco de dados</strong>
+        <p>Isso irá criar dados de exemplo em todas as coleções do Firestore.</p>
+    </div>
+
+    <button onclick="popularBanco()" id="btnPopular">
+        🚀 Criar Banco de Dados Completo
+    </button>
+    <button onclick="limparLogs()" id="btnLimpar" disabled>
+        🗑️ Limpar Logs
+    </button>
+
+    <h2>📊 Logs de Criação:</h2>
+    <div class="log" id="logs"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            serverTimestamp,
+            doc,
+            setDoc
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCY2nBQn50KnGx44PTvIKMCEyeQtldwdwA",
+            authDomain: "erp-industrial-inox.firebaseapp.com",
+            projectId: "erp-industrial-inox",
+            storageBucket: "erp-industrial-inox.firebasestorage.app",
+            messagingSenderId: "398874377867",
+            appId: "1:398874377867:web:55c982a51293615fcfde8e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const TENANT_ID = 'tenant-demo-001';
+
+        function addLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const logItem = document.createElement('div');
+            logItem.className = `log-item log-${type}`;
+            logItem.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(logItem);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        window.limparLogs = function() {
+            document.getElementById('logs').innerHTML = '';
+        };
+
+        window.popularBanco = async function() {
+            const btnPopular = document.getElementById('btnPopular');
+            const btnLimpar = document.getElementById('btnLimpar');
+            const status = document.getElementById('status');
+            
+            btnPopular.disabled = true;
+            btnLimpar.disabled = false;
+            status.className = 'status loading';
+            status.innerHTML = '<strong>⏳ Criando banco de dados...</strong>';
+
+            try {
+                addLog('🔥 Iniciando população do Firestore...', 'info');
+                let totalCriado = 0;
+
+                // 1. CRIAR EMPRESA
+                addLog('🏢 Criando empresa...', 'info');
+                await setDoc(doc(db, 'empresas', TENANT_ID), {
+                    id: TENANT_ID,
+                    razaoSocial: 'Inox Val Indústria e Comércio LTDA',
+                    nomeFantasia: 'Inox Val',
+                    cnpj: '12345678000199',
+                    email: 'contato@inoxval.com.br',
+                    telefone: '11912345678',
+                    cidade: 'São Paulo',
+                    estado: 'SP',
+                    ativo: true,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                addLog('  ✅ Empresa criada: Inox Val', 'success');
+                totalCriado++;
+
+                // 2. CRIAR CLIENTES
+                addLog('📋 Criando clientes...', 'info');
+                const clientes = [
+                    {
+                        tenantId: TENANT_ID,
+                        nome: 'Metalúrgica Silva & Cia',
+                        cnpj: '12345678000190',
+                        email: 'contato@metalurgicasilva.com.br',
+                        telefone: '11987654321',
+                        cidade: 'São Paulo',
+                        estado: 'SP',
+                        status: 'Ativo',
+                        totalCompras: 0,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    },
+                    {
+                        tenantId: TENANT_ID,
+                        nome: 'Construções Rodrigues LTDA',
+                        cnpj: '98765432000123',
+                        email: 'obras@construcoesrodrigues.com',
+                        telefone: '11976543210',
+                        cidade: 'Guarulhos',
+                        estado: 'SP',
+                        status: 'Ativo',
+                        totalCompras: 0,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    },
+                    {
+                        tenantId: TENANT_ID,
+                        nome: 'Indústria Mecânica Santos',
+                        cnpj: '45678912000156',
+                        email: 'vendas@mecanicasantos.ind.br',
+                        telefone: '11965432109',
+                        cidade: 'São Bernardo do Campo',
+                        estado: 'SP',
+                        status: 'Ativo',
+                        totalCompras: 0,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    },
+                ];
+
+                let clienteIds = [];
+                for (const cliente of clientes) {
+                    const docRef = await addDoc(collection(db, 'clientes'), cliente);
+                    clienteIds.push(docRef.id);
+                    addLog(`  ✅ Cliente criado: ${cliente.nome}`, 'success');
+                    totalCriado++;
+                }
+
+                // 3. CRIAR MATERIAIS
+                addLog('📦 Criando materiais...', 'info');
+                const materiais = [
+                    {
+                        tenantId: TENANT_ID,
+                        codigo: 'CHAPA-INOX-304-1.5',
+                        nome: 'Chapa Inox 304 - 1.5mm',
+                        tipo: 'Chapa',
+                        unidade: 'M2',
+                        espessura: 1.5,
+                        precoCusto: 150.00,
+                        precoVenda: 225.00,
+                        estoqueMinimo: 10,
+                        estoqueAtual: 50,
+                        ativo: true,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    },
+                    {
+                        tenantId: TENANT_ID,
+                        codigo: 'TUBO-INOX-304-50',
+                        nome: 'Tubo Inox 304 - Ø50mm',
+                        tipo: 'Tubo',
+                        unidade: 'M',
+                        precoCusto: 85.00,
+                        precoVenda: 127.50,
+                        estoqueMinimo: 20,
+                        estoqueAtual: 100,
+                        ativo: true,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    },
+                ];
+
+                let materialIds = [];
+                for (const material of materiais) {
+                    const docRef = await addDoc(collection(db, 'materiais'), material);
+                    materialIds.push(docRef.id);
+                    addLog(`  ✅ Material criado: ${material.nome}`, 'success');
+                    totalCriado++;
+
+                    // Criar estoque
+                    await addDoc(collection(db, 'estoque_materiais'), {
+                        tenantId: TENANT_ID,
+                        materialId: docRef.id,
+                        materialNome: material.nome,
+                        quantidade: material.estoqueAtual,
+                        unidade: material.unidade,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    });
+                    totalCriado++;
+                }
+
+                // 4. CRIAR ORÇAMENTO
+                addLog('💰 Criando orçamento...', 'info');
+                const orcamentoRef = await addDoc(collection(db, 'orcamentos'), {
+                    tenantId: TENANT_ID,
+                    numero: `ORC-${new Date().getFullYear()}-001`,
+                    clienteId: clienteIds[0],
+                    clienteNome: clientes[0].nome,
+                    data: new Date().toISOString(),
+                    validade: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+                    status: 'Aprovado',
+                    itens: [{
+                        id: '1',
+                        modeloId: 'portas-janelas-basculante',
+                        quantidade: 5,
+                        precoUnitario: 850.00,
+                        subtotal: 4250.00,
+                        especificacoes: {
+                            comprimento: 1200,
+                            largura: 800,
+                            espessura: 1.5,
+                            acabamento: 'Lixado',
+                        },
+                        bom: [{
+                            materialId: 'chapa-inox-304',
+                            tipo: 'Chapa',
+                            quantidade: 3.5,
+                            unidade: 'M2',
+                        }],
+                    }],
+                    subtotal: 4250.00,
+                    total: 4250.00,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                addLog(`  ✅ Orçamento criado: ORC-${new Date().getFullYear()}-001`, 'success');
+                totalCriado++;
+
+                // 5. CRIAR ORDEM DE PRODUÇÃO
+                addLog('🏭 Criando ordem de produção...', 'info');
+                await addDoc(collection(db, 'ordens_producao'), {
+                    tenantId: TENANT_ID,
+                    numero: `OP-${new Date().getFullYear()}-001`,
+                    orcamentoId: orcamentoRef.id,
+                    orcamentoNumero: `ORC-${new Date().getFullYear()}-001`,
+                    clienteId: clienteIds[0],
+                    clienteNome: clientes[0].nome,
+                    status: 'Aberta',
+                    dataAbertura: new Date().toISOString(),
+                    prioridade: 'Normal',
+                    itens: [{
+                        id: '1',
+                        modeloId: 'portas-janelas-basculante',
+                        quantidade: 5,
+                        quantidadeProduzida: 0,
+                    }],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                addLog(`  ✅ Ordem criada: OP-${new Date().getFullYear()}-001`, 'success');
+                totalCriado++;
+
+                // 6. CRIAR SOLICITAÇÃO DE COMPRA
+                addLog('🛒 Criando solicitação de compra...', 'info');
+                await addDoc(collection(db, 'solicitacoes_compra'), {
+                    tenantId: TENANT_ID,
+                    numero: `SC-${new Date().getFullYear()}-001`,
+                    dataSolicitacao: new Date().toISOString(),
+                    status: 'Pendente',
+                    solicitante: 'João Silva',
+                    itens: [{
+                        materialCodigo: 'CHAPA-INOX-304-1.5',
+                        materialNome: 'Chapa Inox 304 - 1.5mm',
+                        quantidade: 20,
+                        unidade: 'M2',
+                    }],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                addLog(`  ✅ Solicitação criada`, 'success');
+                totalCriado++;
+
+                // SUCESSO!
+                addLog(`\n🎉 BANCO CRIADO COM SUCESSO!`, 'success');
+                addLog(`✅ Total de documentos: ${totalCriado}`, 'success');
+                addLog(`\nColeções criadas:`, 'info');
+                addLog(`  - empresas (1)`, 'info');
+                addLog(`  - clientes (${clientes.length})`, 'info');
+                addLog(`  - materiais (${materiais.length})`, 'info');
+                addLog(`  - estoque_materiais (${materiais.length})`, 'info');
+                addLog(`  - orcamentos (1)`, 'info');
+                addLog(`  - ordens_producao (1)`, 'info');
+                addLog(`  - solicitacoes_compra (1)`, 'info');
+
+                status.className = 'status success';
+                status.innerHTML = `
+                    <strong>✅ BANCO DE DADOS CRIADO COM SUCESSO!</strong>
+                    <p>Total de documentos criados: ${totalCriado}</p>
+                    <p>Acesse o <a href="https://console.firebase.google.com/project/erp-industrial-inox/firestore" target="_blank" style="color: #3b82f6;">Firebase Console</a> para visualizar.</p>
+                `;
+
+            } catch (error) {
+                addLog(`\n❌ ERRO: ${error.message}`, 'error');
+                status.className = 'status error';
+                status.innerHTML = `<strong>❌ Erro ao criar banco</strong><p>${error.message}</p>`;
+            } finally {
+                btnPopular.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
+import PopularBanco from "./pages/PopularBanco";
 import Clientes from "./pages/Clientes";
 import Produtos from "./pages/Produtos";
 import Estoque from "./pages/Estoque";
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
   {
     path: "/reset-password",
     Component: ResetPassword,
+  },
+  {
+    path: "/popular-banco",
+    Component: PopularBanco,
   },
   {
     path: "/",
