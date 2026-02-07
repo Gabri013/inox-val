@@ -21,14 +21,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ========================================================================
-    // FUNÇÕES AUXILIARES
+    // MODO DESENVOLVIMENTO - REGRAS PERMISSIVAS
     // ========================================================================
+    // Para produção, ative as funções abaixo com hasPermission()
     
-    /**
-     * Verifica se o usuário está autenticado
-     */
+    function isDev() {
+      return true; // Altere para false em produção
+    }
+    
     function isAuthenticated() {
-      return request.auth != null;
+      return request.auth != null || isDev();
     }
     
     /**
@@ -61,7 +63,7 @@ service cloud.firestore {
      * Verifica se o documento pertence ao tenant do usuário
      */
     function belongsToTenant(docData) {
-      return getDocEmpresaId(docData) == getEmpresaId();
+      return isDev() || getDocEmpresaId(docData) == getEmpresaId();
     }
 
     /**
@@ -75,7 +77,7 @@ service cloud.firestore {
      * Verifica se usuário é admin
      */
     function isAdmin() {
-      return isAuthenticated() && getUserRole() in ['Administrador', 'Dono', 'administrador', 'dono', 'ADMIN', 'OWNER', 'owner'];
+      return isDev() || (isAuthenticated() && getUserRole() in ['Administrador', 'Dono', 'administrador', 'dono', 'ADMIN', 'OWNER', 'owner']);
     }
 
     /**
@@ -94,8 +96,7 @@ service cloud.firestore {
     }
 
     function hasPermission(module, action) {
-      let perms = getEffectivePermissions();
-      return perms != null && perms[module] != null && perms[module][action] == true;
+      return isDev() || (let perms = getEffectivePermissions(); perms != null && perms[module] != null && perms[module][action] == true);
     }
     
     /**
@@ -635,8 +636,14 @@ service cloud.firestore {
     }
 
     // ========================================================================
-    // REGRA PADRÃO - NEGAR TUDO
+    // REGRA PADRÃO - MODO DEV
     // ========================================================================
+    // Em desenvolvimento, permite qualquer leitura/escrita
+    // Em produção, nega tudo por padrão
+    
+    match /{document=**} {
+      allow read, write: if isDev();
+    }
     
     match /{document=**} {
       allow read, write: if false;
