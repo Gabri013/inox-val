@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Package, PackageX, AlertTriangle, TrendingUp, Eye } from 'lucide-react';
 import { ListPage } from '@/app/components/layout/ListPage';
 import { Badge } from '@/app/components/ui/badge';

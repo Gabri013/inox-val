@@ -340,43 +340,6 @@ export default function Ajuda() {
             </Card>
           ))}
 
-          <Card className="border-primary/50 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calculator className="w-5 h-5" />
-                Dica: Use a Calculadora Rápida
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Antes de criar um orçamento formal, use a <strong>Calculadora Rápida</strong> para:
-              </p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Calcular peso e densidade de chapas rapidamente</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Testar diferentes materiais e espessuras</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Dar uma ideia rápida ao cliente sem poluir o sistema</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Fazer simulações sem salvar dados</span>
-                </li>
-              </ul>
-              <Button className="mt-4" asChild>
-                <a href="/calculadora-rapida">
-                  Acessar Calculadora Rápida
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Tab: FAQ */}

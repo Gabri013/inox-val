@@ -1,325 +1,187 @@
 /**
- * Serviço de Estoque com sistema de movimentos
- * Gerencia saldo, disponibilidade e movimentações
+ * Serviço de Estoque (Firestore)
  */
 
-import { getHttpClient, PaginatedResponse, PaginationParams } from '@/services/http/client';
-import { newId, type ID } from '@/shared/types/ids';
-import { toISOString } from '@/shared/lib/format';
-import { Storage } from '@/services/storage/db';
+import { estoqueItensService, estoqueMovimentosService, registrarMovimentoEstoque, type EstoqueItem } from '@/services/firestore/estoque.service';
+import type { MovimentoEstoque, SaldoEstoque, EstoqueFilters } from './estoque.types';
+import type { ID } from '@/shared/types/ids';
+import { PaginationParams } from '@/services/http/client';
 import { produtosService } from '../produtos/produtos.service';
-import type { 
-  MovimentoEstoque, 
-  CreateMovimentoInput, 
-  SaldoEstoque,
-  EstoqueFilters 
-} from './estoque.types';
-
-const BASE_URL = '/api/movimentos-estoque';
 
 class EstoqueService {
-  /**
-   * Lista movimentos com paginação e filtros
-   */
-  async listMovimentos(
-    params: PaginationParams & EstoqueFilters = {}
-  ): Promise<PaginatedResponse<MovimentoEstoque>> {
-    const client = getHttpClient();
-    
-    const apiParams: PaginationParams = {
-      page: params.page,
-      pageSize: params.pageSize,
-      search: params.search,
-      sortBy: params.sortBy || 'data',
-      sortOrder: params.sortOrder || 'desc',
-    };
-    
-    if (params.tipo && params.tipo !== 'all') {
-      apiParams.tipo = params.tipo;
-    }
-    
-    if (params.produtoId) {
-      apiParams.produtoId = params.produtoId;
-    }
-    
-    if (params.dataInicio) {
-      apiParams.dataInicio = params.dataInicio;
-    }
-    
-    if (params.dataFim) {
-      apiParams.dataFim = params.dataFim;
-    }
-    
-    return client.get<PaginatedResponse<MovimentoEstoque>>(BASE_URL, { params: apiParams });
+  private async getItemByProdutoId(produtoId: ID): Promise<EstoqueItem | null> {
+    const result = await estoqueItensService.list({
+      where: [{ field: 'produtoId', operator: '==', value: String(produtoId) }],
+      limit: 1,
+    });
+    return result.success && result.data?.items[0] ? (result.data.items[0] as EstoqueItem) : null;
   }
 
-  /**
-   * Calcula saldo atual de um produto baseado em movimentos
-   */
-  async calcularSaldo(produtoId: ID): Promise<{
-    saldo: number;
-    reservado: number;
-    disponivel: number;
-  }> {
-    const storage = new Storage<MovimentoEstoque>('movimentos_estoque');
-    const movimentos = await storage.getByIndex('by-produto', produtoId);
-    
-    let saldo = 0;
-    let reservado = 0;
-    
-    for (const movimento of movimentos) {
-      switch (movimento.tipo) {
-        case 'ENTRADA':
-        case 'AJUSTE':
-          saldo += movimento.quantidade;
-          break;
-        case 'SAIDA':
-          saldo -= movimento.quantidade;
-          break;
-        case 'RESERVA':
-          reservado += movimento.quantidade;
-          break;
-        case 'ESTORNO':
-          // Estorno é tratado no momento da criação
-          break;
-      }
-    }
-    
-    return {
-      saldo,
-      reservado,
-      disponivel: saldo - reservado,
-    };
-  }
+  private async ensureItem(produtoId: ID): Promise<EstoqueItem> {
+    const existing = await this.getItemByProdutoId(produtoId);
+    if (existing) return existing;
 
-  /**
-   * Lista saldos de estoque de todos os produtos
-   */
-  async listSaldos(): Promise<SaldoEstoque[]> {
-    // Busca todos os produtos
-    const produtosResponse = await produtosService.list({ pageSize: 1000 });
-    const produtos = produtosResponse.items;
-    
-    const saldos: SaldoEstoque[] = [];
-    
-    for (const produto of produtos) {
-      const { saldo, reservado, disponivel } = await this.calcularSaldo(produto.id);
-      
-      // Busca última movimentação
-      const storage = new Storage<MovimentoEstoque>('movimentos_estoque');
-      const movimentos = await storage.getByIndex('by-produto', produto.id);
-      const ultimaMovimentacao = movimentos.length > 0
-        ? movimentos.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0].data
-        : undefined;
-      
-      saldos.push({
-        produtoId: produto.id,
-        produtoNome: produto.nome,
-        produtoCodigo: produto.codigo,
-        saldo,
-        saldoDisponivel: disponivel,
-        saldoReservado: reservado,
-        estoqueMinimo: produto.estoqueMinimo,
-        unidade: produto.unidade,
-        ultimaMovimentacao,
-      });
-    }
-    
-    return saldos;
-  }
-
-  /**
-   * Busca saldo de um produto específico
-   */
-  async getSaldo(produtoId: ID): Promise<SaldoEstoque> {
     const produto = await produtosService.getById(produtoId);
-    const { saldo, reservado, disponivel } = await this.calcularSaldo(produtoId);
-    
-    const storage = new Storage<MovimentoEstoque>('movimentos_estoque');
-    const movimentos = await storage.getByIndex('by-produto', produtoId);
-    const ultimaMovimentacao = movimentos.length > 0
-      ? movimentos.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0].data
-      : undefined;
-    
-    return {
+    const created = await estoqueItensService.create({
       produtoId: produto.id,
       produtoNome: produto.nome,
       produtoCodigo: produto.codigo,
-      saldo,
-      saldoDisponivel: disponivel,
-      saldoReservado: reservado,
-      estoqueMinimo: produto.estoqueMinimo,
+      saldo: produto.estoque || 0,
+      saldoDisponivel: produto.estoque || 0,
+      saldoReservado: 0,
+      estoqueMinimo: produto.estoqueMinimo || 0,
       unidade: produto.unidade,
-      ultimaMovimentacao,
-    };
-  }
+      ultimaMovimentacao: undefined,
+    } as EstoqueItem);
 
-  /**
-   * Cria movimento genérico (base interna)
-   */
-  private async criarMovimento(input: CreateMovimentoInput): Promise<MovimentoEstoque> {
-    const produto = await produtosService.getById(input.produtoId);
-    const { saldo } = await this.calcularSaldo(input.produtoId);
-    
-    const movimento: MovimentoEstoque = {
-      id: newId(),
-      produtoId: input.produtoId,
-      produtoNome: produto.nome,
-      produtoCodigo: produto.codigo,
-      tipo: input.tipo,
-      quantidade: input.quantidade,
-      saldoAnterior: saldo,
-      saldoNovo: input.tipo === 'ENTRADA' || input.tipo === 'AJUSTE'
-        ? saldo + input.quantidade
-        : saldo - input.quantidade,
-      origem: input.origem,
-      observacoes: input.observacoes,
-      usuario: input.usuario,
-      data: toISOString(new Date()),
-      criadoEm: toISOString(new Date()),
-    };
-    
-    const client = getHttpClient();
-    return client.post<MovimentoEstoque>(BASE_URL, movimento);
-  }
-
-  /**
-   * Entrada de material no estoque
-   */
-  async entrada(
-    produtoId: ID,
-    quantidade: number,
-    origem: string,
-    usuario: string,
-    observacoes?: string
-  ): Promise<MovimentoEstoque> {
-    if (quantidade <= 0) {
-      throw new Error('Quantidade deve ser positiva');
+    if (!created.success || !created.data) {
+      throw new Error(created.error || 'Erro ao criar item de estoque');
     }
-    
-    return this.criarMovimento({
-      produtoId,
+    return created.data as EstoqueItem;
+  }
+
+  async listMovimentos(params: PaginationParams & EstoqueFilters = {}): Promise<MovimentoEstoque[]> {
+    const where = [] as { field: string; operator: any; value: any }[];
+
+    if (params.tipo && params.tipo !== 'all') {
+      where.push({ field: 'tipo', operator: '==', value: params.tipo });
+    }
+
+    if (params.produtoId) {
+      where.push({ field: 'produtoId', operator: '==', value: String(params.produtoId) });
+    }
+
+    const result = await estoqueMovimentosService.list({
+      where,
+      orderBy: [{ field: 'data', direction: 'desc' }],
+    });
+
+    let items = result.success && result.data ? result.data.items : [];
+    if (params.dataInicio) {
+      items = items.filter((m) => new Date(m.data).getTime() >= new Date(params.dataInicio!).getTime());
+    }
+    if (params.dataFim) {
+      items = items.filter((m) => new Date(m.data).getTime() <= new Date(params.dataFim!).getTime());
+    }
+
+    return items;
+  }
+
+  async listSaldos(): Promise<SaldoEstoque[]> {
+    const result = await estoqueItensService.list({
+      orderBy: [{ field: 'produtoNome', direction: 'asc' }],
+    });
+    return result.success && result.data ? result.data.items : [];
+  }
+
+  async getSaldo(produtoId: ID): Promise<SaldoEstoque> {
+    const item = await this.ensureItem(produtoId);
+    return item;
+  }
+
+  async entrada(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+    if (quantidade <= 0) throw new Error('Quantidade deve ser positiva');
+    const item = await this.ensureItem(produtoId);
+    await registrarMovimentoEstoque({
+      itemId: item.id,
       tipo: 'ENTRADA',
       quantidade,
       origem,
-      usuario,
       observacoes,
+      usuario,
     });
   }
 
-  /**
-   * Saída de material do estoque
-   */
-  async saida(
-    produtoId: ID,
-    quantidade: number,
-    origem: string,
-    usuario: string,
-    observacoes?: string
-  ): Promise<MovimentoEstoque> {
-    if (quantidade <= 0) {
-      throw new Error('Quantidade deve ser positiva');
+  async saida(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+    if (quantidade <= 0) throw new Error('Quantidade deve ser positiva');
+    const item = await this.ensureItem(produtoId);
+    if (quantidade > (item.saldoDisponivel || 0)) {
+      throw new Error(`Saldo disponível insuficiente. Disponível: ${item.saldoDisponivel}`);
     }
-    
-    const { disponivel } = await this.calcularSaldo(produtoId);
-    
-    if (quantidade > disponivel) {
-      throw new Error(`Saldo insuficiente. Disponível: ${disponivel}, Solicitado: ${quantidade}`);
-    }
-    
-    return this.criarMovimento({
-      produtoId,
+    await registrarMovimentoEstoque({
+      itemId: item.id,
       tipo: 'SAIDA',
       quantidade,
       origem,
-      usuario,
       observacoes,
+      usuario,
     });
   }
 
-  /**
-   * Reserva de material (não retira do estoque físico, mas bloqueia disponibilidade)
-   */
-  async reserva(
-    produtoId: ID,
-    quantidade: number,
-    origem: string,
-    usuario: string,
-    observacoes?: string
-  ): Promise<MovimentoEstoque> {
-    if (quantidade <= 0) {
-      throw new Error('Quantidade deve ser positiva');
+  async reserva(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+    if (quantidade <= 0) throw new Error('Quantidade deve ser positiva');
+    const item = await this.ensureItem(produtoId);
+    if (quantidade > (item.saldoDisponivel || 0)) {
+      throw new Error(`Saldo disponível insuficiente. Disponível: ${item.saldoDisponivel}`);
     }
-    
-    const { disponivel } = await this.calcularSaldo(produtoId);
-    
-    if (quantidade > disponivel) {
-      throw new Error(`Saldo disponível insuficiente para reserva. Disponível: ${disponivel}, Solicitado: ${quantidade}`);
-    }
-    
-    return this.criarMovimento({
-      produtoId,
+    await registrarMovimentoEstoque({
+      itemId: item.id,
       tipo: 'RESERVA',
       quantidade,
       origem,
-      usuario,
       observacoes: observacoes || 'Reserva automática',
+      usuario,
     });
   }
 
-  /**
-   * Estorno de movimento (libera reserva ou reverte movimento)
-   */
-  async estorno(
-    movimentoId: ID,
-    usuario: string,
-    observacoes?: string
-  ): Promise<MovimentoEstoque> {
-    const storage = new Storage<MovimentoEstoque>('movimentos_estoque');
-    const movimentoOriginal = await storage.getById(movimentoId);
-    
-    if (!movimentoOriginal) {
-      throw new Error('Movimento não encontrado');
+  async estorno(movimentoId: ID, usuario: string, observacoes?: string) {
+    const movimentoResult = await estoqueMovimentosService.getById(String(movimentoId));
+    if (!movimentoResult.success || !movimentoResult.data) {
+      throw new Error(movimentoResult.error || 'Movimento não encontrado');
     }
-    
-    if (movimentoOriginal.tipo === 'ESTORNO') {
+    const movimento = movimentoResult.data;
+    if (movimento.tipo === 'ESTORNO') {
       throw new Error('Não é possível estornar um estorno');
     }
-    
-    // Cria movimento inverso
-    return this.criarMovimento({
-      produtoId: movimentoOriginal.produtoId,
+
+    const item = await this.ensureItem(movimento.produtoId);
+
+    let saldoDelta = 0;
+    let reservadoDelta = 0;
+
+    switch (movimento.tipo) {
+      case 'ENTRADA':
+        saldoDelta = -movimento.quantidade;
+        break;
+      case 'SAIDA':
+        saldoDelta = movimento.quantidade;
+        break;
+      case 'AJUSTE':
+        saldoDelta = -movimento.quantidade;
+        break;
+      case 'RESERVA':
+        reservadoDelta = -movimento.quantidade;
+        break;
+      default:
+        break;
+    }
+
+    await registrarMovimentoEstoque({
+      itemId: item.id,
       tipo: 'ESTORNO',
-      quantidade: movimentoOriginal.quantidade,
-      origem: `Estorno de ${movimentoOriginal.tipo} - ${movimentoOriginal.origem}`,
-      usuario,
+      quantidade: movimento.quantidade,
+      origem: `Estorno de ${movimento.tipo} - ${movimento.origem}`,
       observacoes: observacoes || `Estorno do movimento ${movimentoId}`,
-    });
-  }
-
-  /**
-   * Ajuste de estoque (para correções)
-   */
-  async ajuste(
-    produtoId: ID,
-    quantidade: number,
-    origem: string,
-    usuario: string,
-    observacoes?: string
-  ): Promise<MovimentoEstoque> {
-    return this.criarMovimento({
-      produtoId,
-      tipo: 'AJUSTE',
-      quantidade: Math.abs(quantidade), // Ajuste pode ser positivo ou negativo
-      origem,
       usuario,
-      observacoes,
+      saldoDelta,
+      reservadoDelta,
     });
   }
 
-  /**
-   * Estatísticas de estoque
-   */
+  async ajuste(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+    if (quantidade === 0) throw new Error('Quantidade deve ser diferente de zero');
+    const item = await this.ensureItem(produtoId);
+    await registrarMovimentoEstoque({
+      itemId: item.id,
+      tipo: 'AJUSTE',
+      quantidade,
+      origem,
+      observacoes,
+      usuario,
+      saldoDelta: quantidade,
+    });
+  }
+
   async getStats(): Promise<{
     totalProdutos: number;
     totalMovimentos: number;
@@ -328,24 +190,19 @@ class EstoqueService {
     valorTotal: number;
   }> {
     const saldos = await this.listSaldos();
-    const storage = new Storage<MovimentoEstoque>('movimentos_estoque');
-    const movimentos = await storage.getAll();
-    
+    const movimentos = await estoqueMovimentosService.list({ orderBy: [{ field: 'data', direction: 'desc' }] });
+    const totalMovimentos = movimentos.success && movimentos.data ? movimentos.data.items.length : 0;
     const produtos = await produtosService.list({ pageSize: 1000 });
-    
-    let valorTotal = 0;
-    for (const saldo of saldos) {
-      const produto = produtos.items.find(p => p.id === saldo.produtoId);
-      if (produto) {
-        valorTotal += saldo.saldo * produto.custo;
-      }
-    }
-    
+    const valorTotal = saldos.reduce((acc, item) => {
+      const produto = produtos.items.find((p) => p.id === item.produtoId);
+      if (!produto) return acc;
+      return acc + (item.saldo || 0) * produto.custo;
+    }, 0);
     return {
       totalProdutos: saldos.length,
-      totalMovimentos: movimentos.length,
-      baixoEstoque: saldos.filter(s => s.saldo > 0 && s.saldo <= s.estoqueMinimo).length,
-      semEstoque: saldos.filter(s => s.saldo === 0).length,
+      totalMovimentos,
+      baixoEstoque: saldos.filter((s) => s.saldo > 0 && s.saldo <= s.estoqueMinimo).length,
+      semEstoque: saldos.filter((s) => s.saldo === 0).length,
       valorTotal,
     };
   }

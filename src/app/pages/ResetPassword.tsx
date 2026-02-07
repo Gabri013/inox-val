@@ -5,8 +5,9 @@
  */
 
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
@@ -15,6 +16,8 @@ import { Building2, Loader2, CheckCircle2 } from 'lucide-react';
 
 export function ResetPassword() {
   const { resetPassword } = useAuth();
+
+  const firebaseReady = isFirebaseConfigured() && !!getFirebaseAuth();
   
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -97,6 +100,18 @@ export function ResetPassword() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border ${
+                firebaseReady
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
+              }`}
+            >
+              <span className={`size-2 rounded-full ${firebaseReady ? 'bg-green-500' : 'bg-red-500'}`} />
+              {firebaseReady ? 'Firebase conectado' : 'Firebase não configurado'}
+            </div>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

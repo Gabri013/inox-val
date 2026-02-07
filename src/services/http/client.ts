@@ -7,6 +7,7 @@
  */
 
 import { mockClient } from './mockClient';
+import { firebaseClient } from './firebaseClient';
 
 /**
  * Configuração de requisição
@@ -54,18 +55,15 @@ export interface PaginatedResponse<T> {
 /**
  * Retorna a instância do HTTP Client configurada
  * 
- * Por enquanto, sempre retorna mockClient.
- * Quando backend estiver pronto, pode verificar variável de ambiente:
- * 
- * export function getHttpClient(): HttpClient {
- *   if (import.meta.env.VITE_USE_MOCK === 'true') {
- *     return mockClient;
- *   }
- *   return realHttpClient; // axios ou fetch configurado
- * }
+ * Mocks só são ativados em desenvolvimento se VITE_USE_MOCK === 'true'.
+ * Em produção, a flag é sempre ignorada (sempre retorna firebaseClient).
  */
 export function getHttpClient(): HttpClient {
-  return mockClient;
+  const isDev = import.meta.env.DEV;
+  if (isDev && import.meta.env.VITE_USE_MOCK === 'true') {
+    return mockClient;
+  }
+  return firebaseClient;
 }
 
 /**

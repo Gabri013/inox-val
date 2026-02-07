@@ -1,0 +1,261 @@
+rules_version = '2';
+
+/**
+ * ============================================================================
+ * FIRESTORE SECURITY RULES - ERP INDUSTRIAL
+ * ============================================================================
+ * 
+ * Regras de seguranÇõa multi-tenant:
+ * - UsuÇ­rio sÇü acessa dados da prÇüpria empresa (empresaId)
+ * - ValidaÇõÇœo de campos obrigatÇürios
+ * - ValidaÇõÇœo de tipos de dados
+ * - ProteÇõÇœo contra modificaÇõÇœo de campos sensÇðveis
+ * 
+ * DEPLOY:
+ * firebase deploy --only firestore:rules
+ * 
+ * ============================================================================
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================================================
+    // FUNÇÎÇES AUXILIARES
+    // ========================================================================
+    
+    /**
+     * Verifica se o usuÇ­rio estÇ­ autenticado
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    /**
+     * ObtÇ¸m o documento do usuÇ­rio autenticado (compatÇðvel com users/usuarios)
+     */
+    function getUserDoc() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    /**
+     * ObtÇ¸m o empresaId do usuÇ­rio autenticado
+     */
+    function getEmpresaId() {
+      let userData = getUserDoc();
+      return userData.empresaId != null
+        ? userData.empresaId
+        : request.auth.uid;
+    }
+
+    /**
+     * ObtÇ¸m empresaId no documento
+     */
+    function getDocEmpresaId(docData) {
+      return docData.empresaId;
+    }
+    
+    /**
+     * Verifica se o documento pertence ao tenant do usuÇ­rio
+     */
+    function belongsToTenant(docData) {
+      return getDocEmpresaId(docData) == getEmpresaId();
+    }
+
+    /**
+     * ObtÇ¸m role do usuÇ­rio autenticado
+     */
+    function getUserRole() {
+      return getUserDoc().role;
+    }
+
+    /**
+     * Verifica se usuÇ­rio Ç¸ admin
+     */
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() in ['Administrador', 'Dono', 'administrador', 'dono', 'ADMIN', 'OWNER', 'owner'];
+    }
+
+    /**
+     * ObtÇ¸m permissÇæes efetivas (customizadas ou por role)
+     */
+    function getRolePermissions() {
+      return getUserRole() != null && exists(/databases/$(database)/documents/permissoes_roles/$(getUserRole()))
+        ? get(/databases/$(database)/documents/permissoes_roles/$(getUserRole())).data.permissions
+        : null;
+    }
+
+    function getEffectivePermissions() {
+      return getUserDoc().permissoesCustomizadas != null
+        ? getUserDoc().permissoesCustomizadas
+        : getRolePermissions();
+    }
+
+    function hasPermission(module, action) {
+      let perms = getEffectivePermissions();
+      return perms != null && perms[module] != null && perms[module][action] == true;
+    }
+    
+    /**
+     * Verifica se campos sensÇðveis nÇœo foram modificados
+     */
+    function noSensitiveChanges(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+    
+    // ========================================================================
+    // CLIENTES
+    // ========================================================================
+    
+    match /clientes/{clienteId} {
+      // Leitura: permitida se pertence ao tenant
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('clientes', 'view');
+      
+      // CriaÇõÇœo: permitida se autenticado e com empresaId correto
+      allow create: if isAuthenticated()
+        && hasPermission('clientes', 'create')
+        && getDocEmpresaId(request.resource.data) == getEmpresaId()
+        && request.resource.data.keys().hasAll(['nome', 'cnpj', 'email', 'telefone', 'cidade', 'estado', 'status'])
+        && request.resource.data.cnpj is string
+        && request.resource.data.cnpj.size() == 14
+        && request.resource.data.email is string
+        && request.resource.data.email.matches('.*@.*\\..*');
+      
+      // AtualizaÇõÇœo: permitida se pertence ao tenant e nÇœo modifica campos sensÇðveis
+      allow update: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('clientes', 'edit')
+        && noSensitiveChanges(['id', 'empresaId', 'createdAt']);
+      
+      // ExclusÇœo: apenas admin
+      allow delete: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('clientes', 'delete');
+    }
+
+    // ========================================================================
+    // PRODUTOS
+    // ========================================================================
+
+    match /produtos/{produtoId} {
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('produtos', 'view');
+
+      allow create: if isAuthenticated()
+        && hasPermission('produtos', 'create')
+        && getDocEmpresaId(request.resource.data) == getEmpresaId();
+
+      allow update: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('produtos', 'edit')
+        && noSensitiveChanges(['id', 'empresaId', 'createdAt']);
+
+      allow delete: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('produtos', 'delete');
+    }
+    
+    // ========================================================================
+    // ORÇÎAMENTOS
+    // ========================================================================
+    
+    match /orcamentos/{orcamentoId} {
+      // Leitura: permitida se pertence ao tenant
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('orcamentos', 'view');
+      
+      // CriaÇõÇœo: permitida se autenticado e com empresaId correto
+      allow create: if isAuthenticated()
+        && hasPermission('orcamentos', 'create')
+        && getDocEmpresaId(request.resource.data) == getEmpresaId()
+        && request.resource.data.keys().hasAll(['clienteId', 'clienteNome', 'status', 'itens'])
+        && request.resource.data.itens.size() <= 200
+        && request.resource.data.status in ['Rascunho', 'Enviado'];
+      
+      // AtualizaÇõÇœo: permitida se pertence ao tenant
+      allow update: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('orcamentos', 'edit')
+        && noSensitiveChanges(['id', 'empresaId', 'createdAt'])
+        && request.resource.data.itens.size() <= 200;
+      
+      // ExclusÇœo: apenas rascunhos podem ser deletados
+      allow delete: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('orcamentos', 'delete')
+        && resource.data.status == 'Rascunho';
+    }
+    
+    // ========================================================================
+    // ORDENS DE PRODUÇÎÇŸO
+    // ========================================================================
+    
+    match /ordens_producao/{ordemId} {
+      // Leitura: permitida se pertence ao tenant
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('ordens', 'view');
+      
+      // CriaÇõÇœo: permitida se autenticado e com empresaId correto
+      allow create: if isAuthenticated()
+        && hasPermission('ordens', 'create')
+        && getDocEmpresaId(request.resource.data) == getEmpresaId()
+        && request.resource.data.keys().hasAll(['clienteId', 'clienteNome', 'status', 'itens'])
+        && request.resource.data.status in ['Pendente'];
+      
+      // AtualizaÇõÇœo: permitida se pertence ao tenant
+      allow update: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('ordens', 'edit')
+        && noSensitiveChanges(['id', 'empresaId', 'createdAt', 'orcamentoId']);
+      
+      // ExclusÇœo: apenas admin e ordens nÇœo iniciadas
+      allow delete: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('ordens', 'delete')
+        && resource.data.status == 'Pendente';
+    }
+    
+    // ========================================================================
+    // SOLICITAÇÎÇES DE COMPRA
+    // ========================================================================
+    
+    match /solicitacoes_compra/{solicitacaoId} {
+      // Leitura: permitida se pertence ao tenant
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('compras', 'view');
+      
+      // CriaÇõÇœo: permitida se autenticado e com empresaId correto
+      allow create: if isAuthenticated()
+        && hasPermission('compras', 'create')
+        && getDocEmpresaId(request.resource.data) == getEmpresaId()
+        && request.resource.data.keys().hasAll(['status', 'itens', 'total']);
+      
+      // AtualizaÇõÇœo: permitida se pertence ao tenant
+      allow update: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('compras', 'edit')
+        && noSensitiveChanges(['id', 'empresaId', 'createdAt']);
+      
+      // ExclusÇœo: apenas admin
+      allow delete: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('compras', 'delete');
+    }
+
+    // ========================================================================
+    // COMPRAS (NOVO)
+    // ========================================================================
+
+    match /compras/{compraId} {
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('compras', 'view');
+
+      allow create: if isAuthenticated()
+        && hasPermission('compras', 'create')
+        && getDocEmpresaId(request.resource.data) == getEmpresaId();
+
+      allow update: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('compras', 'edit')
+        && noSensitiveChanges(['id', 'empresaId', 'createdAt']);
+
+      allow delete: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('compras', 'delete');
+    }
+    
+    // ========================================================================
+    // MATERIAIS (CATÇ?LOGO)
+    // ========================================================================
+    
+    match /materiais/{materialId} {
+      // Leitura: permitida se pertence ao tenant

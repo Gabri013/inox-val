@@ -1,0 +1,992 @@
+[2026-02-07T02:55:26] OpenAI Codex v0.0.0 (research preview)
+[2026-02-07T02:55:26] binary: C:\Users\Victoria\AppData\Local\just-every\code\0.6.59\code-x86_64-pc-windows-msvc.exe
+--------
+workdir: C:\Users\Victoria\Documents\GitHub\INOX-VAL
+model: gpt-5.1-codex-mini
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: auto
+--------
+[2026-02-07T02:55:26] User instructions:
+Context: Repo local em `C:\Users\Victoria\Documents\GitHub\INOX-VAL` (branch `main`). Foco no módulo `src/domains/producao` e serviços Firestore. Compare com módulos finalizados em `src/domains/*` e `src/services/firestore/*`.
+
+Agent: Analisar o repositório INOX-VAL e produzir um plano técnico detalhado para continuar o módulo de produção do ponto atual, sem recriar o que já existe. 
+
+Objetivos:
+- Mapear tudo que já foi implementado no módulo de produção: services (firebase e firestore), hooks (React Query), páginas, tipos, seeds, integrações (Firestore/Firebase), e regras/indexes.
+- Localizar partes incompletas/inconsistentes/TODOs e divergências entre: `src/domains/producao/*`, `src/services/firestore/producao.service.ts`, `src/services/firebase/producao.service.ts`, hooks que chamam métodos inexistentes, etc.
+- Comparar com o padrão dos outros módulos já finalizados (ex.: clientes, estoque, produtos, chat, calculadora) para inferir o padrão “novo” (audit + soft delete) vs legado.
+- Gerar um plano de execução incremental (passo a passo), com checkpoints de validação e riscos, começando exatamente do estado atual.
+
+Pistas já observadas:
+- `src/domains/producao/producao.service.ts` apenas re-exporta `@/services/firestore/producao.service`.
+- `src/domains/producao/producao.hooks.ts` chama métodos como `listOrdens`, `getOrdem`, `getItensPorSetor`, `entradaSetor`, etc, mas o `FirestoreService` base expõe `list/getById/create/update/remove`.
+- Existe service legado em `src/services/firebase/producao.service.ts`.
+
+Por favor:
+1) Faça um inventário do que existe (arquivos + responsabilidades).
+2) Liste gaps (métodos faltantes, tipos faltantes, páginas incompletas, regras Firestore, inconsistências de naming/collections).
+3) Proponha um plano em fases, com ordem de implementação, e como manter compatibilidade com o padrão atual do repo.
+
+Contexto técnico:
+- Frontend Vite + React + TS.
+- Firestore com um base service novo em `src/services/firestore/base.ts` (auditoria + soft delete + empresaId).
+- Coleções em `src/types/firebase`.
+
+Você pode explorar o repo livremente (somente leitura).
+
+Files to consider: src/domains/producao/producao.hooks.ts, src/services/firestore/base.ts, src/services/firestore/producao.service.ts, src/domains/producao/producao.types.ts
+
+[Running in read-only mode - no modifications allowed]
+
+[2026-02-07T02:55:28] thinking
+
+**Identifying need for planning skill**
+[2026-02-07T02:55:29] tokens used: 6.828
+
+[2026-02-07T02:55:30] thinking
+
+**Considering alternative file reading methods**
+[2026-02-07T02:55:31] exec powershell.exe -Command "Get-Content -Raw 'C:\\Users\\Victoria\\.code\\skills\\.system\\plan\\SKILL.md'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:31] powershell.exe -Command "Get-Content -Raw 'C:\\Users\\Victoria\\.code\\skills\\.system\\plan\\SKILL.md'" succeeded in 524ms:
+---
+name: plan
+description: Generate a plan for how an agent should accomplish a complex coding task. Use when a user asks for a plan, and optionally when they want to save, find, read, update, or delete plan files in $CODEX_HOME/plans (default ~/.codex/plans).
+metadata:
+  short-description: Generate a plan for a complex task
+---
+
+# Plan
+
+## Overview
+
+Draft structured plans that clarify intent, scope, requirements, action items, testing/validation, and risks.
+
+Optionally, save plans to disk as markdown files with YAML frontmatter and free-form content. When drafting in chat, output only the plan body without frontmatter; add frontmatter only when saving to disk. Only write to the plans folder; do not modify the repository codebase.
+
+This skill can also be used to draft codebase or system overviews.
+
+## Core rules
+
+- Resolve the plans directory as `$CODEX_HOME/plans` or `~/.codex/plans` when `CODEX_HOME` is not set.
+[2026-02-07T02:55:31] tokens used: 13.825
+
+[2026-02-07T02:55:33] thinking
+
+**Preparing to gather project information**
+[2026-02-07T02:55:34] exec powershell.exe -Command ls in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:37] powershell.exe -Command ls succeeded in 3s:
+
+
+    Diret┴io: C:\Users\Victoria\Documents\GitHub\INOX-VAL
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                               
+----                 -------------         ------ ----                                                                                                                               
+d-----        06/02/2026     18:37                .claude                                                                                                                            
+d-----        06/02/2026     20:39                .code                                                                                                                              
+d-----        06/02/2026     17:52                docs                                                                                                                               
+d-----        06/02/2026     17:52                guidelines                                                                                                                         
+d-----        06/02/2026     17:52                model                                                                                                                              
+d-----        06/02/2026     18:03                node_modules                                                                                                                       
+d-----        06/02/2026     17:52                public                                                                                                                             
+d-----        06/02/2026     18:50                scripts                                                                                                                            
+d-----        06/02/2026     17:52                src                                                                                                                                
+-a----        06/02/2026     20:20            635 .env                                                                                                                               
+-a----        06/02/2026     16:27             61 .firebaserc                                                                                                                        
+-a----        06/02/2026     16:27             66 .gitattributes                                                                                                                     
+-a----        06/02/2026     16:27            191 .gitignore                                                                                                                         
+[2026-02-07T02:55:37] tokens used: 22.718
+
+[2026-02-07T02:55:39] thinking
+
+**Preparing project inspection plan**
+[2026-02-07T02:55:40] exec powershell.exe -Command "ls src\\domains\\producao" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:42] powershell.exe -Command "ls src\\domains\\producao" succeeded in 2s:
+
+
+    Diret┴io: C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\domains\producao
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                               
+----                 -------------         ------ ----                                                                                                                               
+d-----        06/02/2026     17:52                pages                                                                                                                              
+-a----        06/02/2026     16:27            397 index.ts                                                                                                                           
+-a----        06/02/2026     16:27           4864 producao.hooks.ts                                                                                                                  
+-a----        06/02/2026     16:27           6816 producao.seed.ts                                                                                                                   
+-a----        06/02/2026     16:27            420 producao.service.ts                                                                                                                
+-a----        06/02/2026     16:27           2857 producao.types.ts                                                                                                                  
+
+
+[2026-02-07T02:55:42] tokens used: 25.630
+
+[2026-02-07T02:55:44] thinking
+
+**Inspecting files with PowerShell**
+[2026-02-07T02:55:45] exec powershell.exe -Command "Get-Content -Raw 'src/domains/producao/index.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:45] powershell.exe -Command "Get-Content -Raw 'src/domains/producao/index.ts'" succeeded in 596ms:
+/**
+ * DomÇðnio: ProduÇõÇœo
+ * ExportaÇõÇæes pÇ§blicas
+ */
+
+export * from './producao.types';
+export * from './producao.service';
+export * from './producao.hooks';
+export * from './producao.seed';
+export { default as ControleProducao } from './pages/ControleProducao';
+export { default as DashboardTV } from './pages/DashboardTV';
+export { default as ApontamentoOP } from './pages/ApontamentoOP';
+
+[2026-02-07T02:55:45] tokens used: 35.641
+
+[2026-02-07T02:55:48] thinking
+
+**Preparing to examine hooks file**
+[2026-02-07T02:55:48] exec powershell.exe -Command "Get-Content 'src/domains/producao/producao.hooks.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:50] powershell.exe -Command "Get-Content 'src/domains/producao/producao.hooks.ts'" succeeded in 1s:
+/**
+ * Hooks React Query para ProduÇõÇœo
+ */
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { producaoService } from './producao.service';
+import type { SetorProducao } from './producao.types';
+
+const QUERY_KEY = 'producao';
+
+/**
+ * Hook para listar ordens de produÇõÇœo
+ */
+export function useOrdensProducao(filters?: any) {
+  return useQuery({
+    queryKey: [QUERY_KEY, 'ordens', filters],
+    queryFn: () => producaoService.listOrdens(filters),
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
+  });
+[2026-02-07T02:55:50] tokens used: 36.277
+
+[2026-02-07T02:55:51] thinking
+
+**Requesting service file content**
+[2026-02-07T02:55:52] exec powershell.exe -Command "Get-Content -Raw 'src/domains/producao/producao.service.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:53] powershell.exe -Command "Get-Content -Raw 'src/domains/producao/producao.service.ts'" succeeded in 700ms:
+/**
+ * ServiÇõo de ProduÇõÇœo
+ */
+
+import { producaoService as _producaoService } from '@/services/firestore/producao.service';
+
+// Re-export da instÇ½ncia do novo service (com auditoria + soft delete)
+import type { 
+  OrdemProducaoCompleta, 
+  OrdemProducaoItem,
+  MovimentacaoSetor,
+  DashboardSetorData,
+  ConsultaMaterial,
+  SetorProducao 
+} from './producao.types';
+
+export const producaoService = _producaoService;
+[2026-02-07T02:55:53] tokens used: 38.225
+
+[2026-02-07T02:55:54] thinking
+
+**Opening service file for editing**
+[2026-02-07T02:55:54] exec powershell.exe -Command "Get-Content 'src/services/firestore/producao.service.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:55] powershell.exe -Command "Get-Content 'src/services/firestore/producao.service.ts'" succeeded in 581ms:
+/**
+ * ============================================================================
+ * PRODUÇÎÇŸO FIRESTORE SERVICE (novo padrÇœo com auditoria + soft delete)
+ * ============================================================================
+ *
+ * Substitui services/firebase/producao.service.ts.
+ * Usa FirestoreService<T> de ./base.ts que garante:
+ *  - empresaId automÇ­tico
+ *  - createdBy / updatedBy
+ *  - soft delete (isDeleted)
+ *  - audit_logs
+ * ============================================================================
+ */
+
+import { FirestoreService } from "./base";
+import { COLLECTIONS } from "@/types/firebase";
+import type { OrdemProducaoCompleta } from "@/domains/producao";
+
+class ProducaoFirestoreService extends FirestoreService<OrdemProducaoCompleta> {
+  constructor() {
+[2026-02-07T02:55:55] tokens used: 50.513
+
+[2026-02-07T02:55:57] thinking
+
+**Inspecting Firebase service file**
+[2026-02-07T02:55:57] exec powershell.exe -Command "Get-Content -Raw 'src/services/firebase/producao.service.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:55:58] powershell.exe -Command "Get-Content -Raw 'src/services/firebase/producao.service.ts'" succeeded in 634ms:
+import { BaseFirestoreService } from './base.service';
+import { COLLECTIONS } from '@/types/firebase';
+import type { OrdemProducaoCompleta } from '@/domains/producao';
+
+export class ProducaoService extends BaseFirestoreService<OrdemProducaoCompleta> {
+  constructor() {
+    super(COLLECTIONS.ordensProducao);
+  }
+}
+
+[2026-02-07T02:55:58] tokens used: 57.030
+
+[2026-02-07T02:56:00] thinking
+
+**Checking firestore base service**
+[2026-02-07T02:56:00] exec powershell.exe -Command "Get-Content 'src/services/firestore/base.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:02] powershell.exe -Command "Get-Content 'src/services/firestore/base.ts'" succeeded in 1s:
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  type DocumentData,
+  type QueryConstraint,
+  type WhereFilterOp,
+  type OrderByDirection,
+} from "firebase/firestore";
+import { getFirestore, getEmpresaContext } from "@/lib/firebase";
+[2026-02-07T02:56:02] tokens used: 57.959
+
+[2026-02-07T02:56:04] thinking
+
+**Opening type definitions**
+[2026-02-07T02:56:04] exec powershell.exe -Command "Get-Content 'src/domains/producao/producao.types.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:05] powershell.exe -Command "Get-Content 'src/domains/producao/producao.types.ts'" succeeded in 824ms:
+/**
+ * Tipos do domÇðnio de ProduÇõÇœo
+ */
+
+import type { ID } from '@/shared/types/ids';
+
+export type SetorProducao = 
+  | 'Corte'
+  | 'Dobra'
+  | 'Solda'
+  | 'Acabamento'
+  | 'Montagem'
+  | 'Qualidade'
+  | 'Expedicao';
+
+export type StatusProducaoItem = 
+  | 'Aguardando'
+  | 'Em Producao'
+  | 'Pausado'
+  | 'Concluido'
+[2026-02-07T02:56:05] tokens used: 60.960
+
+[2026-02-07T02:56:06] thinking
+
+**Checking for pages folder**
+[2026-02-07T02:56:07] exec powershell.exe -Command "ls src\\domains\\producao\\pages" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:08] powershell.exe -Command "ls src\\domains\\producao\\pages" succeeded in 816ms:
+
+
+    Diret┴io: C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\domains\producao\pages
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                               
+----                 -------------         ------ ----                                                                                                                               
+-a----        06/02/2026     16:27          16766 ApontamentoOP.tsx                                                                                                                  
+-a----        06/02/2026     16:27          14493 ControleProducao.tsx                                                                                                               
+-a----        06/02/2026     16:27          12239 DashboardTV.tsx                                                                                                                    
+
+
+[2026-02-07T02:56:08] tokens used: 77.843
+
+[2026-02-07T02:56:10] thinking
+
+**Checking seed file relevance**
+[2026-02-07T02:56:10] exec powershell.exe -Command "Get-Content -Raw 'src/domains/producao/producao.seed.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:11] powershell.exe -Command "Get-Content -Raw 'src/domains/producao/producao.seed.ts'" succeeded in 487ms:
+/**
+ * Dados seed/mock para Produاُاœo
+ */
+
+import type { 
+  OrdemProducaoCompleta, 
+  OrdemProducaoItem,
+  DashboardSetorData,
+  ConsultaMaterial,
+  SetorProducao 
+} from './producao.types';
+
+// Mock de Ordens de Produاُاœo
+export const ordensMock: OrdemProducaoCompleta[] = [
+  {
+    id: '1',
+    numero: 'OP-2024-001',
+    clienteId: '1',
+    clienteNome: 'Restaurante Bom Sabor',
+    dataAbertura: '2024-02-01T08:00:00Z',
+[2026-02-07T02:56:11] tokens used: 79.360
+
+[2026-02-07T02:56:14] thinking
+
+**Inspecting domain services for patterns**
+[2026-02-07T02:56:14] exec powershell.exe -Command 'ls src/domains' in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:15] powershell.exe -Command 'ls src/domains' succeeded in 653ms:
+
+
+    Diret┴io: C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\domains
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                               
+----                 -------------         ------ ----                                                                                                                               
+d-----        06/02/2026     17:52                anuncios                                                                                                                           
+d-----        06/02/2026     17:52                calculadora                                                                                                                        
+d-----        06/02/2026     17:52                catalogo                                                                                                                           
+d-----        06/02/2026     17:52                chat                                                                                                                               
+d-----        06/02/2026     17:52                clientes                                                                                                                           
+d-----        06/02/2026     17:52                configuracoes                                                                                                                      
+d-----        06/02/2026     17:52                custos                                                                                                                             
+d-----        06/02/2026     17:52                estoque                                                                                                                            
+d-----        06/02/2026     17:52                nesting                                                                                                                            
+d-----        06/02/2026     17:52                producao                                                                                                                           
+d-----        06/02/2026     17:52                produtos                                                                                                                           
+d-----        06/02/2026     18:26                usuarios                                                                                                                           
+d-----        06/02/2026     19:05                vendedores                                                                                                                         
+[2026-02-07T02:56:15] tokens used: 82.869
+
+[2026-02-07T02:56:18] thinking
+
+**Examining Firestore service patterns**
+[2026-02-07T02:56:18] exec powershell.exe -Command 'ls src/services/firestore' in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:20] powershell.exe -Command 'ls src/services/firestore' succeeded in 1s:
+
+
+    Diret┴io: C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\services\firestore
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                               
+----                 -------------         ------ ----                                                                                                                               
+-a----        06/02/2026     16:27           3976 anuncios.service.ts                                                                                                                
+-a----        06/02/2026     16:27           8950 base.ts                                                                                                                            
+-a----        06/02/2026     16:27           5771 calculadora-historico.service.ts                                                                                                   
+-a----        06/02/2026     16:27            644 calculadora.service.ts                                                                                                             
+-a----        06/02/2026     16:27           5407 chat.service.ts                                                                                                                    
+-a----        06/02/2026     16:27            335 clientes.service.ts                                                                                                                
+-a----        06/02/2026     16:27            353 compras.service.ts                                                                                                                 
+-a----        06/02/2026     16:27           1423 configuracoes.service.ts                                                                                                           
+-a----        06/02/2026     16:27           3617 estoque.service.ts                                                                                                                 
+-a----        06/02/2026     16:27           1055 orcamentos.service.ts                                                                                                              
+-a----        06/02/2026     16:27            350 ordens.service.ts                                                                                                                  
+-a----        06/02/2026     16:27           1013 producao.service.ts                                                                                                                
+-a----        06/02/2026     16:27            335 produtos.service.ts                                                                                                                
+[2026-02-07T02:56:20] tokens used: 83.481
+
+[2026-02-07T02:56:22] thinking
+
+**Checking other services for patterns**
+[2026-02-07T02:56:23] exec powershell.exe -Command "Get-Content 'src/services/firestore/clientes.service.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:23] powershell.exe -Command "Get-Content 'src/services/firestore/clientes.service.ts'" succeeded in 784ms:
+import { FirestoreService } from "./base";
+import { COLLECTIONS } from "@/types/firebase";
+import type { Cliente } from "@/domains/clientes";
+
+class ClientesService extends FirestoreService<Cliente> {
+  constructor() {
+    super(COLLECTIONS.clientes, { softDelete: true });
+  }
+}
+
+export const clientesService = new ClientesService();
+[2026-02-07T02:56:23] tokens used: 84.882
+
+[2026-02-07T02:56:26] thinking
+
+**Considering hook file for clients**
+[2026-02-07T02:56:26] exec powershell.exe -Command "Get-Content 'src/domains/clientes/clientes.hooks.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:27] powershell.exe -Command "Get-Content 'src/domains/clientes/clientes.hooks.ts'" succeeded in 767ms:
+/**
+ * Hooks React Query para Clientes
+ */
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { clientesService } from './clientes.service';
+import type { ID } from '@/shared/types/ids';
+import type { CreateClienteInput, UpdateClienteInput, ClienteFilters } from './clientes.types';
+import { PaginationParams } from '@/services/http/client';
+
+const QUERY_KEY = 'clientes';
+
+/**
+ * Hook para listar clientes
+ */
+export function useClientes(params: PaginationParams & ClienteFilters = {}) {
+  return useQuery({
+    queryKey: [QUERY_KEY, 'list', params],
+    queryFn: () => clientesService.list(params),
+[2026-02-07T02:56:27] tokens used: 85.206
+
+[2026-02-07T02:56:29] thinking
+
+**Comparing service methods signatures**
+[2026-02-07T02:56:29] exec powershell.exe -Command "Get-Content 'src/domains/clientes/clientes.service.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:30] powershell.exe -Command "Get-Content 'src/domains/clientes/clientes.service.ts'" succeeded in 565ms:
+/**
+ * ServiÇõo de Clientes (Firestore)
+ */
+
+import { clientesService as firestoreClientesService } from '@/services/firestore/clientes.service';
+import type { Cliente, CreateClienteInput, UpdateClienteInput, ClienteFilters } from './clientes.types';
+import type { ID } from '@/shared/types/ids';
+import { PaginationParams, PaginatedResponse } from '@/services/http/client';
+
+class ClientesService {
+	async list(params: PaginationParams & ClienteFilters = {}): Promise<PaginatedResponse<Cliente>> {
+		const where = [] as { field: string; operator: any; value: any }[];
+
+		if (params.status && params.status !== 'all') {
+			where.push({ field: 'status', operator: '==', value: params.status });
+		}
+
+		const result = await firestoreClientesService.list({
+			where,
+			orderBy: [{ field: 'nome', direction: 'asc' }],
+[2026-02-07T02:56:30] tokens used: 98.572
+
+[2026-02-07T02:56:33] thinking
+
+**Analyzing domain service integration patterns**
+[2026-02-07T02:56:33] exec powershell.exe -Command 'rg -n "entradaSetor" -n' in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:34] powershell.exe -Command 'rg -n "entradaSetor" -n' exited 1 in 1s:
+ERROR
+rg : O termo 'rg' nÆo ‚ reconhecido como nome de cmdlet, fun‡Æo, arquivo de script ou programa oper vel. Verifique a grafia do nome ou, se um caminho tiver sido inclu¡do, veja se o 
+caminho est  correto e tente novamente.
+No linha:1 caractere:1
++ rg -n "entradaSetor" -n
++ ~~
+    + CategoryInfo          : ObjectNotFound: (rg:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+[2026-02-07T02:56:34] tokens used: 100.287
+
+[2026-02-07T02:56:37] thinking
+
+**Handling missing rg command**
+[2026-02-07T02:56:37] exec "C:\\Program Files\\Git\\usr\\bin\\bash.exe" -lc 'rg -n "entradaSetor"' in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:38] "C:\\Program Files\\Git\\usr\\bin\\bash.exe" -lc 'rg -n "entradaSetor"' exited 127 in 1s:
+ERROR
+/usr/bin/bash: line 1: rg: command not found
+[2026-02-07T02:56:38] tokens used: 100.666
+
+[2026-02-07T02:56:42] thinking
+
+**Adjusting search command for Windows**
+[2026-02-07T02:56:42] exec powershell.exe -Command "Select-String -Path 'src\\**\\*' -Pattern 'entradaSetor' -SimpleMatch" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:43] powershell.exe -Command "Select-String -Path 'src\\**\\*' -Pattern 'entradaSetor' -SimpleMatch" exited 1 in 1s:
+ERROR
+Select-String : O arquivo C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\app\components nÆo pode ser lido: O acesso ao caminho 
+'C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\app\components' foi negado.
+No linha:1 caractere:1
++ Select-String -Path 'src\**\*' -Pattern 'entradaSetor' -SimpleMatch
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Select-String], ArgumentException
+    + FullyQualifiedErrorId : ProcessingFile,Microsoft.PowerShell.Commands.SelectStringCommand
+ 
+Select-String : O arquivo C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\app\contexts nÆo pode ser lido: O acesso ao caminho 
+'C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\app\contexts' foi negado.
+No linha:1 caractere:1
++ Select-String -Path 'src\**\*' -Pattern 'entradaSetor' -SimpleMatch
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Select-String], ArgumentException
+    + FullyQualifiedErrorId : ProcessingFile,Microsoft.PowerShell.Commands.SelectStringCommand
+ 
+Select-String : O arquivo C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\app\domain nÆo pode ser lido: O acesso ao caminho 
+'C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\app\domain' foi negado.
+No linha:1 caractere:1
++ Select-String -Path 'src\**\*' -Pattern 'entradaSetor' -SimpleMatch
+[2026-02-07T02:56:43] tokens used: 125.052
+
+[2026-02-07T02:56:50] thinking
+
+**Troubleshooting Select-String usage**
+[2026-02-07T02:56:50] exec powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'entradaSetor' -SimpleMatch" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:51] powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'entradaSetor' -SimpleMatch" succeeded in 789ms:
+
+src\domains\producao\producao.hooks.ts:72:export function useEntradaSetor() {
+src\domains\producao\producao.hooks.ts:80:    }) => producaoService.entradaSetor(itemId, setor, observacoes),
+src\domains\producao\pages\ControleProducao.tsx:45:import { useItensSetor, useEntradaSetor, useSaidaSetor, useConsultaMateriais } from '../producao.hooks';
+src\domains\producao\pages\ControleProducao.tsx:69:  const entradaMutation = useEntradaSetor();
+
+
+[2026-02-07T02:56:51] tokens used: 130.324
+
+[2026-02-07T02:56:53] thinking
+
+**Searching for other hook functions**
+[2026-02-07T02:56:53] exec powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'listOrdens' -SimpleMatch" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:54] powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'listOrdens' -SimpleMatch" succeeded in 846ms:
+
+src\domains\producao\producao.hooks.ts:18:    queryFn: () => producaoService.listOrdens(filters),
+
+
+[2026-02-07T02:56:54] tokens used: 130.736
+
+[2026-02-07T02:56:57] thinking
+
+**Searching for hook method definitions**
+[2026-02-07T02:56:57] exec powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'getItensPorSetor' -SimpleMatch" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:56:58] powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'getItensPorSetor' -SimpleMatch" succeeded in 778ms:
+
+src\domains\producao\producao.hooks.ts:41:    queryFn: () => producaoService.getItensPorSetor(setor!),
+
+
+[2026-02-07T02:56:58] tokens used: 131.125
+
+[2026-02-07T02:57:01] thinking
+
+**Searching for producaoService usage**
+[2026-02-07T02:57:02] exec powershell.exe -Command "Get-Content 'src/domains/producao/pages/ControleProducao.tsx'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:02] powershell.exe -Command "Get-Content 'src/domains/producao/pages/ControleProducao.tsx'" succeeded in 647ms:
+/**
+ * Controle de ProduÇõÇœo - Interface para operadores no chÇœo de fÇ­brica
+ */
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '@/shared/components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Button } from '@/app/components/ui/button';
+import { Input } from '@/app/components/ui/input';
+import { Label } from '@/app/components/ui/label';
+import { Badge } from '@/app/components/ui/badge';
+import { Progress } from '@/app/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
+import { Textarea } from '@/app/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+[2026-02-07T02:57:02] tokens used: 137.338
+
+[2026-02-07T02:57:04] thinking
+
+**Inspecting DashboardTV.tsx for context**
+[2026-02-07T02:57:05] exec powershell.exe -Command "Get-Content 'src/domains/producao/pages/DashboardTV.tsx'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:06] powershell.exe -Command "Get-Content 'src/domains/producao/pages/DashboardTV.tsx'" succeeded in 1s:
+/**
+ * DASHBOARD TV - ExibiÇõÇœo em tempo real para TV no chÇœo de fÇ­brica
+ * - Auto-refresh a cada 5 segundos
+ * - Cards grandes com OPs em andamento
+ * - CronÇïmetro em tempo real
+ * - Status visual (verde/amarelo/vermelho)
+ * - Fila de OPs pendentes
+ */
+
+import { useState, useEffect } from 'react';
+import { useOrdens } from '@/hooks/useOrdens';
+import { Clock, User, AlertTriangle, CheckCircle2, List } from 'lucide-react';
+import type { OrdemProducao } from '@/app/types/workflow';
+
+export default function DashboardTV() {
+  const { ordens } = useOrdens({ autoLoad: true });
+  const [temposAtuais, setTemposAtuais] = useState<Record<string, number>>({});
+
+  // Filtrar OPs
+  const opsEmProducao = ordens.filter(op => op.status === 'Em ProduÇõÇœo');
+[2026-02-07T02:57:06] tokens used: 141.746
+
+[2026-02-07T02:57:08] thinking
+
+**Exploring useOrdens hook location**
+[2026-02-07T02:57:09] exec powershell.exe -Command "ls src\\hooks" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:10] powershell.exe -Command "ls src\\hooks" succeeded in 631ms:
+
+
+    Diret┴io: C:\Users\Victoria\Documents\GitHub\INOX-VAL\src\hooks
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                               
+----                 -------------         ------ ----                                                                                                                               
+-a----        06/02/2026     20:45           7655 useClientes.ts                                                                                                                     
+-a----        06/02/2026     16:27           4597 useCompras.ts                                                                                                                      
+-a----        06/02/2026     16:27           1474 useConfiguracoes.ts                                                                                                                
+-a----        06/02/2026     20:47           9949 useOrcamentos.ts                                                                                                                   
+-a----        06/02/2026     20:49          13443 useOrdens.ts                                                                                                                       
+
+
+[2026-02-07T02:57:10] tokens used: 150.298
+
+[2026-02-07T02:57:14] thinking
+
+**Checking useOrdens file**
+[2026-02-07T02:57:15] exec powershell.exe -Command "Get-Content 'src/hooks/useOrdens.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:16] powershell.exe -Command "Get-Content 'src/hooks/useOrdens.ts'" succeeded in 864ms:
+/**
+ * ============================================================================
+ * HOOK: useOrdens
+ * ============================================================================
+ * 
+ * Hook React para gerenciar ordens de produÇõÇœo usando Firebase.
+ * 
+ * Funcionalidades:
+ * - Carregar lista de ordens
+ * - Criar OP de orÇõamento
+ * - Atualizar ordem
+ * - Deletar ordem
+ * - Iniciar/Pausar/Retomar/Concluir produÇõÇœo
+ * - Cancelar ordem
+ * - Filtrar por status e cliente
+ * 
+ * ============================================================================
+ */
+
+import { useState, useEffect } from 'react';
+[2026-02-07T02:57:16] tokens used: 154.524
+
+[2026-02-07T02:57:18] thinking
+
+**Analyzing service structure and planning**
+[2026-02-07T02:57:19] exec powershell.exe -Command "Get-Content -Raw 'src/types/firebase.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:19] powershell.exe -Command "Get-Content -Raw 'src/types/firebase.ts'" succeeded in 777ms:
+/**
+ * Tipos e configuraÇõÇæes para Firebase
+ */
+
+export interface FirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+}
+
+/**
+ * Interface base para documentos Firebase (multi-tenant)
+ */
+export interface FirebaseDocument {
+  id: string;
+  empresaId?: string; // ID da empresa (isolamento de dados)
+  createdAt?: Date | string; // Timestamp de criaÇõÇœo
+[2026-02-07T02:57:19] tokens used: 159.213
+
+[2026-02-07T02:57:22] thinking
+
+**Searching Firestore config for ordens_producao**
+[2026-02-07T02:57:22] exec powershell.exe -Command "Select-String -Path 'firestore.rules' -Pattern 'ordens_producao'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:23] powershell.exe -Command "Select-String -Path 'firestore.rules' -Pattern 'ordens_producao'" succeeded in 660ms:
+
+firestore.rules:189:    match /ordens_producao/{ordemId} {
+
+
+[2026-02-07T02:57:23] tokens used: 191.443
+
+[2026-02-07T02:57:26] thinking
+
+**Inspecting code snippet around line 189**
+[2026-02-07T02:57:27] exec powershell.exe -Command "Select-String -Path 'firestore.rules' -Pattern 'ordens_producao' -Context 5" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:27] powershell.exe -Command "Select-String -Path 'firestore.rules' -Pattern 'ordens_producao' -Context 5" succeeded in 761ms:
+
+  firestore.rules:184:    
+  firestore.rules:185:    // ========================================================================
+  firestore.rules:186:    // ORDENS DE PRODU€ÇO
+  firestore.rules:187:    // ========================================================================
+  firestore.rules:188:    
+> firestore.rules:189:    match /ordens_producao/{ordemId} {
+  firestore.rules:190:      // Leitura: permitida se pertence ao tenant
+  firestore.rules:191:      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('ordens', 'view');
+  firestore.rules:192:      
+  firestore.rules:193:      // Cria‡Æo: permitida se autenticado e com empresaId correto
+  firestore.rules:194:      allow create: if isAuthenticated()
+
+
+[2026-02-07T02:57:27] tokens used: 236.359
+
+[2026-02-07T02:57:30] thinking
+
+**Planning to extract targeted code segment**
+[2026-02-07T02:57:30] exec powershell.exe -Command '(Get-Content firestore.rules)[175..220]' in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:31] powershell.exe -Command '(Get-Content firestore.rules)[175..220]' succeeded in 732ms:
+        && request.resource.data.itens.size() <= 200;
+      
+      // ExclusÇœo: apenas rascunhos podem ser deletados
+      allow delete: if isAuthenticated()
+        && belongsToTenant(resource.data)
+        && hasPermission('orcamentos', 'delete')
+        && resource.data.status == 'Rascunho';
+    }
+    
+    // ========================================================================
+    // ORDENS DE PRODUÇÎÇŸO
+    // ========================================================================
+    
+    match /ordens_producao/{ordemId} {
+      // Leitura: permitida se pertence ao tenant
+      allow read: if isAuthenticated() && belongsToTenant(resource.data) && hasPermission('ordens', 'view');
+      
+      // CriaÇõÇœo: permitida se autenticado e com empresaId correto
+      allow create: if isAuthenticated()
+        && hasPermission('ordens', 'create')
+[2026-02-07T02:57:31] tokens used: 238.389
+
+[2026-02-07T02:57:33] thinking
+
+**Checking relevant Firestore indexes**
+[2026-02-07T02:57:34] exec powershell.exe -Command "Select-String -Path 'firestore.indexes.json' -Pattern 'ordens_producao' -Context 2" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:34] powershell.exe -Command "Select-String -Path 'firestore.indexes.json' -Pattern 'ordens_producao' -Context 2" succeeded in 643ms:
+
+  firestore.indexes.json:20:    },
+  firestore.indexes.json:21:    {
+> firestore.indexes.json:22:      "collectionGroup": "ordens_producao",
+  firestore.indexes.json:23:      "queryScope": "COLLECTION",
+  firestore.indexes.json:24:      "fields": [
+  firestore.indexes.json:29:    },
+  firestore.indexes.json:30:    {
+> firestore.indexes.json:31:      "collectionGroup": "ordens_producao",
+  firestore.indexes.json:32:      "queryScope": "COLLECTION",
+  firestore.indexes.json:33:      "fields": [
+
+
+[2026-02-07T02:57:34] tokens used: 239.684
+
+[2026-02-07T02:57:36] thinking
+
+**Reviewing index lines for context**
+[2026-02-07T02:57:37] exec powershell.exe -Command '(Get-Content firestore.indexes.json)[15..40]' in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:38] powershell.exe -Command '(Get-Content firestore.indexes.json)[15..40]' succeeded in 806ms:
+        { "fieldPath": "empresaId", "order": "ASCENDING" },
+        { "fieldPath": "clienteId", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ordens_producao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "empresaId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dataAbertura", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ordens_producao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "empresaId", "order": "ASCENDING" },
+        { "fieldPath": "clienteId", "order": "ASCENDING" },
+[2026-02-07T02:57:38] tokens used: 240.082
+
+[2026-02-07T02:57:41] thinking
+
+**Drafting service integration plan**
+[2026-02-07T02:57:41] exec powershell.exe -Command "Get-Content 'src/app/types/workflow.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:42] powershell.exe -Command "Get-Content 'src/app/types/workflow.ts'" succeeded in 532ms:
+/**
+ * Tipos do mÇüdulo de OrÇõamentos (Workflow)
+ */
+
+import type { ResultadoCalculadora } from '@/domains/calculadora/types';
+
+// ========================================
+// STATUS
+// ========================================
+
+export type StatusOrcamento =
+  | 'Rascunho'
+  | 'Enviado'
+  | 'Aprovado'
+  | 'Rejeitado'
+  | 'Convertido';
+
+// ========================================
+// ITEM DO ORÇÎAMENTO
+// ========================================
+[2026-02-07T02:57:42] tokens used: 241.738
+
+[2026-02-07T02:57:45] thinking
+
+**Searching for OrdemProducao interface**
+[2026-02-07T02:57:45] exec powershell.exe -Command "Select-String -Path 'src/app/types/workflow.ts' -Pattern 'OrdemProducao'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:46] powershell.exe -Command "Select-String -Path 'src/app/types/workflow.ts' -Pattern 'OrdemProducao'" succeeded in 522ms:
+[2026-02-07T02:57:46] tokens used: 250.664
+
+[2026-02-07T02:57:49] thinking
+
+**Searching for 'OrdemProducao' type definition**
+[2026-02-07T02:57:49] exec powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'OrdemProducao' -CaseSensitive" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:50] powershell.exe -Command "Get-ChildItem -Path src -Recurse -File | Select-String -Pattern 'OrdemProducao' -CaseSensitive" succeeded in 905ms:
+
+src\app\contexts\WorkflowContext.tsx:4:  OrdemProducao,
+src\app\contexts\WorkflowContext.tsx:85:  const [ordens, setOrdens] = useState<OrdemProducao[]>([]);
+src\app\contexts\WorkflowContext.tsx:146:    const novaOrdem: OrdemProducao = {
+src\app\contexts\WorkflowContext.tsx:195:    const newOrdem: OrdemProducao = {
+src\app\contexts\WorkflowContext.tsx:336:  const extrairMateriaisDaOrdem = (ordem: OrdemProducao): { materialId: string; quantidade: number; unidade: string; nome: string }[] => {
+src\app\contexts\WorkflowContext.v2.tsx:25:  OrdemProducao,
+src\app\pages\Ordens.tsx:21:import { OrdemProducao, StatusOrdem } from "../types/workflow";
+src\app\pages\Ordens.tsx:37:  const [selectedOrdem, setSelectedOrdem] = useState<OrdemProducao | null>(null);
+src\app\pages\Ordens.tsx:127:      render: (ord: OrdemProducao) => (
+src\app\pages\Ordens.tsx:138:      render: (ord: OrdemProducao) => format(ord.dataAbertura, "dd/MM/yyyy", { locale: ptBR })
+src\app\pages\Ordens.tsx:144:      render: (ord: OrdemProducao) => <span className="font-medium">{ord.clienteNome}</span>
+src\app\pages\Ordens.tsx:149:      render: (ord: OrdemProducao) => (
+src\app\pages\Ordens.tsx:156:      render: (ord: OrdemProducao) => (
+src\app\pages\Ordens.tsx:165:      render: (ord: OrdemProducao) => (
+src\app\pages\Ordens.tsx:174:      render: (ord: OrdemProducao) => (
+src\app\pages\Ordens.tsx:184:  const handleIniciarProducao = async (ordem: OrdemProducao) => {
+src\app\pages\Ordens.tsx:241:      onClick: (ord: OrdemProducao) => {
+src\app\pages\Ordens.tsx:249:      show: (ord: OrdemProducao) => ord.status === "Pendente"
+src\app\pages\Ordens.tsx:254:      onClick: (ord: OrdemProducao) => {
+[2026-02-07T02:57:50] tokens used: 298.158
+
+[2026-02-07T02:57:53] thinking
+
+**Opening API handler file**
+[2026-02-07T02:57:53] exec powershell.exe -Command "Get-Content 'src/services/http/producaoMockHandler.ts'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:57:54] powershell.exe -Command "Get-Content 'src/services/http/producaoMockHandler.ts'" succeeded in 639ms:
+/**
+ * Handler especÇðfico para rotas de produÇõÇœo
+ * Simula lÇügica de backend para controle de produÇõÇœo
+ */
+
+import { ordensMock, dashboardMock, materiaisMock } from '@/domains/producao';
+import type { 
+  OrdemProducaoCompleta, 
+  OrdemProducaoItem,
+  DashboardSetorData,
+  ConsultaMaterial,
+  SetorProducao,
+  MovimentacaoSetor 
+} from '@/domains/producao';
+import { newId } from '@/shared/types/ids';
+
+// Estado em memÇüria (poderia usar IndexedDB tambÇ¸m)
+let ordens: OrdemProducaoCompleta[] = [...ordensMock];
+let dashboard: DashboardSetorData[] = [...dashboardMock];
+
+[2026-02-07T02:57:54] tokens used: 348.689
+
+[2026-02-07T02:58:17] thinking
+
+**Drafting comprehensive implementation plan**
+**Outlining detailed gap analysis and phased actions**
+
+I’m organizing gaps like missing methods and type inconsistencies while planning phased steps—from inventory through domain service build, mutations, querying, hooking, to tests and validation—ensuring alignment with Firestore rules, audit patterns, and front-end integration. Let’s keep track of open questions about data storage and indexing to clarify later!
+
+[2026-02-07T02:58:29] exec powershell.exe -Command "Get-Content 'src/domains/producao/pages/ApontamentoOP.tsx'" in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T02:58:31] powershell.exe -Command "Get-Content 'src/domains/producao/pages/ApontamentoOP.tsx'" succeeded in 1s:
+/**
+ * APONTAMENTO DE PRODUÇÎÇŸO - Interface para operadores no chÇœo de fÇ­brica
+ * - Login simplificado (seleÇõÇœo de operador)
+ * - Selecionar OP da fila
+ * - Iniciar, Pausar, Retomar, Finalizar
+ * - Interface touch-friendly (botÇæes grandes)
+ */
+
+import { useState, useEffect } from 'react';
+import { useOrdens } from '@/hooks/useOrdens';
+import { Button } from '@/app/components/ui/button';
+import { Card } from '@/app/components/ui/card';
+import { Play, Pause, Square, Clock, User, AlertCircle } from 'lucide-react';
+import type { OrdemProducao } from '@/app/types/workflow';
+
+// Lista de operadores (em produÇõÇœo viria do backend)
+const OPERADORES = [
+  { id: '1', nome: 'JoÇœo Silva' },
+  { id: '2', nome: 'Maria Santos' },
+  { id: '3', nome: 'Pedro Costa' },
+[2026-02-07T02:58:31] tokens used: 357.251
+
+[2026-02-07T02:58:40] thinking
+
+**Outlining detailed implementation plan**
+
+I'm mapping out a comprehensive plan starting from the current state, covering existing files, identifying gaps, and defining clear action items. This plan includes referencing hooks like `useOrdens`, related service files, Firestore rules, and mock handlers, all tied together with checkpoints for testing and validation. I'll make sure to highlight incremental steps and open questions about data persistence and compatibility with the new base service pattern.
+[2026-02-07T02:58:42] codex
+
+Used the `plan` skill to document a structured execution plan for finishing the produção module from its current state.
+
+# Plan
+
+The produção domain currently exports only passive hooks/pages and a Firestore service re-export; the React Query hooks expect a richer API (listOrdens, setor mutations, dashboard, materials) that doesn’t exist yet. The plan below inventories the existing assets, pinpoints the missing behaviors, and lays out an incremental, audit-friendly implementation path that reuses the new `FirestoreService` base (audit + soft delete pattern) while staying compatible with the hooks, UI, and Firestore rules/indexes already in place.
+
+## Inventory
+- `src/domains/producao/producao.hooks.ts`: React Query hooks for listing ordens, fetching items by setor, dashboard snapshots, material lookups, and mutations (`entradaSetor`, `saidaSetor`, `pausarItem`, etc.) that currently call undefined methods on `producaoService`.
+- `src/domains/producao/producao.types.ts`: rich domain types (`OrdemProducaoCompleta`, `MovimentacaoSetor`, `ConsultaMaterial`, `SetorProducao`, etc.) that describe the payloads the UI expects.
+- `src/domains/producao/pages/*`: `ControleProducao`, `DashboardTV`, `ApontamentoOP` UIs that rely on the hooks above plus the more generic `useOrdens` hook for TV/apontamento flows.
+- `src/domains/producao/producao.seed.ts` + `src/services/http/producaoMockHandler.ts`: mock dataset and HTTP handler that document the desired REST behavior (listing ordens, setor entradas/saídas, materiais, dashboard, status transitions).
+- `src/services/firestore/base.ts`: the reusable `FirestoreService` implementing audit logs, soft delete, locked `empresaId`, and the generic `list/getById/create/update/remove` operations that must power the new domain behavior.
+- `src/services/firestore/producao.service.ts`: Firestore service that extends the base with `ordens_producao` collection and `softDelete: true`.
+- `src/services/firebase/producao.service.ts`: legacy Firebase-based service (no audit/soft delete) that should be retired once the domain service wraps the new Firestore implementation.
+- `firestore.rules` and `firestore.indexes.json`: Firestore security rules and indexes already guard Reads/Writes on `ordens_producao` and support queries by `(empresaId,status,dataAbertura)`; no production-specific rules yet for sector mutations or movimentações.
+
+## Gaps & inconsistencies
+- `producaoService` is just `export const producaoService = new FirestoreService(...)` so none of the domain-specific operations (`listOrdens`, `entradaSetor`, `getDashboardSetor`, etc.) exist despite being invoked in hooks/pages.
+- The hooks reference detailed payloads (e.g., `MovimentacaoSetor` objects, material lookups, setor status updates) that have no Firestore implementation; the HTTP mock shows the expected semantics.
+- `producao.types` describes nested item/material structures that must be kept in sync with Firestore documents—currently there is no code ensuring Firestore keeps `itens` arrays, statuses, timestamps, or movimentações consistent.
+- Firestore rules only cover basic CRUD on `ordens_producao`; new mutations (setor entrada/saída changes, progress updates, material consultations) may need additional indexes/guards, especially if filtering by `setorAtual`, `prioridade`, or writing to a `movimentacoes_setor` collection.
+- There’s no coordination between the multi-tenant/audit pattern in `FirestoreService` and the domain-specific flows, so even once methods exist they must wrap the base service to preserve audit logs, soft delete flags, and `empresaId` filtering.
+
+## Requirements
+- Support the hooks’ query/mutation surface: `listOrdens(filters)`, `getOrdem(id)`, `getItensPorSetor(setor)`, `getDashboardSetor(setor?)`, `consultarMateriais(itemId)`, and the mutations `entradaSetor`, `saidaSetor`, `atualizarProgresso`, `rejeitarItem`, `pausarItem`, `retomarItem`.
+- Align with the new Firestore pattern (audit logs, soft delete, automatic `empresaId`, `createdBy/updatedBy` metadata) by composing the domain service on top of `FirestoreService`.
+- Respect existing Firestore rules/indexes for `ordens_producao`, and add any missing indexes/rules needed for sector filtering or new collections (e.g., movimentações/consultas).
+- Match UI expectations described in `ControleProducao`, `DashboardTV`, and `ApontamentoOP`, including sector sequences, material deficits, and dashboard stats.
+- Avoid reintroducing legacy Firebase base services once the Firestore-backed domain service can cover the full surface.
+
+## Scope
+- In: domain hooks/pages, `producao.types`, `producao.seed`, `src/services/firestore/producao.service.ts`, Firestore rules/indexes relevant to production, and any new helper collections (movimentações, dashboard snapshots).
+- Out: the generic `useOrdens` hook and `ordens_producao` REST handlers (they already exist and can keep using the Firestore service once the domain service is complete).
+
+## Files and entry points
+- `src/domains/producao/producao.hooks.ts`
+- `src/domains/producao/producao.service.ts`
+- `src/domains/producao/producao.types.ts`
+- `src/services/firestore/producao.service.ts`
+- `src/services/firestore/base.ts`
+- `src/services/http/producaoMockHandler.ts` (reference for required behavior)
+- `firestore.rules` / `firestore.indexes.json`
+- `src/domains/producao/pages/*` for UX expectations
+
+## Data model / API changes
+- Treat each `OrdemProducaoCompleta` document as the Firestore source of truth; updates will modify the nested `itens` array to reflect setor changes, progress, and status, while audit metadata is handled by the base service.
+- Consider storing `MovimentacaoSetor` records either as a subcollection (`ordens_producao/{id}/movimentacoes`) or dedicated collection (need to decide) to track entradas/saídas/rejeições; include this decision in the plan.
+- Dashboard data (`DashboardSetorData`) can be derived from live orders, but if Firestore-side aggregation is needed for performance, persist summaries in a supporting doc/collection and ensure indexes support `setor` filtering.
+- Material consultations should either read the `materiaisNecessarios` stored on each item or compute them from related inventory documents; the mock stores them on the item, so the Firestore write/mutation flow must maintain those arrays.
+
+## Action items
+- [ ] Map every method stubbed in `producao.hooks.ts` to the corresponding Firestore operation by comparing to `src/services/http/producaoMockHandler.ts` (queries, payloads, sector sequences, material returns) so we have a precise contract for `producaoService`.
+- [ ] Implement a domain wrapper (`ProducaoDomainService` or similar) that mirrors how `clientes.service.ts` wraps `clientesService`: expose `listOrdens(filters)`, `getOrdem(id)`, and other read APIs that call `producaoFirestoreService.list/getById` with the right `ListParams`, and normalize the results for the hooks.
+- [ ] Add sector/material specific helpers: `getItensPorSetor(setor)` filters the order list (or queries a dedicated index) for the requested `setorAtual`, `consultarMateriais(itemId)` returns the `materiaisNecessarios` array/derived data, and `getDashboardSetor(setor?)` summarizes statuses/times from the live orders as described in `DashboardTV` (consider caching the summary document if needed).
+- [ ] Implement mutations (`entradaSetor`, `saidaSetor`, `atualizarProgresso`, `rejeitarItem`, `pausarItem`, `retomarItem`) that update the nested `itens` / `status` fields and optionally persist `MovimentacaoSetor` records, always calling `producaoFirestoreService.update` so audit logs & `insertedBy` metadata stay consistent.
+- [ ] Sync the newly implemented methods with the hooks/pages: ensure `useEntradaSetor`/`useSaidaSetor`/`useAtualizarProgresso` etc call the domain service methods, validate the returned data shape for toasts/UI, and adjust `SetorProducao`/`ConsultMaterial` types if the Firestore payload differs.
+- [ ] Review `firestore.rules`/`firestore.indexes.json` to add any needed indexes for queries filtered by `setorAtual`, `prioridade`, or `materiaisDisponiveis`, and confirm the security rules allow the new mutations while still enforcing `belongsToTenant` and the permission matrix.
+- [ ] Validate the entire flow by exercising `ControleProducao`/`DashboardTV`/`ApontamentoOP` against the new domain service (using the mock data layer if necessary), ensuring the React Query hooks refresh as expected and the audit+soft-delete behavior works.
+
+## Testing and validation
+- Manual QA: use the mock handler or Firestore seed to exercise `ControleProducao` mutations (entrada/saída/progresso) and watch for toast success, query invalidations, and updated statuses in the UI.
+- TypeScript build: run `npm run build` (or equivalent) to catch missing imports/types now that the domain service has a richer API surface.
+- Firestore rules simulation: use the emulator (if available) or a lint tool to confirm the new writes still satisfy `belongsToTenant`, `hasPermission`, and that added indexes align with the queries.
+
+## Risks and edge cases
+- Migrating existing `ordens_producao` docs to include the new nested fields (materiais, movimentações, progresso) may require scripts or backfilling if current production data lacks them.
+- Sector transitions rely on a fixed sequence (`Corte` → ... → `Expedicao`); if the real process deviates, the `saidaSetor` logic must be configurable to avoid locking items.
+- Persisting `MovimentacaoSetor` documents while keeping them in sync with nested `itens` arrays can double-write the same data, so the plan must clarify whether to use subcollections or embedded arrays to avoid inconsistencies.
+- Firestore indexes might be missing for filtering by `setorAtual`/`prioridade`, causing query failures; plan to add them before roll-out.
+
+## Open questions
+- Where should `MovimentacaoSetor` records live? A subcollection under each order, a dedicated collection, or embedded in the order document?
+- Should `getDashboardSetor` compute stats on-demand from live order data, or persist aggregates in a supporting document/collection for faster TV rendering?
+- Do we need to expose `consultaMateriais` results from a separate inventory collection instead of relying on data stored inside each order item?
+
+
+[2026-02-07T02:58:57] tokens used: 366.745

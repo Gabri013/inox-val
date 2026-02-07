@@ -18,10 +18,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { orcamentosService } from '@/services/firebase/orcamentos.service';
+import { orcamentosService } from '@/services/firestore/orcamentos.service';
+import { httpClient, type PaginatedResponse } from '@/services/http/client';
 import type { Orcamento, StatusOrcamento } from '@/app/types/workflow';
-import type { ServiceResult } from '@/services/firebase/base.service';
 import { toast } from 'sonner';
+
+type ServiceResult<T> = { success: boolean; data?: T; error?: string };
 
 interface UseOrcamentosOptions {
   autoLoad?: boolean;
@@ -31,39 +33,63 @@ interface UseOrcamentosOptions {
 
 export function useOrcamentos(options: UseOrcamentosOptions = {}) {
   const { autoLoad = true, status, clienteId } = options;
+  const isMock = import.meta.env.VITE_USE_MOCK === 'true';
   
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Carregar orçamentos
+  const normalizeOrcamento = (orcamento: Orcamento): Orcamento => {
+    const toDate = (value: any) => {
+      if (!value) return value;
+      if (value instanceof Date) return value;
+      if (typeof value === 'string') return new Date(value);
+      if (value?.toDate) return value.toDate();
+      return value;
+    };
+
+    return {
+      ...orcamento,
+      data: toDate(orcamento.data),
+      validade: toDate(orcamento.validade),
+      createdAt: toDate(orcamento.createdAt),
+      updatedAt: toDate(orcamento.updatedAt),
+    } as Orcamento;
+  };
+
   const loadOrcamentos = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      let result: ServiceResult<Orcamento[]>;
+      const where = [] as { field: string; operator: any; value: any }[];
+      if (clienteId) where.push({ field: 'clienteId', operator: '==', value: clienteId });
+      if (status) where.push({ field: 'status', operator: '==', value: status });
 
-      if (clienteId) {
-        result = await orcamentosService.listByCliente(clienteId);
-      } else if (status) {
-        result = await orcamentosService.listByStatus(status);
-      } else {
-        const listResult = await orcamentosService.list({
-          orderBy: [{ field: 'data', direction: 'desc' }],
+      if (isMock) {
+        const response = await httpClient.get<PaginatedResponse<Orcamento>>('/api/orcamentos', {
+          params: {
+            page: 1,
+            pageSize: 1000,
+            ...(status ? { status } : {}),
+            ...(clienteId ? { clienteId } : {}),
+          },
         });
-        result = {
-          success: listResult.success,
-          data: listResult.data?.items,
-          error: listResult.error,
-        };
+        setOrcamentos(response.items.map(normalizeOrcamento));
+        return;
       }
 
-      if (result.success && result.data) {
-        setOrcamentos(result.data);
+      const listResult = await orcamentosService.list({
+        where,
+        orderBy: [{ field: 'data', direction: 'desc' }],
+      });
+
+      if (listResult.success && listResult.data) {
+        setOrcamentos(listResult.data.items.map(normalizeOrcamento));
       } else {
-        setError(result.error || 'Erro ao carregar orçamentos');
-        toast.error(result.error || 'Erro ao carregar orçamentos');
+        setError(listResult.error || 'Erro ao carregar orçamentos');
+        toast.error(listResult.error || 'Erro ao carregar orçamentos');
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -76,15 +102,33 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
 
   // Criar orçamento
   const createOrcamento = async (
-    data: Omit<Orcamento, 'id' | 'tenantId' | 'createdAt' | 'updatedAt'>
+    data: Omit<Orcamento, 'id' | 'empresaId' | 'createdAt' | 'updatedAt'>
   ): Promise<ServiceResult<Orcamento>> => {
     try {
       setLoading(true);
 
-      const result = await orcamentosService.create(data);
+      const numero = `ORC-${Date.now()}`;
+
+      if (isMock) {
+        const payload = {
+          id: `orc_${Date.now()}`,
+          ...data,
+          numero,
+        } as Orcamento;
+        const created = await httpClient.post<Orcamento>('/api/orcamentos', payload);
+        const result = { success: true, data: created } as ServiceResult<Orcamento>;
+        setOrcamentos((prev) => [normalizeOrcamento(created), ...prev]);
+        toast.success('OrВamento criado com sucesso!');
+        return result;
+      }
+
+      const result = await orcamentosService.create({
+        ...data,
+        numero,
+      } as Orcamento);
 
       if (result.success && result.data) {
-        setOrcamentos((prev) => [result.data!, ...prev]);
+        setOrcamentos((prev) => [normalizeOrcamento(result.data!), ...prev]);
         toast.success('Orçamento criado com sucesso!');
       } else {
         toast.error(result.error || 'Erro ao criar orçamento');
@@ -103,16 +147,26 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
   // Atualizar orçamento
   const updateOrcamento = async (
     id: string,
-    updates: Partial<Omit<Orcamento, 'id' | 'tenantId' | 'createdAt'>>
+    updates: Partial<Omit<Orcamento, 'id' | 'empresaId' | 'createdAt'>>
   ): Promise<ServiceResult<Orcamento>> => {
     try {
       setLoading(true);
 
-      const result = await orcamentosService.update(id, updates);
+      if (isMock) {
+        const updated = await httpClient.put<Orcamento>(`/api/orcamentos/${id}`, updates as Orcamento);
+        const result = { success: true, data: updated } as ServiceResult<Orcamento>;
+        setOrcamentos((prev) =>
+          prev.map((o) => (o.id === id ? normalizeOrcamento(updated) : o))
+        );
+        toast.success('OrВamento atualizado com sucesso!');
+        return result;
+      }
+
+      const result = await orcamentosService.update(id, updates as Orcamento);
 
       if (result.success && result.data) {
         setOrcamentos((prev) =>
-          prev.map((o) => (o.id === id ? result.data! : o))
+          prev.map((o) => (o.id === id ? normalizeOrcamento(result.data!) : o))
         );
         toast.success('Orçamento atualizado com sucesso!');
       } else {
@@ -134,7 +188,14 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
     try {
       setLoading(true);
 
-      const result = await orcamentosService.delete(id);
+      if (isMock) {
+        await httpClient.delete<void>(`/api/orcamentos/${id}`);
+        setOrcamentos((prev) => prev.filter((o) => o.id !== id));
+        toast.success('OrВamento removido com sucesso!');
+        return { success: true } as ServiceResult<void>;
+      }
+
+      const result = await orcamentosService.remove(id);
 
       if (result.success) {
         setOrcamentos((prev) => prev.filter((o) => o.id !== id));
@@ -155,67 +216,30 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
 
   // Aprovar orçamento
   const aprovarOrcamento = async (id: string): Promise<ServiceResult<Orcamento>> => {
-    try {
-      setLoading(true);
-
-      const result = await orcamentosService.aprovar(id);
-
-      if (result.success && result.data) {
-        setOrcamentos((prev) =>
-          prev.map((o) => (o.id === id ? result.data! : o))
-        );
-        toast.success('Orçamento aprovado com sucesso!');
-      } else {
-        toast.error(result.error || 'Erro ao aprovar orçamento');
-      }
-
-      return result;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
-      toast.error(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      setLoading(false);
-    }
+    return updateOrcamento(id, { status: 'Aprovado' });
   };
 
   // Rejeitar orçamento
-  const rejeitarOrcamento = async (
-    id: string,
-    motivo?: string
-  ): Promise<ServiceResult<Orcamento>> => {
-    try {
-      setLoading(true);
-
-      const result = await orcamentosService.rejeitar(id, motivo);
-
-      if (result.success && result.data) {
-        setOrcamentos((prev) =>
-          prev.map((o) => (o.id === id ? result.data! : o))
-        );
-        toast.success('Orçamento rejeitado');
-      } else {
-        toast.error(result.error || 'Erro ao rejeitar orçamento');
-      }
-
-      return result;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
-      toast.error(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      setLoading(false);
-    }
+  const rejeitarOrcamento = async (id: string, motivo?: string): Promise<ServiceResult<Orcamento>> => {
+    return updateOrcamento(id, {
+      status: 'Rejeitado',
+      observacoes: motivo,
+    });
   };
 
   // Buscar por ID
   const getOrcamentoById = async (id: string): Promise<Orcamento | null> => {
     try {
       setLoading(true);
+      if (isMock) {
+        const data = await httpClient.get<Orcamento>(`/api/orcamentos/${id}`);
+        return normalizeOrcamento(data);
+      }
+
       const result = await orcamentosService.getById(id);
 
       if (result.success && result.data) {
-        return result.data;
+        return normalizeOrcamento(result.data);
       }
 
       return null;
@@ -230,13 +254,33 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
   // Obter estatísticas
   const getEstatisticas = async () => {
     try {
-      const result = await orcamentosService.getEstatisticas();
-
-      if (result.success && result.data) {
-        return result.data;
+      if (isMock) {
+        const response = await httpClient.get<PaginatedResponse<Orcamento>>('/api/orcamentos', {
+          params: { page: 1, pageSize: 1000 },
+        });
+        const items = response.items.map(normalizeOrcamento);
+        return {
+          total: items.length,
+          rascunhos: items.filter((o) => o.status === 'Rascunho').length,
+          enviados: items.filter((o) => o.status === 'Enviado').length,
+          aprovados: items.filter((o) => o.status === 'Aprovado').length,
+          rejeitados: items.filter((o) => o.status === 'Rejeitado').length,
+          convertidos: items.filter((o) => o.status === 'Convertido').length,
+          valorTotal: items.reduce((acc, o) => acc + o.total, 0),
+        };
       }
 
-      return null;
+      const list = await orcamentosService.list({ orderBy: [{ field: 'data', direction: 'desc' }] });
+      const items = list.success && list.data ? list.data.items.map(normalizeOrcamento) : [];
+      return {
+        total: items.length,
+        rascunhos: items.filter((o) => o.status === 'Rascunho').length,
+        enviados: items.filter((o) => o.status === 'Enviado').length,
+        aprovados: items.filter((o) => o.status === 'Aprovado').length,
+        rejeitados: items.filter((o) => o.status === 'Rejeitado').length,
+        convertidos: items.filter((o) => o.status === 'Convertido').length,
+        valorTotal: items.reduce((acc, o) => acc + o.total, 0),
+      };
     } catch (err) {
       toast.error('Erro ao carregar estatísticas');
       return null;

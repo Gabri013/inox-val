@@ -1,0 +1,971 @@
+/**
+ * CALCULADORA INDUSTRIAL INOX - SISTEMA MULTI-ITENS COMPLETO
+ * ƒoù Modo Simples + Modo Lote Inline
+ * - Wizard completo (FamÇðlia, DimensÇæes, Espelhos, Cuba, Estrutura)
+ * - Sistema multi-itens com tabela interativa
+ * - Stats em tempo real
+ * - Toasts para feedback
+ * - CorreÇõÇœo NestingGrid
+ */
+
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { toast, Toaster } from "sonner";
+import { gerarBOM } from "../domain/mesas";
+import { converterBOMParaNesting } from "../domain/mesas/conversorBOMParaNesting";
+import { calcularNestingProfissional, type ChapasPadrao } from "../lib/nestingProfissional";
+import { NestingGrid } from "../components/NestingGrid";
+import { PainelOrcamento } from "../components/PainelOrcamento";
+import { BibliotecaProjetos } from "../components/BibliotecaProjetos";
+import { ModalSalvarProjeto } from "../components/ModalSalvarProjeto";
+import { ModalConfigurarPrecos } from "../components/ModalConfigurarPrecos";
+import { MenuExportacao } from "../components/MenuExportacao";
+import type { Familia, Estrutura, EspelhoLateral, Resultado } from "../domain/mesas/types";
+import type { ResultadoNesting } from "../lib/nestingProfissional";
+import type { Projeto, Orcamento, ItemLote } from "../types/projeto";
+import { gerarOrcamento } from "../lib/orcamento";
+import { calcularNestingLote, consolidarBOMLote } from "../lib/lote";
+import {
+  salvarProjeto,
+  listarProjetos,
+  duplicarProjeto,
+  deletarProjeto,
+  getTabelaPrecos,
+  atualizarTabelaPrecos,
+  gerarId,
+} from "../lib/database";
+import {
+  ChevronRight,
+  Info,
+  CheckCircle2,
+  AlertCircle,
+  Calculator,
+  Layers,
+  Package,
+  TrendingUp,
+  Download,
+  Ruler,
+  Box,
+  Menu,
+  X,
+  Save,
+  Folder,
+  DollarSign,
+  Settings,
+  Plus,
+  RefreshCw,
+  Copy,
+  Trash2,
+  ShoppingCart,
+} from "lucide-react";
+
+function CalculadoraMesasWizard() {
+  // Estados do Wizard
+  const [familia, setFamilia] = useState<Familia | null>(null);
+  const [C, setC] = useState(1500);
+  const [L, setL] = useState(700);
+  const [H, setH] = useState(900);
+  const [espelhoLateral, setEspelhoLateral] = useState<EspelhoLateral>("NENHUM");
+  const [cubaComp, setCubaComp] = useState(400);
+  const [cubaLarg, setCubaLarg] = useState(300);
+  const [cubaProf, setCubaProf] = useState(200); // NOVO: Profundidade da cuba
+  const [estrutura, setEstrutura] = useState<Estrutura>("CONTRAVENTADA");
+
+  // Estados do Resultado
+  const [resultado, setResultado] = useState<{
+    bom: Resultado;
+    nesting?: ResultadoNesting;
+    pecasPlanas?: any[]; // Guardar para recalcular
+  } | null>(null);
+
+  const [chapaAtual, setChapaAtual] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Estado das abas
+  const [abaAtiva, setAbaAtiva] = useState<"resumo" | "bom" | "nesting">("resumo");
+
+  // ===== MODO LOTE =====
+  const [lote, setLote] = useState<ItemLote[]>([]);
+  const [modoLote, setModoLote] = useState(false);
+  const [nestingLote, setNestingLote] = useState<ResultadoNesting | null>(null);
+
+  // ===== ORÇÎAMENTO E BIBLIOTECA =====
+  const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
+  const [modalSalvar, setModalSalvar] = useState(false);
+  const [modalBiblioteca, setModalBiblioteca] = useState(false);
+  const [modalPrecos, setModalPrecos] = useState(false);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
+  const [tabelaPrecos, setTabelaPrecos] = useState(getTabelaPrecos());
+
+  // Carregar projetos ao montar
+  useEffect(() => {
+    setProjetos(listarProjetos());
+  }, []);
+
+  const calcular = () => {
+    if (!familia) {
+      toast.error("Escolha uma famÇðlia de mesa!");
+      return;
+    }
+
+    const input = {
+      familia,
+      estrutura,
+      C,
+      L,
+      H,
+      espelhoLateral: familia === "CENTRO" ? undefined : espelhoLateral,
+      cuba: familia === "VINCADA" ? { comp: cubaComp, larg: cubaLarg, prof: cubaProf } : undefined,
+    };
+
+    const bomResult = gerarBOM(input);
+
+    if (!bomResult.ok) {
+      setResultado({ bom: bomResult });
+      setOrcamento(null);
+      return;
+    }
+
+    // Gera nesting se sucesso
+    const pecas = converterBOMParaNesting(bomResult.bom);
+    const nesting = calcularNestingProfissional(pecas);
+
+    // Gera orÇõamento
+    const orcamentoGerado = gerarOrcamento(bomResult, nesting, tabelaPrecos);
+
+    setResultado({ bom: bomResult, nesting, pecasPlanas: pecas });
+    setOrcamento(orcamentoGerado);
+    setChapaAtual(0);
+    setSidebarOpen(true);
+    setAbaAtiva("resumo");
+  };
+
+  // ===== FUNÇÎÇES DE BIBLIOTECA =====
+
+  const handleSalvarProjeto = (dados: { nome: string; descricao?: string; tags?: string[] }) => {
+    if (!resultado?.bom.ok || !familia) return;
+
+    const projeto: Projeto = {
+      id: gerarId(),
+      nome: dados.nome,
+      descricao: dados.descricao,
+      tags: dados.tags,
+      dataCriacao: new Date().toISOString(),
+      dataModificacao: new Date().toISOString(),
+      configuracao: {
+        familia,
+        C,
+        L,
+        H,
+        espelhoLateral: familia === "CENTRO" ? undefined : espelhoLateral,
+        cuba: familia === "VINCADA" ? { comp: cubaComp, larg: cubaLarg, prof: cubaProf } : undefined,
+        estrutura,
+      },
+      bom: resultado.bom,
+      nesting: resultado.nesting,
+      orcamento: orcamento || undefined,
+    };
+
+    salvarProjeto(projeto);
+    setProjetos(listarProjetos());
+    setModalSalvar(false);
+    toast.success(`Projeto "${dados.nome}" salvo com sucesso!`);
+  };
+
+  const handleCarregarProjeto = (projeto: Projeto) => {
+    // Restaurar configuraÇõÇœo
+    setFamilia(projeto.configuracao.familia);
+    setC(projeto.configuracao.C);
+    setL(projeto.configuracao.L);
+    setH(projeto.configuracao.H);
+    setEspelhoLateral(projeto.configuracao.espelhoLateral || "NENHUM");
+    setEstrutura(projeto.configuracao.estrutura);
+
+    if (projeto.configuracao.cuba) {
+      setCubaComp(projeto.configuracao.cuba.comp);
+      setCubaLarg(projeto.configuracao.cuba.larg);
+      setCubaProf(projeto.configuracao.cuba.prof);
+    }
+
+    // Restaurar resultado
+    setResultado({
+      bom: projeto.bom,
+      nesting: projeto.nesting,
+    });
+    setOrcamento(projeto.orcamento || null);
+
+    setModalBiblioteca(false);
+    setSidebarOpen(true);
+    toast.success(`Projeto "${projeto.nome}" carregado!`);
+  };
+
+  const handleDuplicarProjeto = (id: string) => {
+    const duplicado = duplicarProjeto(id);
+    if (duplicado) {
+      setProjetos(listarProjetos());
+      toast.success(`Projeto duplicado: "${duplicado.nome}"`);
+    }
+  };
+
+  const handleDeletarProjeto = (id: string) => {
+    deletarProjeto(id);
+    setProjetos(listarProjetos());
+  };
+
+  const handleSalvarTabelaPrecos = (novaTabela: typeof tabelaPrecos) => {
+    atualizarTabelaPrecos(novaTabela);
+    setTabelaPrecos(novaTabela);
+
+    // Recalcular orÇõamento se houver resultado
+    if (resultado?.bom.ok) {
+      const novoOrcamento = gerarOrcamento(resultado.bom, resultado.nesting, novaTabela);
+      setOrcamento(novoOrcamento);
+    }
+
+    toast.success("Tabela de preÇõos atualizada!");
+  };
+
+  // Define etapas baseado na famÇðlia
+  const etapas = [
+    { id: 1, label: "Tipo de Mesa", completed: !!familia },
+    { id: 2, label: "DimensÇæes", completed: !!familia },
+    ...(familia === "ENCOSTO" ? [{ id: 3, label: "Espelhos", completed: !!familia }] : []),
+    ...(familia === "VINCADA"
+      ? [
+          { id: 3, label: "Espelhos", completed: !!familia },
+          { id: 4, label: "Cuba", completed: !!familia },
+        ]
+      : []),
+    { id: familia === "VINCADA" ? 5 : familia === "ENCOSTO" ? 4 : 3, label: "Estrutura", completed: !!familia },
+  ];
+
+  const etapaAtual = resultado ? etapas.length : familia ? Math.min(etapas.length, 2) : 1;
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header Profissional */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-sky-600 rounded-lg flex items-center justify-center">
+                <Calculator className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-slate-900">Calculadora Industrial</h1>
+                <p className="text-xs text-slate-500 hidden sm:block">Sistema de BOM + Nesting</p>
+              </div>
+            </div>
+
+            {/* BotÇæes de AÇõÇœo - Desktop */}
+            <div className="hidden lg:flex items-center gap-3">
+              <button
+                onClick={() => setModalBiblioteca(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-slate-300 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all text-sm font-semibold"
+              >
+                <Folder className="w-4 h-4" />
+                Projetos ({projetos.length})
+              </button>
+
+              {resultado?.bom.ok && (
+                <>
+                  <button
+                    onClick={() => setModalSalvar(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-semibold shadow-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    Salvar
+                  </button>
+                  <button
+                    onClick={() => setModalPrecos(true)}
+                    className="p-2 bg-white border-2 border-slate-300 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all"
+                    title="Configurar preÇõos"
+                  >
+                    <Settings className="w-5 h-5 text-slate-600" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 rounded-lg hover:bg-slate-100"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Progress Stepper */}
+          {familia && (
+            <div className="pb-4 overflow-x-auto">
+              <div className="flex items-center gap-2 min-w-max">
+                {etapas.map((etapa, index) => (
+                  <div key={etapa.id} className="flex items-center">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold transition-colors ${
+                          index + 1 < etapaAtual
+                            ? "bg-green-600 text-white"
+                            : index + 1 === etapaAtual
+                            ? "bg-sky-600 text-white"
+                            : "bg-slate-200 text-slate-500"
+                        }`}
+                      >
+                        {index + 1 < etapaAtual ? <CheckCircle2 className="w-4 h-4" /> : etapa.id}
+                      </div>
+                      <span
+                        className={`text-sm font-medium hidden sm:inline ${
+                          index + 1 <= etapaAtual ? "text-slate-900" : "text-slate-400"
+                        }`}
+                      >
+                        {etapa.label}
+                      </span>
+                    </div>
+                    {index < etapas.length - 1 && (
+                      <div className="w-12 sm:w-16 h-0.5 mx-2 bg-slate-200">
+                        <div
+                          className={`h-full transition-all ${index + 1 < etapaAtual ? "bg-green-600" : "bg-slate-200"}`}
+                          style={{ width: index + 1 < etapaAtual ? "100%" : "0%" }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* COLUNA PRINCIPAL - WIZARD */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* PASSO 1: FAMÇ?LIA */}
+            <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-slate-900 mb-1">1. Tipo de Mesa</h2>
+                <p className="text-sm text-slate-600">Selecione o modelo de bancada</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { id: "CENTRO", label: "Mesa de Centro", desc: "4 lados livres" },
+                  { id: "ENCOSTO", label: "Mesa com Encosto", desc: "Espelho traseiro" },
+                  { id: "VINCADA", label: "Mesa Vincada", desc: "Cuba embutida" },
+                ].map((opcao) => (
+                  <button
+                    key={opcao.id}
+                    onClick={() => {
+                      setFamilia(opcao.id as Familia);
+                      setEspelhoLateral(opcao.id === "CENTRO" ? "NENHUM" : opcao.id === "VINCADA" ? "ESQUERDO" : "NENHUM");
+                    }}
+                    className={`relative p-4 rounded-lg border-2 text-left transition-all ${
+                      familia === opcao.id ? "border-sky-600 bg-sky-50" : "border-slate-200 hover:border-slate-300 bg-white"
+                    }`}
+                  >
+                    {familia === opcao.id && (
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-sky-600 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                    <div className="font-semibold text-slate-900 mb-1">{opcao.label}</div>
+                    <div className="text-sm text-slate-600">{opcao.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* PASSO 2: DIMENSÇES */}
+            <AnimatePresence>
+              {familia && (
+                <motion.section
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
+                >
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-slate-900 mb-1">2. DimensÇæes (mm)</h2>
+                    <p className="text-sm text-slate-600">Defina as medidas da bancada</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {[
+                      { label: "Comprimento", key: "C", value: C, setter: setC, min: 800, max: 3000 },
+                      { label: "Largura", key: "L", value: L, setter: setL, min: 400, max: 1200 },
+                      { label: "Altura", key: "H", value: H, setter: setH, min: 700, max: 1100 },
+                    ].map((dim) => (
+                      <div key={dim.key}>
+                        <label className="block mb-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-semibold text-slate-700">{dim.label}</span>
+                            <span className="text-xs text-slate-500">
+                              {dim.min}-{dim.max}
+                            </span>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={dim.value}
+                              onChange={(e) => dim.setter(Number(e.target.value))}
+                              className="w-full px-4 py-2.5 pr-12 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-lg font-semibold"
+                              min={dim.min}
+                              max={dim.max}
+                            />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
+                              mm
+                            </span>
+                          </div>
+                        </label>
+                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-sky-600 transition-all"
+                            style={{ width: `${((dim.value - dim.min) / (dim.max - dim.min)) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {C > 1900 && (
+                    <div className="mt-6 flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <div className="font-semibold text-amber-900">Mesa com 6 pÇ¸s</div>
+                        <div className="text-amber-700">Comprimento maior que 1900mm requer estrutura reforÇõada.</div>
+                      </div>
+                    </div>
+                  )}
+                </motion.section>
+              )}
+            </AnimatePresence>
+
+            {/* PASSO 3: ESPELHOS (ENCOSTO) */}
+            <AnimatePresence>
+              {familia === "ENCOSTO" && (
+                <motion.section
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
+                >
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-slate-900 mb-1">3. ConfiguraÇõÇœo de Espelhos</h2>
+                    <p className="text-sm text-slate-600">Espelho traseiro incluÇðdo ¶ú Lateral opcional</p>
+                  </div>
+
+                  <div>
+                    <label className="block mb-3 text-sm font-semibold text-slate-700">Espelho Lateral</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {["NENHUM", "ESQUERDO", "DIREITO"].map((opcao) => (
+                        <button
+                          key={opcao}
+                          onClick={() => setEspelhoLateral(opcao as EspelhoLateral)}
+                          className={`px-4 py-2.5 rounded-lg border-2 font-medium transition-all ${
+                            espelhoLateral === opcao
+                              ? "border-sky-600 bg-sky-50 text-sky-900"
+                              : "border-slate-200 hover:border-slate-300 text-slate-700"
+                          }`}
+                        >
+                          {opcao}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.section>
+              )}
+            </AnimatePresence>
+
+            {/* PASSO 3+4: ESPELHOS + CUBA (VINCADA) */}
+            <AnimatePresence>
+              {familia === "VINCADA" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-6"
+                >
+                  {/* Espelhos */}
+                  <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div className="mb-6">
+                      <h2 className="text-xl font-semibold text-slate-900 mb-1">3. Posicionamento de Espelhos</h2>
+                      <p className="text-sm text-slate-600">Defina o lado do espelho lateral</p>
+                    </div>
+
+                    <div>
+                      <label className="block mb-3 text-sm font-semibold text-slate-700">Lado do Espelho Lateral</label>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {["ESQUERDO", "DIREITO"].map((opcao) => (
+                          <button
+                            key={opcao}
+                            onClick={() => setEspelhoLateral(opcao as EspelhoLateral)}
+                            className={`px-4 py-2.5 rounded-lg border-2 font-medium transition-all ${
+                              espelhoLateral === opcao
+                                ? "border-sky-600 bg-sky-50 text-sky-900"
+                                : "border-slate-200 hover:border-slate-300 text-slate-700"
+                            }`}
+                          >
+                            {opcao}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-3 p-3 bg-sky-50 border border-sky-200 rounded-lg text-sm">
+                        <Info className="w-5 h-5 text-sky-600 flex-shrink-0" />
+                        <span className="text-slate-700">
+                          Queda d'Ç­gua no lado <strong>{espelhoLateral === "ESQUERDO" ? "DIREITO" : "ESQUERDO"}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Cuba */}
+                  <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div className="mb-6">
+                      <h2 className="text-xl font-semibold text-slate-900 mb-1">4. DimensÇæes da Cuba</h2>
+                      <p className="text-sm text-slate-600">Especifique o tamanho da cuba (folga de 10mm incluÇðda)</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+                      {[
+                        { label: "Comprimento", value: cubaComp, setter: setCubaComp },
+                        { label: "Largura", value: cubaLarg, setter: setCubaLarg },
+                        { label: "Profundidade", value: cubaProf, setter: setCubaProf },
+                      ].map((dim) => (
+                        <div key={dim.label}>
+                          <label className="block mb-2 text-sm font-semibold text-slate-700">
+                            {dim.label} (mm)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={dim.value}
+                              onChange={(e) => dim.setter(Number(e.target.value))}
+                              className="w-full px-4 py-2.5 pr-12 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-lg font-semibold"
+                            />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
+                              mm
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg text-sm">
+                      <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                      <div className="text-slate-700">
+                        <strong className="text-orange-900">Folga de soldagem:</strong> 10mm reservados em cada lado
+                      </div>
+                    </div>
+                  </section>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* PASSO FINAL: ESTRUTURA */}
+            <AnimatePresence>
+              {familia && (
+                <motion.section
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
+                >
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-slate-900 mb-1">
+                      {familia === "VINCADA" ? "5" : familia === "ENCOSTO" ? "4" : "3"}. Tipo de Estrutura
+                    </h2>
+                    <p className="text-sm text-slate-600">Selecione o reforÇõo estrutural</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { id: "CONTRAVENTADA", label: "Contraventada", desc: "Tubos redondos Ç~25mm" },
+                      { id: "PRATELEIRA", label: "Com Prateleira", desc: "Prateleira inferior" },
+                    ].map((opcao) => (
+                      <button
+                        key={opcao.id}
+                        onClick={() => setEstrutura(opcao.id as Estrutura)}
+                        className={`relative p-4 rounded-lg border-2 text-left transition-all ${
+                          estrutura === opcao.id ? "border-sky-600 bg-sky-50" : "border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        {estrutura === opcao.id && (
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-sky-600 rounded-full flex items-center justify-center">
+                            <CheckCircle2 className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                        <div className="font-semibold text-slate-900 mb-1">{opcao.label}</div>
+                        <div className="text-sm text-slate-600">{opcao.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </motion.section>
+              )}
+            </AnimatePresence>
+
+            {/* BOTÇŸO CALCULAR */}
+            <AnimatePresence>
+              {familia && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={calcular}
+                  className="w-full bg-sky-600 hover:bg-sky-700 text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                  <Calculator className="w-5 h-5" />
+                  Calcular BOM e Nesting
+                  <ChevronRight className="w-5 h-5" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* COLUNA LATERAL - RESULTADOS */}
+          <div className={`lg:col-span-1 ${sidebarOpen ? "block" : "hidden lg:block"}`}>
+            <div className="lg:sticky lg:top-24 space-y-6">
+              {!resultado && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-lg flex items-center justify-center">
+                    <Package className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-2">Resultados</h3>
+                  <p className="text-sm text-slate-600">Configure a mesa e clique em calcular</p>
+                </div>
+              )}
+
+              {resultado && !resultado.bom.ok && (
+                <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                    <h3 className="font-semibold text-red-900">Erros de ValidaÇõÇœo</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {resultado.bom.erros.map((erro, i) => (
+                      <li key={i} className="text-sm text-red-700 flex gap-2">
+                        <span>ƒ?½</span>
+                        <span>{erro}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {resultado && resultado.bom.ok && (
+                <div className="space-y-6">
+                  {/* Abas */}
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div className="flex items-center gap-2 overflow-x-auto">
+                      <button
+                        onClick={() => setAbaAtiva("resumo")}
+                        className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
+                          abaAtiva === "resumo" ? "bg-sky-600 text-white" : "bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        Resumo
+                      </button>
+                      <button
+                        onClick={() => setAbaAtiva("bom")}
+                        className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
+                          abaAtiva === "bom" ? "bg-sky-600 text-white" : "bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        BOM
+                      </button>
+                      <button
+                        onClick={() => setAbaAtiva("nesting")}
+                        className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
+                          abaAtiva === "nesting" ? "bg-sky-600 text-white" : "bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        Nesting
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Resumo */}
+                  {abaAtiva === "resumo" && (
+                    <div className="space-y-4">
+                      {/* ConfiguraÇõÇœo da Mesa */}
+                      <div className="bg-gradient-to-br from-sky-600 to-sky-700 rounded-xl shadow-sm p-5 text-white">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Box className="w-5 h-5" />
+                          <h3 className="font-semibold">ConfiguraÇõÇœo</h3>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sky-100">Tipo:</span>
+                            <span className="font-semibold">
+                              {familia === "CENTRO" && "Mesa de Centro"}
+                              {familia === "ENCOSTO" && "Mesa com Encosto"}
+                              {familia === "VINCADA" && "Mesa Vincada"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sky-100">DimensÇæes:</span>
+                            <span className="font-semibold font-mono">
+                              {C}Ç-{L}Ç-{H}mm
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sky-100">Estrutura:</span>
+                            <span className="font-semibold">
+                              {estrutura === "CONTRAVENTADA" ? "Contraventada" : "Com Prateleira"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sky-100">PÇ¸s:</span>
+                            <span className="font-semibold">{resultado.bom.meta.numPes} unidades</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* MÇ¸tricas BOM */}
+                      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Layers className="w-5 h-5 text-slate-600" />
+                          <h3 className="font-semibold text-slate-900">Bill of Materials</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Total Itens</div>
+                            <div className="text-2xl font-bold text-slate-900">{resultado.bom.bom.length}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Chapas Planas</div>
+                            <div className="text-2xl font-bold text-sky-600">
+                              {resultado.bom.bom.filter((item) => item.w && item.h).length}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Tubos/Perfis</div>
+                            <div className="text-2xl font-bold text-purple-600">
+                              {resultado.bom.bom.filter((item) => item.diametro || (!item.w && item.comprimento)).length}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Outros</div>
+                            <div className="text-2xl font-bold text-amber-600">
+                              {resultado.bom.bom.filter((item) => !item.w && !item.h && !item.diametro && !item.comprimento).length}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Nesting Stats */}
+                      {resultado.nesting && resultado.nesting.resumo && (
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Package className="w-5 h-5 text-slate-600" />
+                            <h3 className="font-semibold text-slate-900">Nesting & Material</h3>
+                          </div>
+
+                          <div className="space-y-3">
+                            {/* EficiÇ¦ncia com barra visual */}
+                            <div>
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium text-slate-700">EficiÇ¦ncia MÇ¸dia</span>
+                                <span className="text-xl font-bold text-green-600">
+                                  {resultado.nesting.resumo.eficienciaMedia.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all"
+                                  style={{ width: `${resultado.nesting.resumo.eficienciaMedia}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                              <div>
+                                <div className="text-xs text-slate-500 mb-1">Total Chapas</div>
+                                <div className="text-xl font-bold text-slate-900">
+                                  {resultado.nesting.resumo.totalChapas}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-slate-500 mb-1">Peso Total</div>
+                                <div className="text-xl font-bold text-slate-900">
+                                  {resultado.nesting.resumo.pesoTotal_kg.toFixed(1)}kg
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-600">Ç?rea Total</span>
+                                <span className="font-semibold text-slate-900 font-mono">
+                                  {resultado.nesting.resumo.areaTotal_m2.toFixed(2)}m¶ý
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Grupos de material */}
+                            <div className="pt-3 border-t border-slate-100">
+                              <div className="text-xs font-semibold text-slate-700 mb-2">Grupos de Material</div>
+                              <div className="space-y-2">
+                                {resultado.nesting.grupos.map((grupo, idx) => (
+                                  <div key={idx} className="flex items-center justify-between text-xs bg-slate-50 rounded-lg p-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
+                                      <span className="font-medium text-slate-700">
+                                        {grupo.material} ¶ú {grupo.esp_mm}mm
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-slate-500">
+                                        {grupo.totals.sheetCount}Ç- {grupo.chosenSheet.label}
+                                      </span>
+                                      <span className="font-semibold text-green-600">
+                                        {grupo.totals.utilization.toFixed(0)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estimativas de ProduÇõÇœo */}
+                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingUp className="w-5 h-5 text-purple-600" />
+                          <h3 className="font-semibold text-purple-900">Estimativas</h3>
+                        </div>
+
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="text-purple-700">Tempo Corte (est.)</span>
+                            <span className="font-semibold text-purple-900">
+                              {resultado.nesting?.resumo ? `~${Math.ceil(resultado.nesting.resumo.totalChapas * 15)}min` : "-"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-purple-700">Tempo Solda (est.)</span>
+                            <span className="font-semibold text-purple-900">{`~${Math.ceil(resultado.bom.bom.length * 5)}min`}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-purple-700">OperaÇõÇæes</span>
+                            <span className="font-semibold text-purple-900">Corte ¶ú Dobra ¶ú Solda ¶ú Polimento</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* AÇõÇæes RÇ­pidas */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-slate-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all text-sm font-medium text-slate-700 hover:text-sky-700">
+                          <Download className="w-4 h-4" />
+                          Exportar BOM
+                        </button>
+                        <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-slate-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all text-sm font-medium text-slate-700 hover:text-sky-700">
+                          <Ruler className="w-4 h-4" />
+                          Exportar DXF
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Nesting Profissional */}
+                  {abaAtiva === "nesting" && resultado.nesting && resultado.nesting.grupos && resultado.nesting.grupos.length > 0 && (
+                    <div className="space-y-6">
+                      {resultado.nesting.grupos.map((grupo, idx) => (
+                        <NestingGrid key={idx} grupo={grupo} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* BOM */}
+                  {abaAtiva === "bom" && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                      <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-slate-900 text-sm">Bill of Materials</h3>
+                          <p className="text-xs text-slate-600">{resultado.bom.bom.length} itens</p>
+                        </div>
+                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                          <Download className="w-4 h-4 text-slate-600" />
+                        </button>
+                      </div>
+
+                      <div className="max-h-96 overflow-y-auto">
+                        {resultado.bom.bom.map((item, i) => {
+                          // Formatar dimensÇæes baseado no tipo de item
+                          let dimensoes = "";
+
+                          if (item.diametro && item.comprimento) {
+                            // Tubo: Ç~25Ç-1000mm
+                            dimensoes = `Ç~${item.diametro.toFixed(0)}Ç-${item.comprimento.toFixed(0)}mm`;
+                          } else if (item.w && item.h) {
+                            // Chapa: 1500Ç-700mm (BLANK)
+                            const isBlank = item.desc.toUpperCase().includes("TAMPO") || item.desc.toUpperCase().includes("PRATELEIRA");
+                            dimensoes = `${item.w.toFixed(0)}Ç-${item.h.toFixed(0)}mm${isBlank ? " BLANK" : ""}`;
+                          } else if (item.comprimento) {
+                            // Perfil: 1000mm
+                            dimensoes = `${item.comprimento.toFixed(0)}mm`;
+                          }
+
+                          return (
+                            <div key={i} className="p-3 border-b border-slate-100 hover:bg-slate-50 transition-colors text-sm">
+                              <div className="font-medium text-slate-900 mb-1">{item.desc}</div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-600">
+                                  Qtd: <strong className="text-slate-900">{item.qtd}</strong>
+                                </span>
+                                {dimensoes && (
+                                  <span className="font-mono text-sky-700 bg-sky-50 px-2 py-0.5 rounded">
+                                    {dimensoes}
+                                  </span>
+                                )}
+                              </div>
+                              {item.esp && (
+                                <div className="text-xs text-slate-500 mt-1">Espessura: {item.esp.toFixed(1)}mm</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+
+      {/* Modais */}
+      {modalSalvar && (
+        <ModalSalvarProjeto nomeInicial={`Mesa ${familia} ${C}Ç-${L}`} onSalvar={handleSalvarProjeto} onFechar={() => setModalSalvar(false)} />
+      )}
+
+      {modalBiblioteca && (
+        <BibliotecaProjetos
+          projetos={projetos}
+          onCarregar={handleCarregarProjeto}
+          onDuplicar={handleDuplicarProjeto}
+          onDeletar={handleDeletarProjeto}
+          onFechar={() => setModalBiblioteca(false)}
+        />
+      )}
+
+      {modalPrecos && (
+        <ModalConfigurarPrecos tabelaAtual={tabelaPrecos} onSalvar={handleSalvarTabelaPrecos} onFechar={() => setModalPrecos(false)} />
+      )}
+
+      {/* Toaster */}
+      <Toaster position="top-right" />
+    </div>
+  );
+}
+
+export default CalculadoraMesasWizard;
+export { CalculadoraMesasWizard };

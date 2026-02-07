@@ -7,7 +7,16 @@ import type { ID } from '@/shared/types/ids';
 
 // ========== ROLES E PERMISSÕES ==========
 
-export type UserRole = 'Admin' | 'Engenharia' | 'Producao' | 'Comercial';
+export type UserRole =
+  | 'Administrador'
+  | 'Dono'
+  | 'Compras'
+  | 'Gerencia'
+  | 'Financeiro'
+  | 'Producao'
+  | 'Engenharia'
+  | 'Orcamentista'
+  | 'Vendedor';
 
 export type UserStatus = 'ativo' | 'inativo' | 'ferias';
 
@@ -58,7 +67,7 @@ export type PermissionsMap = Partial<Record<Module, ModulePermissions>>;
  * Admin tem acesso total
  */
 export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
-  Admin: {
+  Administrador: {
     dashboard: { view: true, create: false, edit: false, delete: false },
     clientes: { view: true, create: true, edit: true, delete: true },
     produtos: { view: true, create: true, edit: true, delete: true },
@@ -74,6 +83,60 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     configuracoes: { view: true, create: false, edit: true, delete: false },
     chat: { view: true, create: true, edit: true, delete: true },
     anuncios: { view: true, create: true, edit: true, delete: true },
+  },
+
+  Dono: {
+    dashboard: { view: true, create: false, edit: false, delete: false },
+    clientes: { view: true, create: true, edit: true, delete: true },
+    produtos: { view: true, create: true, edit: true, delete: true },
+    catalogo: { view: true, create: true, edit: true, delete: true },
+    estoque: { view: true, create: true, edit: true, delete: true },
+    orcamentos: { view: true, create: true, edit: true, delete: true },
+    ordens: { view: true, create: true, edit: true, delete: true },
+    compras: { view: true, create: true, edit: true, delete: true },
+    producao: { view: true, create: true, edit: true, delete: true },
+    calculadora: { view: true, create: true, edit: true, delete: true },
+    auditoria: { view: true, create: false, edit: false, delete: true },
+    usuarios: { view: true, create: true, edit: true, delete: true },
+    configuracoes: { view: true, create: true, edit: true, delete: true },
+    chat: { view: true, create: true, edit: true, delete: true },
+    anuncios: { view: true, create: true, edit: true, delete: true },
+  },
+
+  Compras: {
+    dashboard: { view: true, create: false, edit: false, delete: false },
+    clientes: { view: true, create: false, edit: false, delete: false },
+    produtos: { view: true, create: false, edit: false, delete: false },
+    catalogo: { view: true, create: false, edit: false, delete: false },
+    estoque: { view: true, create: true, edit: true, delete: false },
+    orcamentos: { view: false, create: false, edit: false, delete: false },
+    ordens: { view: true, create: false, edit: false, delete: false },
+    compras: { view: true, create: true, edit: true, delete: false },
+    producao: { view: true, create: false, edit: false, delete: false },
+    calculadora: { view: false, create: false, edit: false, delete: false },
+    auditoria: { view: true, create: false, edit: false, delete: false },
+    usuarios: { view: false, create: false, edit: false, delete: false },
+    configuracoes: { view: false, create: false, edit: false, delete: false },
+    chat: { view: false, create: false, edit: false, delete: false },
+    anuncios: { view: false, create: false, edit: false, delete: false },
+  },
+
+  Gerencia: {
+    dashboard: { view: true, create: false, edit: false, delete: false },
+    clientes: { view: true, create: false, edit: false, delete: false },
+    produtos: { view: true, create: false, edit: false, delete: false },
+    catalogo: { view: true, create: false, edit: false, delete: false },
+    estoque: { view: true, create: false, edit: false, delete: false },
+    orcamentos: { view: true, create: false, edit: true, delete: false },
+    ordens: { view: true, create: false, edit: true, delete: false },
+    compras: { view: true, create: false, edit: true, delete: false },
+    producao: { view: true, create: false, edit: true, delete: false },
+    calculadora: { view: true, create: false, edit: false, delete: false },
+    auditoria: { view: true, create: false, edit: false, delete: false },
+    usuarios: { view: true, create: false, edit: false, delete: false },
+    configuracoes: { view: true, create: false, edit: false, delete: false },
+    chat: { view: false, create: false, edit: false, delete: false },
+    anuncios: { view: false, create: false, edit: false, delete: false },
   },
   
   Engenharia: {
@@ -100,7 +163,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     produtos: { view: true, create: false, edit: false, delete: false },
     catalogo: { view: true, create: false, edit: false, delete: false },
     estoque: { view: true, create: true, edit: true, delete: false },
-    orcamentos: { view: true, create: false, edit: false, delete: false },
+    orcamentos: { view: false, create: false, edit: false, delete: false },
     ordens: { view: true, create: false, edit: true, delete: false },
     compras: { view: true, create: true, edit: false, delete: false },
     producao: { view: true, create: true, edit: true, delete: false },
@@ -111,8 +174,26 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     chat: { view: true, create: true, edit: true, delete: false },
     anuncios: { view: true, create: false, edit: false, delete: false },
   },
-  
-  Comercial: {
+
+  Financeiro: {
+    dashboard: { view: true, create: false, edit: false, delete: false },
+    clientes: { view: true, create: false, edit: false, delete: false },
+    produtos: { view: false, create: false, edit: false, delete: false },
+    catalogo: { view: false, create: false, edit: false, delete: false },
+    estoque: { view: false, create: false, edit: false, delete: false },
+    orcamentos: { view: true, create: false, edit: false, delete: false },
+    ordens: { view: true, create: false, edit: false, delete: false },
+    compras: { view: true, create: true, edit: true, delete: false },
+    producao: { view: false, create: false, edit: false, delete: false },
+    calculadora: { view: false, create: false, edit: false, delete: false },
+    auditoria: { view: true, create: false, edit: false, delete: false },
+    usuarios: { view: false, create: false, edit: false, delete: false },
+    configuracoes: { view: false, create: false, edit: false, delete: false },
+    chat: { view: true, create: true, edit: true, delete: false },
+    anuncios: { view: false, create: false, edit: false, delete: false },
+  },
+
+  Orcamentista: {
     dashboard: { view: true, create: false, edit: false, delete: false },
     clientes: { view: true, create: true, edit: true, delete: false },
     produtos: { view: true, create: false, edit: false, delete: false },
@@ -122,12 +203,29 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     ordens: { view: true, create: false, edit: false, delete: false },
     compras: { view: false, create: false, edit: false, delete: false },
     producao: { view: true, create: false, edit: false, delete: false },
-    calculadora: { view: true, create: true, edit: false, delete: false },
+    calculadora: { view: true, create: true, edit: true, delete: false },
     auditoria: { view: false, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
-    configuracoes: { view: true, create: false, edit: true, delete: false },
+    configuracoes: { view: false, create: false, edit: false, delete: false },
     chat: { view: true, create: true, edit: true, delete: false },
-    anuncios: { view: true, create: false, edit: false, delete: false },
+    anuncios: { view: false, create: false, edit: false, delete: false },
+  },
+  Vendedor: {
+    dashboard: { view: true, create: false, edit: false, delete: false },
+    clientes: { view: true, create: true, edit: true, delete: false },
+    produtos: { view: true, create: false, edit: false, delete: false },
+    catalogo: { view: true, create: false, edit: false, delete: false },
+    estoque: { view: true, create: false, edit: false, delete: false },
+    orcamentos: { view: true, create: true, edit: true, delete: false },
+    ordens: { view: true, create: false, edit: false, delete: false },
+    compras: { view: false, create: false, edit: false, delete: false },
+    producao: { view: true, create: false, edit: false, delete: false },
+    calculadora: { view: true, create: true, edit: true, delete: false },
+    auditoria: { view: false, create: false, edit: false, delete: false },
+    usuarios: { view: false, create: false, edit: false, delete: false },
+    configuracoes: { view: false, create: false, edit: false, delete: false },
+    chat: { view: true, create: true, edit: true, delete: false },
+    anuncios: { view: false, create: false, edit: false, delete: false },
   },
 };
 
@@ -145,6 +243,7 @@ export interface Usuario {
   status: UserStatus;
   avatar?: string;
   telefone?: string;
+  cargo?: string;
   departamento: string;
   dataAdmissao: string;
   dataCriacao: string;
@@ -164,6 +263,7 @@ export interface CreateUsuarioInput {
   role: UserRole;
   status?: UserStatus;
   telefone?: string;
+  cargo?: string;
   departamento: string;
   dataAdmissao?: string;
   permissoesCustomizadas?: PermissionsMap;
@@ -180,6 +280,7 @@ export interface UpdateUsuarioInput {
   status?: UserStatus;
   avatar?: string;
   telefone?: string;
+  cargo?: string;
   departamento?: string;
   dataAdmissao?: string;
   permissoesCustomizadas?: PermissionsMap;
@@ -231,10 +332,15 @@ export function hasModuleAccess(usuario: Usuario, module: Module): boolean {
  * Labels para roles
  */
 export const roleLabels: Record<UserRole, string> = {
-  Admin: 'Administrador',
-  Engenharia: 'Engenharia',
+  Administrador: 'Administrador',
+  Dono: 'Dono',
+  Compras: 'Compras',
+  Gerencia: 'GerÃªncia',
+  Financeiro: 'Financeiro',
   Producao: 'Produção',
-  Comercial: 'Comercial',
+  Engenharia: 'Engenharia',
+  Orcamentista: 'Orçamentista',
+  Vendedor: 'Vendedor',
 };
 
 /**

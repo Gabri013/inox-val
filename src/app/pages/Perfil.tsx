@@ -2,8 +2,8 @@
  * Página de Perfil do Usuário
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -15,20 +15,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Switch } from '../components/ui/switch';
 import { Separator } from '../components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/app/hooks/usePermissions';
+import { usuariosService } from '@/domains/usuarios';
 import { toast } from 'sonner';
 import { User, Mail, Phone, MapPin, Building2, Shield, Bell, Palette, Lock, Save } from 'lucide-react';
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { isAdmin, can } = usePermissions();
 
   const [formData, setFormData] = useState({
-    nome: user?.nome || '',
-    email: user?.email || '',
+    nome: '',
+    email: '',
     telefone: '',
     departamento: '',
     cargo: '',
   });
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const [preferences, setPreferences] = useState({
     notificacoes: true,
@@ -44,8 +48,40 @@ export default function Perfil() {
     confirmarSenha: '',
   });
 
-  const handleSaveProfile = () => {
-    toast.success('Perfil atualizado com sucesso!');
+  const canEditProfile = isAdmin() || can('usuarios', 'edit');
+
+  useEffect(() => {
+    if (!user) return;
+    setFormData({
+      nome: profile?.nome || user.displayName || '',
+      email: user.email || '',
+      telefone: profile?.telefone || '',
+      departamento: profile?.departamento || '',
+      cargo: profile?.cargo || '',
+    });
+  }, [profile, user]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    if (!canEditProfile) {
+      toast.error('Sem permissÃ£o para editar o perfil.');
+      return;
+    }
+    try {
+      setSavingProfile(true);
+      await usuariosService.update(user.uid, {
+        nome: formData.nome,
+        email: formData.email,
+        telefone: formData.telefone,
+        departamento: formData.departamento,
+        cargo: formData.cargo,
+      });
+      toast.success('Perfil atualizado com sucesso!');
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao atualizar perfil');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const handleSavePreferences = () => {
@@ -62,9 +98,11 @@ export default function Perfil() {
   };
 
   const getUserInitials = () => {
-    if (!user) return '?';
-    return user.nome
+    if (!user && !profile) return '?';
+    const nome = profile?.nome || user?.displayName || user?.email || 'Usuário';
+    return nome
       .split(' ')
+      .filter(Boolean)
       .map((n) => n[0])
       .join('')
       .toUpperCase()
@@ -72,10 +110,15 @@ export default function Perfil() {
   };
 
   const roleColors: Record<string, string> = {
-    Admin: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    Administrador: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    Dono: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    Gerencia: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
+    Compras: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
+    Financeiro: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
     Engenharia: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
     Producao: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    Comercial: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+    Orcamentista: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300',
+    Vendedor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
   };
 
   if (!user) {
@@ -104,12 +147,14 @@ export default function Perfil() {
             </Avatar>
 
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-2xl font-bold">{user.nome}</h2>
-              <p className="text-muted-foreground mt-1">{user.email}</p>
+              <h2 className="text-2xl font-bold">{profile?.nome || user?.displayName || 'Usuário'}</h2>
+              <p className="text-muted-foreground mt-1">{user?.email}</p>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-3">
-                <Badge className={roleColors[user.role]}>
-                  {user.role}
-                </Badge>
+                {profile?.role && (
+                  <Badge className={roleColors[profile.role] || ''}>
+                    {profile.role}
+                  </Badge>
+                )}
                 <Badge variant="outline" className="gap-1">
                   <Shield className="size-3" />
                   Acesso Completo
@@ -220,9 +265,9 @@ export default function Perfil() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={handleSaveProfile}>
+                <Button onClick={handleSaveProfile} disabled={savingProfile || !canEditProfile}>
                   <Save className="size-4 mr-2" />
-                  Salvar Alterações
+                  {savingProfile ? 'Salvando...' : 'Salvar Altera??es'}
                 </Button>
               </div>
             </CardContent>

@@ -1,0 +1,194 @@
+MV-EC1C-CV - BANCADA C/01 CUBA (ENCOSTO + CUBA CENTRAL + CONTRAVENTADA)
+
+// src/bom/models/s152908/s152908.ts
+
+import { BOMItem, BOMResult, MesaConfig } from "../../types";
+import { r1, r2 } from "../../shared/utils";
+
+/**
+ * MV-EC1C-CV – BANCADA L PRO C/01 CUBA (ENCOSTO + CUBA CENTRAL + CONTRAVENTADA)
+ * Base: 1500x700x900
+ *
+ * Fonte:
+ * - LISTA.txt (itens/códigos/dimensões) :contentReference[oaicite:13]{index=13}
+ * - PROJETO.pdf (confirmação estrutura e itens) :contentReference[oaicite:14]{index=14}
+ */
+
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+
+const COD_CUBA = "PS-CBF-605033";
+
+// Folgas extraídas do projeto MV-EC1C-CV
+const FOLGA_PE = 72;        // 900 -> 828 :contentReference[oaicite:15]{index=15}
+const FOLGA_LAT = 137;      // 700 -> 563 :contentReference[oaicite:16]{index=16}
+const FOLGA_TRAS = 132;     // 1500 -> 1368 :contentReference[oaicite:17]{index=17}
+
+const FOLGA_REFORCO_PADRAO = 56; // 700 -> 644 :contentReference[oaicite:18]{index=18}
+const FOLGA_REFORCO_TRASEIRO = 23; // 1500 -> 1477 :contentReference[oaicite:19]{index=19}
+
+// Offset do blank do tampo (perfil do PC01 MV-EC1C-CV)
+const OFF_TAMPO_X = 140.61; // 1500 -> 1640,61 :contentReference[oaicite:20]{index=20}
+const OFF_TAMPO_Y = 174.86; // 700  -> 874,86 :contentReference[oaicite:21]{index=21}
+
+export function gerarBOM_MV-EC1C-CV(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  // Validações mínimas
+  if (c <= 0 || l <= 0 || a <= 0) throw new Error("Dimensões inválidas (C/L/A).");
+
+  const tuboPe = r1(a - FOLGA_PE);
+  const contravLateral = r1(l - FOLGA_LAT);
+  const contravTraseiro = r1(c - FOLGA_TRAS);
+
+  const reforcoPadraoY = r2(l - FOLGA_REFORCO_PADRAO);
+  const reforcoTraseiroX = r1(c - FOLGA_REFORCO_TRASEIRO);
+
+  const tampoX = r2(c + OFF_TAMPO_X);
+  const tampoY = r2(l + OFF_TAMPO_Y);
+
+  const bom: BOMItem[] = [];
+
+  // 1) Cuba
+  bom.push({
+    desc: "CUBA FABRICADA 600 x 500 x 330 mm",
+    qtd: 1,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "INOX 304",
+    processo: "LASER",
+    codigo: COD_CUBA,
+  });
+
+  // 2) Fechamentos espelho (dir + esq)
+  // (dimensões conforme LISTA.txt) :contentReference[oaicite:22]{index=22}
+  bom.push({
+    desc: "FECHA. DIR. ESPELHO TAMPOS",
+    qtd: 1,
+    w: 30.4,
+    h: 149.37,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "PPB-04",
+  });
+
+  bom.push({
+    desc: "FECHA. ESQ. ESPELHO TAMPOS",
+    qtd: 1,
+    w: 30.4,
+    h: 149.37,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "PPB-04B",
+  });
+
+  // 3) Reforço traseiro (MV-EC1C-CV-PC02)
+  bom.push({
+    desc: "REFORÇO TRASEIRO",
+    qtd: 1,
+    w: reforcoTraseiroX,
+    h: 102.78,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MV-EC1C-CV-PC02",
+  });
+
+  // 4) Reforços (PPB-06) – qty 2
+  bom.push({
+    desc: "REFORÇO",
+    qtd: 2,
+    w: 113.36,
+    h: reforcoPadraoY,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "PPB-06",
+  });
+
+  // 5) Tampo com cuba (MV-EC1C-CV-PC01)
+  bom.push({
+    desc: "TAMPO COM CUBA",
+    qtd: 1,
+    w: tampoY, // Y
+    h: tampoX, // X
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MV-EC1C-CV-PC01",
+  });
+
+  // 6) Estrutura: contraventamentos
+  bom.push({
+    desc: "CONTRAVENTAMENTO LATERAL",
+    qtd: 2,
+    w: contravLateral,
+    h: 0,
+    espessura: 0,
+    material: 'TB INOX 1" x 1 mm',
+    processo: "CORTE",
+    codigo: "PPB-13",
+  });
+
+  bom.push({
+    desc: "CONTRAVENTAMENTO TRASEIRO",
+    qtd: 2,
+    w: contravTraseiro,
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MV-EC1C-CV-PT01",
+  });
+
+  // 7) Pés (tubo Ø38,1) – qty 4
+  bom.push({
+    desc: "TUBO ø38,1mm PÉ",
+    qtd: 4,
+    w: tuboPe,
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1.1/2"x1-1003004',
+    processo: "CORTE",
+    codigo: "PPB-02",
+  });
+
+  // 8) Casquilhos – 61x61 – qty 4
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 4,
+    w: 61,
+    h: 61,
+    espessura: 2.0,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "PPB-01B",
+  });
+
+  // 9) Pé nivelador – qty 4
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 4,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "ABS",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  return {
+    bom,
+    pes: { qtd: 4, tubo: tuboPe },
+    contraventamentos: {
+      qtd: 4,
+      lateral: contravLateral,
+      traseiro: contravTraseiro,
+    },
+    casquilhos: { qtd: 4, dimensao: "61 x 61", espessura: 2.0 },
+    prateleira: null,
+  };
+}

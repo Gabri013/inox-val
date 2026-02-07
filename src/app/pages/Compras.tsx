@@ -3,7 +3,7 @@ import { ListPage, EyeIcon } from "../components/layout/ListPage";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { useWorkflow } from "../contexts/WorkflowContext";
+import { useCompras } from "@/hooks/useCompras";
 import { 
   ShoppingCart, 
   CheckCircle, 
@@ -17,12 +17,12 @@ import { toast } from "sonner";
 import { SolicitacaoCompra, StatusCompra } from "../types/workflow";
 
 export default function Compras() {
-  const { solicitacoes } = useWorkflow();
+  const { compras, updateCompra } = useCompras({ autoLoad: true });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusCompra | "all">("all");
 
   // ❌ REMOVIDO: Mock de compras (apenas solicitações reais criadas pelo sistema)
-  const todasSolicitacoes = solicitacoes; // Apenas solicitações reais
+  const todasSolicitacoes = compras; // Apenas solicitações reais
 
   // Filtros
   const filteredSolicitacoes = todasSolicitacoes.filter((sol) => {
@@ -158,6 +158,7 @@ export default function Compras() {
       icon: CheckCircle,
       label: "Aprovar",
       onClick: (sol: SolicitacaoCompra) => {
+        updateCompra(sol.id, { status: "Aprovada" });
         toast.success(`Solicitação ${sol.numero} aprovada`);
       },
       show: (sol: SolicitacaoCompra) => sol.status === "Solicitada" || sol.status === "Cotação"

@@ -1,0 +1,115 @@
+MPLCP6 – MESA LISA CENTRO COM PRATELEIRA (6 PÉS)
+
+// src/bom/models/mplcp/mplcp6.ts
+import { BOMItem, BOMResult, Casquilhos, MesaConfig, Pes } from "../../types";
+import { ABA, DOBRA, RAIO } from "../../shared/constants";
+import { r1, r2 } from "../../shared/utils";
+
+/**
+ * MPLCP6 – MESA LISA CENTRO COM PRATELEIRA (6 PÉS)
+ * Ajustes 6 pés: pés=6, casquilho=6, reforço padrão=5 (equivalente ao PPB-27 no encosto) :contentReference[oaicite:5]{index=5}
+ * Este modelo NÃO tem contraventamentos (permanece null).
+ */
+
+const OFFSET_DESENHO = 1.8;
+const FOLGA_PE = 72;
+
+const PPB30_W = 135.58;
+const PPB30_H_FOLGA = 50;
+
+const FOLGA_REFORCO_FRONTAL = 130;
+const H_REFORCO_FRONTAL = 93;
+
+const FOLGA_REFORCO_PRAT = 120;
+const H_REFORCO_PRAT = 113.1;
+
+const PRATELEIRA_OFFSET = 1.82;
+
+const CASQUILHO_DIM = 61;
+const CASQUILHO_ESP = 2.0;
+
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+
+export function gerarBOM_MPLCP6(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const somaDobras = ABA + DOBRA + RAIO;
+  const blankC = r1((c - OFFSET_DESENHO) + 2 * somaDobras);
+  const blankL = r1((l - OFFSET_DESENHO) + 2 * somaDobras);
+
+  const bom: BOMItem[] = [];
+
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 6,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "1006036",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  // Reforço padrão (6 pés => 5) :contentReference[oaicite:6]{index=6}
+  bom.push({
+    desc: "REF. PADRÃO MESA LISA CENTRO",
+    qtd: 5,
+    w: PPB30_W,
+    h: r1(l - PPB30_H_FOLGA),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "PPB-30",
+  });
+
+  // Reforço frontal (permanece 2 no centro)
+  bom.push({
+    desc: "REFORÇO FRONTAL",
+    qtd: 2,
+    w: r1(c - FOLGA_REFORCO_FRONTAL),
+    h: H_REFORCO_FRONTAL,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLC-PC03",
+  });
+
+  bom.push({
+    desc: "REFORÇO DA PRATELEIRA",
+    qtd: 1,
+    w: r1(c - FOLGA_REFORCO_PRAT),
+    h: H_REFORCO_PRAT,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "LISA-MC-1500X700-PC02",
+  });
+
+  bom.push({
+    desc: "TAMPO LISO CENTRO",
+    qtd: 1,
+    w: blankL,
+    h: blankC,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLC-PC01",
+  });
+
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 6,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "PPB-01B",
+  });
+
+  const prateleira: BOMItem = {
+    desc: "PRATELEIRA PADRÃO",
+    qtd: 1,
+    w: r2(c + PRATELEIRA_OFFSET),
+    h: r2(l + PRATELE_toggleDCommand??  // purposely no; remove.

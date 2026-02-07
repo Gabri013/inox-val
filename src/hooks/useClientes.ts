@@ -18,8 +18,9 @@
 
 import { useState, useEffect } from 'react';
 import { clientesService } from '@/services/firebase/clientes.service';
-import type { Cliente } from '@/domains/clientes/clientes.types';
+import type { Cliente } from '@/domains/clientes';
 import type { ServiceResult } from '@/services/firebase/base.service';
+import { httpClient, type PaginatedResponse } from '@/services/http/client';
 import { toast } from 'sonner';
 
 interface UseClientesOptions {
@@ -29,6 +30,7 @@ interface UseClientesOptions {
 
 export function useClientes(options: UseClientesOptions = {}) {
   const { autoLoad = true, status } = options;
+  const isMock = import.meta.env.VITE_USE_MOCK === 'true';
   
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,16 @@ export function useClientes(options: UseClientesOptions = {}) {
 
       let result: ServiceResult<Cliente[]>;
 
-      if (status) {
+      if (isMock) {
+        const response = await httpClient.get<PaginatedResponse<Cliente>>('/api/clientes', {
+          params: {
+            page: 1,
+            pageSize: 1000,
+            ...(status ? { status } : {}),
+          },
+        });
+        result = { success: true, data: response.items };
+      } else if (status) {
         result = await clientesService.listByStatus(status);
       } else {
         const listResult = await clientesService.list({
@@ -72,16 +83,21 @@ export function useClientes(options: UseClientesOptions = {}) {
 
   // Criar cliente
   const createCliente = async (
-    data: Omit<Cliente, 'id' | 'tenantId' | 'criadoEm' | 'atualizadoEm'>
+    data: Omit<Cliente, 'id' | 'empresaId' | 'criadoEm' | 'atualizadoEm'>
   ): Promise<ServiceResult<Cliente>> => {
     try {
       setLoading(true);
 
-      const result = await clientesService.create({
+      const payload = {
+        id: `cli_${Date.now()}`,
         ...data,
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString(),
-      });
+      } as Cliente;
+
+      const result = isMock
+        ? ({ success: true, data: await httpClient.post<Cliente>('/api/clientes', payload) } as ServiceResult<Cliente>)
+        : await clientesService.create(payload);
 
       if (result.success && result.data) {
         setClientes((prev) => [...prev, result.data!]);
@@ -103,15 +119,22 @@ export function useClientes(options: UseClientesOptions = {}) {
   // Atualizar cliente
   const updateCliente = async (
     id: string,
-    updates: Partial<Omit<Cliente, 'id' | 'tenantId' | 'criadoEm'>>
+    updates: Partial<Omit<Cliente, 'id' | 'empresaId' | 'criadoEm'>>
   ): Promise<ServiceResult<Cliente>> => {
     try {
       setLoading(true);
 
-      const result = await clientesService.update(id, {
+      const updatePayload = {
         ...updates,
         atualizadoEm: new Date().toISOString(),
-      });
+      } as Partial<Cliente>;
+
+      const result = isMock
+        ? ({
+            success: true,
+            data: await httpClient.put<Cliente>(`/api/clientes/${id}`, updatePayload),
+          } as ServiceResult<Cliente>)
+        : await clientesService.update(id, updatePayload);
 
       if (result.success && result.data) {
         setClientes((prev) =>
@@ -137,7 +160,9 @@ export function useClientes(options: UseClientesOptions = {}) {
     try {
       setLoading(true);
 
-      const result = await clientesService.delete(id);
+      const result = isMock
+        ? ((await httpClient.delete<void>(`/api/clientes/${id}`)) && { success: true } as ServiceResult<void>)
+        : await clientesService.delete(id);
 
       if (result.success) {
         setClientes((prev) => prev.filter((c) => c.id !== id));
@@ -160,6 +185,13 @@ export function useClientes(options: UseClientesOptions = {}) {
   const findByCNPJ = async (cnpj: string): Promise<Cliente | null> => {
     try {
       setLoading(true);
+      if (isMock) {
+        const response = await httpClient.get<PaginatedResponse<Cliente>>('/api/clientes', {
+          params: { page: 1, pageSize: 1000 },
+        });
+        return response.items.find((c) => c.cnpj === cnpj) || null;
+      }
+
       const result = await clientesService.findByCNPJ(cnpj);
 
       if (result.success && result.data) {
@@ -179,12 +211,19 @@ export function useClientes(options: UseClientesOptions = {}) {
   const searchClientes = async (termo: string) => {
     try {
       setLoading(true);
-      const result = await clientesService.search(termo);
-
-      if (result.success && result.data) {
-        setClientes(result.data);
+      if (isMock) {
+        const response = await httpClient.get<PaginatedResponse<Cliente>>('/api/clientes', {
+          params: { page: 1, pageSize: 1000, search: termo },
+        });
+        setClientes(response.items);
       } else {
-        toast.error(result.error || 'Erro ao pesquisar clientes');
+        const result = await clientesService.search(termo);
+
+        if (result.success && result.data) {
+          setClientes(result.data);
+        } else {
+          toast.error(result.error || 'Erro ao pesquisar clientes');
+        }
       }
     } catch (err) {
       toast.error('Erro ao pesquisar clientes');

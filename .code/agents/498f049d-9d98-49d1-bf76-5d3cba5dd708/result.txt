@@ -1,0 +1,294 @@
+[2026-02-07T03:10:43] OpenAI Codex v0.0.0 (research preview)
+[2026-02-07T03:10:43] binary: C:\Users\Victoria\AppData\Local\just-every\code\0.6.59\code-x86_64-pc-windows-msvc.exe
+--------
+workdir: C:\Users\Victoria\Documents\GitHub\INOX-VAL
+model: gpt-5.1-codex-mini
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: auto
+--------
+[2026-02-07T03:10:43] User instructions:
+Context: Repo: C:\Users\Victoria\Documents\GitHub\INOX-VAL. Stack: Vite + React + TS + Firestore. Base de Firestore no novo padrão em `src/services/firestore/base.ts`. Produção em `src/domains/producao/*` com páginas e hooks já criados porém incompletos. Regras e índices em `firestore.rules` e `firestore.indexes.json`.
+
+Agent: Você deve gerar um plano técnico incremental para CONTINUAR a implementação do módulo de Produção no repo INOX-VAL, começando na Fase 1 (modelagem/base de dados) e avançando passo a passo, SEM recriar estruturas que já existem.
+
+Contexto/decisões já aprovadas:
+- Itens e movimentações ficam em subcoleções:
+  - `ordens_producao/{ordemId}/itens/{itemId}`
+  - `ordens_producao/{ordemId}/movimentacoes/{movId}`
+- A fila por setor deve listar itens de TODAS as ordens via `collectionGroup('itens')`.
+- Permissões em rules devem usar o módulo `producao` (não `ordens`).
+- Padrão obrigatório do projeto: domínio → service Firestore (novo padrão) → hooks React Query → páginas.
+- NÃO usar o legado `src/services/firebase/producao.service.ts` (apenas referência).
+
+Objetivo imediato (ordem de execução a planejar):
+1) Modelagem Firestore com subcoleções e collectionGroup.
+2) Implementar novo service solicitado: `src/domains/producao/services/producao-items.service.ts` com métodos:
+   - `getItensPorSetor(empresaId, setorAtual)` (mas note: base atual obtém empresaId; avaliar se deve mesmo receber `empresaId`)
+   - `moverItemDeSetor(itemId, novoSetor)`
+   - `atualizarStatusItem(itemId, status)`
+   - `registrarMovimentacao(itemId, dadosMovimentacao)`
+3) Atualizar `src/domains/producao/producao.hooks.ts` para usar SOMENTE o novo service.
+4) Ajustar páginas `ControleProducao`, `ApontamentoOP`, `DashboardTV` para consumirem dados das subcoleções (itens).
+5) Criar índices em `firestore.indexes.json` para `collectionGroup` “itens”.
+
+Critérios de validação:
+- Fila por setor lista itens via `collectionGroup('itens')`.
+- Mover item de setor atualiza UI automaticamente (React Query invalidate/refetch).
+- Status e movimentações persistidos.
+- Nada depende do service legado.
+
+Pistas do repo (já observadas):
+- `src/domains/producao/producao.hooks.ts` hoje chama métodos (`getItensPorSetor`, `entradaSetor`, etc) que não existem no FirestoreService puro.
+- `src/services/firestore/base.ts` implementa auditoria + soft delete + empresaId, mas não suporta subcoleção/collectionGroup diretamente.
+- `src/domains/clientes/clientes.service.ts` e `src/domains/estoque/estoque.service.ts` são referências do padrão correto (domínio como wrapper).
+- Página `src/domains/producao/pages/ControleProducao.tsx` usa `useItensSetor`, `useEntradaSetor`, `useSaidaSetor`, `useConsultaMateriais`.
+
+Tarefas para você (o agente):
+A) Fazer um inventário rápido do estado atual relevante (arquivos, responsabilidades).
+B) Propor um plano em fases, com passos pequenos e checkpoints, indicando quais arquivos mexer primeiro.
+C) Identificar riscos (rules/indexes, denormalização necessária no item para UI, etc).
+D) Recomendar como encaixar `producao-items.service.ts`: ele deve chamar diretamente Firestore (collectionGroup/subcollection) ou deve haver services em `src/services/firestore/*` e o domínio apenas orquestra, como clientes/estoque?
+
+Restrições:
+- Não reescrever a arquitetura toda.
+- Não recriar pastas/estruturas já existentes se não for necessário; preferir extensões mínimas.
+- Entregar o plano em português, com passos claros e justificativa.
+
+
+Files to consider: src/services/firestore/base.ts, src/domains/producao/producao.hooks.ts, src/domains/producao/pages/ControleProducao.tsx, src/types/firebase.ts
+
+[Running in read-only mode - no modifications allowed]
+
+[2026-02-07T03:10:45] thinking
+
+**Preparing plan with skill usage**
+[2026-02-07T03:10:45] exec cat C:/Users/Victoria/.code/skills/.system/plan/SKILL.md in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T03:10:46] cat C:/Users/Victoria/.code/skills/.system/plan/SKILL.md succeeded in 99ms:
+---
+name: plan
+description: Generate a plan for how an agent should accomplish a complex coding task. Use when a user asks for a plan, and optionally when they want to save, find, read, update, or delete plan files in $CODEX_HOME/plans (default ~/.codex/plans).
+metadata:
+  short-description: Generate a plan for a complex task
+---
+
+# Plan
+
+## Overview
+
+Draft structured plans that clarify intent, scope, requirements, action items, testing/validation, and risks.
+
+Optionally, save plans to disk as markdown files with YAML frontmatter and free-form content. When drafting in chat, output only the plan body without frontmatter; add frontmatter only when saving to disk. Only write to the plans folder; do not modify the repository codebase.
+
+This skill can also be used to draft codebase or system overviews.
+
+## Core rules
+
+- Resolve the plans directory as `$CODEX_HOME/plans` or `~/.codex/plans` when `CODEX_HOME` is not set.
+[2026-02-07T03:10:46] tokens used: 2.123
+
+[2026-02-07T03:10:48] thinking
+
+**Planning file inventory**
+[2026-02-07T03:10:48] exec cat src/services/firestore/base.ts in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T03:10:48] cat src/services/firestore/base.ts succeeded in 171ms:
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  type DocumentData,
+  type QueryConstraint,
+  type WhereFilterOp,
+  type OrderByDirection,
+} from "firebase/firestore";
+import { getFirestore, getEmpresaContext } from "@/lib/firebase";
+[2026-02-07T03:10:48] tokens used: 6.173
+
+[2026-02-07T03:10:49] thinking
+
+**Gathering additional relevant files**
+[2026-02-07T03:10:50] exec cat src/domains/producao/producao.hooks.ts in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T03:10:50] cat src/domains/producao/producao.hooks.ts succeeded in 90ms:
+/**
+ * Hooks React Query para Produção
+ */
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { producaoService } from './producao.service';
+import type { SetorProducao } from './producao.types';
+
+const QUERY_KEY = 'producao';
+
+/**
+ * Hook para listar ordens de produção
+ */
+export function useOrdensProducao(filters?: any) {
+  return useQuery({
+    queryKey: [QUERY_KEY, 'ordens', filters],
+    queryFn: () => producaoService.listOrdens(filters),
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
+  });
+[2026-02-07T03:10:50] tokens used: 12.766
+
+[2026-02-07T03:10:51] thinking
+
+**Opening relevant page file**
+[2026-02-07T03:10:53] exec cat src/domains/producao/pages/ControleProducao.tsx in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T03:10:53] cat src/domains/producao/pages/ControleProducao.tsx succeeded in 264ms:
+/**
+ * Controle de Produção - Interface para operadores no chão de fábrica
+ */
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '@/shared/components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Button } from '@/app/components/ui/button';
+import { Input } from '@/app/components/ui/input';
+import { Label } from '@/app/components/ui/label';
+import { Badge } from '@/app/components/ui/badge';
+import { Progress } from '@/app/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
+import { Textarea } from '@/app/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+[2026-02-07T03:10:53] tokens used: 14.454
+
+[2026-02-07T03:10:55] thinking
+
+**Checking for types file**
+[2026-02-07T03:10:55] exec cat src/types/firebase.ts in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T03:10:55] cat src/types/firebase.ts succeeded in 226ms:
+/**
+ * Tipos e configurações para Firebase
+ */
+
+export interface FirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+}
+
+/**
+ * Interface base para documentos Firebase (multi-tenant)
+ */
+export interface FirebaseDocument {
+  id: string;
+  empresaId?: string; // ID da empresa (isolamento de dados)
+  createdAt?: Date | string; // Timestamp de criação
+[2026-02-07T03:10:55] tokens used: 18.429
+
+[2026-02-07T03:10:58] thinking
+
+**Checking producao service file**
+[2026-02-07T03:10:58] exec cat src/domains/producao/producao.service.ts in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T03:10:58] cat src/domains/producao/producao.service.ts succeeded in 116ms:
+/**
+ * Serviço de Produção
+ */
+
+import { producaoService as _producaoService } from '@/services/firestore/producao.service';
+
+// Re-export da instância do novo service (com auditoria + soft delete)
+import type { 
+  OrdemProducaoCompleta, 
+  OrdemProducaoItem,
+  MovimentacaoSetor,
+  DashboardSetorData,
+  ConsultaMaterial,
+  SetorProducao 
+} from './producao.types';
+
+export const producaoService = _producaoService;
+[2026-02-07T03:10:58] tokens used: 31.804
+
+[2026-02-07T03:11:09] thinking
+
+**Structuring detailed implementation plan**
+[2026-02-07T03:11:10] codex
+
+Usando a skill `plan` para estruturar o próximo conjunto de entregas focado na fase 1 do módulo de Produção.
+
+# Plan
+
+A intenção é continuar a implementação do domínio de Produção com foco em modelagem Firestore (subcoleções + collectionGroup), novo service para itens, hooks React Query atualizados e páginas consumindo a estrutura correta; tudo sem recriar artefatos existentes.
+
+## Inventário rápido
+- `src/services/firestore/base.ts`: helpers multi-tenant (empresaId, auditoria e metadados) que ainda não suportam subcoleções/collectionGroup diretamente.
+- `src/domains/producao/producao.service.ts`: re-exporta o service legado `services/firestore/producao.service` (não usar).
+- `src/domains/producao/producao.hooks.ts`: hooks atuais consulam o service legado (`listOrdens`, `entradaSetor`, etc.).
+- `src/domains/producao/pages/ControleProducao.tsx`: UI já montada mas depende do service antigo; precisa migrar para `useItensSetor` que leia subcoleções.
+
+## Requirements
+- Usar `collectionGroup('itens')` para compor fila por setor, respeitando empresaId.
+- Modelar subcoleções `ordens_producao/{ordemId}/itens/{itemId}` e `movimentacoes`.
+- Criar `producao-items.service.ts` com métodos pedidos e sem depender do service legado.
+- Hooks e páginas devem consumir exclusivamente o novo service + React Query.
+- Regras e índices atualizados para cobrir collectionGroup.
+
+## Scope
+- In: modelagem Firestore (itens/movimentações), novo service específico, hooks/páginas, regras/índices.
+- Out: reescrever outras áreas de Produção (clientes, estoque) ou introduzir feature gates.
+
+## Files and entry points
+- `src/services/firestore/base.ts` (referência para metadados, mas provavelmente não estende diretamente).
+- `src/domains/producao/services/producao-items.service.ts` (novo file).
+- `src/domains/producao/producao.hooks.ts` (atualizar para usar novo service e React Query invalidations).
+- `src/domains/producao/pages/ControleProducao.tsx`, `ApontamentoOP.tsx`, `DashboardTV.tsx` (consumo de itens na nova estrutura).
+- `firestore.rules` e `firestore.indexes.json` (garantir permissões e índice collectionGroup).
+
+## Data model / API changes
+- Cada item deve conter campos necessários para UI (produtoId/código/nome, status, materiaisDisponiveis, progresso, timestamps, ordemId, setorAtual) além de `empresaId` e metadados.
+- Subcoleções:
+  - `collection('ordens_producao').doc(ordemId).collection('itens')`
+  - `collection('ordens_producao').doc(ordemId).collection('movimentacoes')`
+- `producao-items.service.ts` deve encapsular:
+  - `getItensPorSetor(empresaId?, setorAtual)` usando `collectionGroup('itens')` filtrado por empresaId setado na query (retirando dependência do service base que exige coleção única).
+  - Métodos de atualização `moverItemDeSetor`, `atualizarStatusItem` e `registrarMovimentacao` atuando no documento certo (doc da subcoleção) e gravando `movimentacoes`.
+  - Gerenciar metadados/empresaId via helpers (`getEmpresaId`, `getCurrentUserId`, `serverTimestamp`), replicando o que o base faz.
+- Recomenda-se que o novo service acesse o Firestore diretamente (docs, collection, collectionGroup) porque o base não suporta subcoleções e os métodos precisam operar sob paths dinâmicos; o domínio orquestra essa lógica específica de Produção sem atravessar `src/services/firestore/*` legados.
+
+## Action items
+- [ ] Confirmar o modelo atual de ordens/itens/movimentações (campos exigidos pela UI/porções) e documentar qualquer denormalização necessária para evitar múltiplas reads.
+- [ ] Revisar `firestore.rules` para garantir que `producao` (não `ordens`) controla acesso às subcoleções `itens` e `movimentacoes`, considerando `empresaId` e collectionGroup.
+- [ ] Criar `src/domains/producao/services/producao-items.service.ts` com `getItensPorSetor`, `moverItemDeSetor`, `atualizarStatusItem` e `registrarMovimentacao`, utilizando `collectionGroup('itens')`/subcoleções, metadados e invalidando caches com React Query.
+- [ ] Atualizar `src/domains/producao/producao.hooks.ts` para usar apenas o novo service, providenciando hooks para entrada/saída/setor com `useMutation` que invalidem `queryKey` apropriados.
+- [ ] Ajustar páginas `ControleProducao`, `ApontamentoOP`, `DashboardTV` para exibir os campos vindos da subcoleção (ex: usar `item.quantidade`, `item.status`, `item.movimentacoes`), removendo dependência do service legado.
+- [ ] Adicionar os índices necessários em `firestore.indexes.json` cobrindo queries em `collectionGroup('itens')` filtradas por `empresaId`, `setorAtual`, `status` e ordenações usadas (ex: pelo tempo de criação ou prioridade).
+- [ ] Validar fluxos (entrada, saída, status) manualmente via UI/React Query e garantir que atualizações provocam `invalidateQueries` e `refetch`.
+
+## Testing and validation
+- Rodar frontend (Vite) e navegar em Controle, Apontamento e Dashboard; verificar que `collectionGroup` atualiza a fila por setor e que buttons disparam mutations com `invalidateQueries`.
+- Confirmar console/queries do React Query e Firestore (simulação) para verificar que registros são escritos em `ordens_producao/{id}/itens/{id}` e `movimentacoes`.
+- Validar `firestore.rules` com `firebase emulators` (se disponível) para garantir que novos acessos estão autorizados/exigindo empresaId.
+- Garantir que `firestore.indexes.json` contém os indexes usados pelos novos queries.
+
+## Risks and edge cases
+- `collectionGroup('itens')` exige índices; esquecer de criar gera erro runtime no Firestore.
+- Filtrar por `empresaId` em subcoleções pode demandar duplicação desse campo em cada item (denormalização) e pode conflitar com auditoria.
+- Se o service tentar usar `FirestoreService` base para subcoleções, faltará suporte e as queries falharão; por isso o domínio precisa lidar diretamente com os paths dinâmicos.
+- Mutations que não invalidam as queries corretas podem deixar a UI desatualizada (especialmente se as updates ocorrem em collectionGroup).
+
+## Open questions
+- Há campos adicionais (como prioridade, tempo estimado) necessários nos itens para as páginas `DashboardTV` ou `ApontamentoOP`?
+- Devemos registrar movimentos em uma subcoleção independente ou em um documento geral para cada item?
+[2026-02-07T03:11:18] tokens used: 44.740

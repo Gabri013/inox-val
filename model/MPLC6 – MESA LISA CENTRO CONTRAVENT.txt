@@ -1,0 +1,132 @@
+MPLC6 – MESA LISA CENTRO CONTRAVENTADA (6 PÉS)
+
+// src/bom/models/mplc/mplc6.ts
+import { BOMItem, BOMResult, Casquilhos, MesaConfig, Pes } from "../../types";
+import { ABA, DOBRA, RAIO } from "../../shared/constants";
+import { r1 } from "../../shared/utils";
+
+/**
+ * MPLC6 – MESA LISA CENTRO CONTRAVENTADA (6 PÉS)
+ * Regras 6 pés (base BOM 6 pés encosto):
+ * - pés: 6
+ * - casquilhos: 6
+ * - contrav lateral: 2
+ * - contrav traseiro: 2
+ * - reforço padrão: 5 (quando existir no modelo)
+ * - reforço frontal: 2
+ * :contentReference[oaicite:0]{index=0}
+ */
+
+const OFFSET_DESENHO = 1.8;
+const FOLGA_CONTRAV = 130;
+const FOLGA_PE = 72;
+
+const H_REFORCO_FRONTAL = 93;
+const CASQUILHO_DIM = 61;
+const CASQUILHO_ESP = 2.0;
+
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+
+export function gerarBOM_MPLC6(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const somaDobras = ABA + DOBRA + RAIO;
+
+  const blankC = r1((c - OFFSET_DESENHO) + 2 * somaDobras);
+  const blankL = r1((l - OFFSET_DESENHO) + 2 * somaDobras);
+
+  const bom: BOMItem[] = [];
+
+  // Tampo
+  bom.push({
+    desc: "TAMPO LISO CENTRO",
+    qtd: 1,
+    w: blankL,
+    h: blankC,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLC-PC01",
+  });
+
+  // Reforço frontal (no MPLC original já é 2; em 6 pés permanece 2) :contentReference[oaicite:1]{index=1}
+  bom.push({
+    desc: "REFORÇO FRONTAL",
+    qtd: 2,
+    w: r1(c - FOLGA_CONTRAV),
+    h: H_REFORCO_FRONTAL,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLC-PC03",
+  });
+
+  // Casquilho (6)
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 6,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "PPB-01B",
+  });
+
+  // Pé nivelador (6) :contentReference[oaicite:2]{index=2}
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 6,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "1006036",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  const casquilhos: Casquilhos = {
+    qtd: 6,
+    dimensao: "61 x 61",
+    espessura: CASQUILHO_ESP,
+  };
+
+  const pes: Pes = {
+    qtd: 6,
+    tubo: r1(a - FOLGA_PE), // 900 -> 828 :contentReference[oaicite:3]{index=3}
+  };
+
+  // Contraventamentos (6 pés): 2 laterais + 2 traseiros :contentReference[oaicite:4]{index=4}
+  // Como seu tipo atual Contraventamentos tem só "lateral/traseiro/qtd",
+  // retornamos "qtd" = 4 (2 + 2). O corte você pode listar no BOM como itens.
+  const contraventamentos = {
+    lateral: r1(l - FOLGA_CONTRAV),
+    traseiro: r1(c - FOLGA_CONTRAV),
+    qtd: 4,
+  };
+
+  // (Opcional recomendado) Itens explícitos de tubo:
+  bom.push({
+    desc: "CONTRAV. LATERAL",
+    qtd: 2,
+    w: r1(l - FOLGA_CONTRAV),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MPLC-PT01",
+  });
+  bom.push({
+    desc: "CONTRAV. TRASEIRO",
+    qtd: 2,
+    w: r1(c - FOLGA_CONTRAV),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MPLC-PT02",
+  });
+
+  return { bom, pes, contraventamentos, casquilhos, prateleira: null };
+}

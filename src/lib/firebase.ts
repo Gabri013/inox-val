@@ -25,7 +25,9 @@
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { 
-  getAuth, 
+  getAuth,
+  initializeAuth,
+  browserLocalPersistence,
   type Auth,
   connectAuthEmulator 
 } from 'firebase/auth';
@@ -34,7 +36,9 @@ import {
   type Firestore,
   connectFirestoreEmulator,
   enableIndexedDbPersistence,
-  enableMultiTabIndexedDbPersistence
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from 'firebase/firestore';
 import type { FirebaseConfig } from '@/types/firebase';
 
@@ -83,6 +87,7 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let isInitialized = false;
+let cachedEmpresaId: string | null = null;
 
 /**
  * Inicializa o Firebase (chamado automaticamente na primeira importação)
@@ -104,29 +109,18 @@ export function initializeFirebase(): { app: FirebaseApp | null; auth: Auth | nu
   try {
     // Inicializar Firebase
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestoreInstance(app);
+    auth = initializeAuth(app, {
+      persistence: browserLocalPersistence,
+    });
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
 
     // Configurar emuladores (apenas em desenvolvimento)
     if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
       console.log('🔧 Usando Firebase Emulators');
       connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
       connectFirestoreEmulator(db, 'localhost', 8080);
-    }
-
-    // Habilitar persistência offline (multi-tab)
-    if (!import.meta.env.DEV || import.meta.env.VITE_FIREBASE_ENABLE_PERSISTENCE === 'true') {
-      enableMultiTabIndexedDbPersistence(db).catch((err) => {
-        if (err.code === 'failed-precondition') {
-          console.warn('⚠️ Persistência offline: múltiplas abas abertas');
-          // Fallback para persistência single-tab
-          enableIndexedDbPersistence(db!).catch((error) => {
-            console.error('❌ Erro ao habilitar persistência:', error);
-          });
-        } else if (err.code === 'unimplemented') {
-          console.warn('⚠️ Persistência offline não suportada neste navegador');
-        }
-      });
     }
 
     isInitialized = true;
@@ -184,26 +178,30 @@ export function isFirebaseConfigured(): boolean {
 }
 
 /**
- * Obtém o tenant ID do usuário atual (multi-tenant)
- * Em produção, usa o UID do usuário autenticado como tenantId
+ * Define o contexto de empresa atual (empresaId)
  */
-export function getCurrentTenantId(): string | null {
-  // Em desenvolvimento, retorna um valor fixo
-  if (import.meta.env.DEV) {
-    return 'tenant-demo-001';
-  }
-  
-  // Em produção, obtém do usuário autenticado
-  const auth = getFirebaseAuth();
-  const user = auth.currentUser;
-  
-  if (user) {
-    // TODO: Futuramente, usar custom claims para multi-tenant real
-    // return user.customClaims?.tenantId;
-    return user.uid;
-  }
-  
-  return null;
+export function setEmpresaContext(empresaId: string | null) {
+  cachedEmpresaId = empresaId;
+}
+
+/**
+ * Obtém o contexto de empresa atual (empresaId)
+ */
+export function getEmpresaContext(): { empresaId: string | null } {
+  const currentAuth = getFirebaseAuth();
+  const user = currentAuth.currentUser;
+  const fallbackId = user ? user.uid : null;
+  return {
+    empresaId: cachedEmpresaId ?? fallbackId,
+  };
+}
+
+/**
+ * Obtém o empresaId do usuário atual
+ * Em produção, usa o UID do usuário autenticado como fallback
+ */
+export function getCurrentEmpresaId(): string | null {
+  return getEmpresaContext().empresaId;
 }
 
 // ============================================================================

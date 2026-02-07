@@ -16,9 +16,12 @@ export interface FirebaseConfig {
  */
 export interface FirebaseDocument {
   id: string;
-  tenantId: string; // ID da empresa (isolamento de dados)
-  createdAt: Date | string; // Timestamp de criação
-  updatedAt: Date | string; // Timestamp de atualização
+  empresaId?: string; // ID da empresa (isolamento de dados)
+  createdAt?: Date | string; // Timestamp de criação
+  updatedAt?: Date | string; // Timestamp de atualização
+  createdBy?: string;
+  updatedBy?: string;
+  isDeleted?: boolean;
 }
 
 /**
@@ -38,40 +41,64 @@ export interface AuditMetadata {
 export interface FirestoreCollections {
   // Empresas (tenants)
   empresas: 'empresas';
-  
+
   // Usuários
-  usuarios: 'usuarios';
-  
+  users: 'users';
+  usuarios: 'usuarios'; // legado
+
   // Domínios principais
   clientes: 'clientes';
+  produtos: 'produtos';
+  estoque_itens: 'estoque_itens';
+  estoque_movimentos: 'estoque_movimentos';
   orcamentos: 'orcamentos';
   ordens_producao: 'ordens_producao';
+  apontamentos: 'apontamentos';
+  compras: 'compras';
+  configuracoes: 'configuracoes';
+  calculos: 'calculos';
+  calculadora_historico: 'calculadora_historico';
+  audit_logs: 'audit_logs';
+
+  // Chat & Anúncios
+  conversas: 'conversas';
+  mensagens: 'mensagens';
+  chat_usuarios: 'chat_usuarios';
+  anuncios: 'anuncios';
+
+  // Legado
   solicitacoes_compra: 'solicitacoes_compra';
-  
-  // Materiais e estoque
   materiais: 'materiais';
   estoque_materiais: 'estoque_materiais';
   movimentacoes_estoque: 'movimentacoes_estoque';
-  
-  // Apontamento de produção
-  apontamentos: 'apontamentos';
-  
-  // Auditoria
   auditoria: 'auditoria';
   logs: 'logs';
 }
 
 export const COLLECTIONS: FirestoreCollections = {
   empresas: 'empresas',
+  users: 'users',
   usuarios: 'usuarios',
   clientes: 'clientes',
+  produtos: 'produtos',
+  estoque_itens: 'estoque_itens',
+  estoque_movimentos: 'estoque_movimentos',
   orcamentos: 'orcamentos',
   ordens_producao: 'ordens_producao',
+  apontamentos: 'apontamentos',
+  compras: 'compras',
+  configuracoes: 'configuracoes',
+  calculos: 'calculos',
+  calculadora_historico: 'calculadora_historico',
+  audit_logs: 'audit_logs',
+  conversas: 'conversas',
+  mensagens: 'mensagens',
+  chat_usuarios: 'chat_usuarios',
+  anuncios: 'anuncios',
   solicitacoes_compra: 'solicitacoes_compra',
   materiais: 'materiais',
   estoque_materiais: 'estoque_materiais',
   movimentacoes_estoque: 'movimentacoes_estoque',
-  apontamentos: 'apontamentos',
   auditoria: 'auditoria',
   logs: 'logs',
 };
@@ -99,7 +126,7 @@ export interface Empresa extends FirebaseDocument {
 export interface Usuario extends FirebaseDocument {
   email: string;
   nome: string;
-  role: 'admin' | 'vendedor' | 'producao' | 'gerente';
+  role: 'ADMIN' | 'VENDEDOR' | 'ENGENHEIRO' | 'OPERADOR' | 'COMPRADOR' | 'ESTOQUISTA';
   ativo: boolean;
   ultimoAcesso?: Date;
 }

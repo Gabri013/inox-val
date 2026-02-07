@@ -12,6 +12,8 @@
  * ============================================================================
  */
 
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { getEmpresaContext, getFirestore } from "@/lib/firebase";
 import { BaseFirestoreService, type ServiceResult } from './base.service';
 import { COLLECTIONS } from '@/types/firebase';
 import type { Orcamento, ItemOrcamento, StatusOrcamento } from '@/app/types/workflow';
@@ -26,6 +28,24 @@ const STATUS_TRANSITIONS: Record<StatusOrcamento, StatusOrcamento[]> = {
   'Rejeitado': [], // Estado final
   'Convertido': [], // Estado final
 };
+
+export function getOrcamentosService(callback: (orcamentos: any[]) => void): () => void {
+  const empresaInfo = getEmpresaContext();
+  if (!empresaInfo.empresaId) {
+    return () => {};
+  }
+
+  const db = getFirestore();
+  const ref = query(
+    collection(db, COLLECTIONS.orcamentos),
+    where("empresaId", "==", empresaInfo.empresaId)
+  );
+  const unsub = onSnapshot(ref, (snap) => {
+    const orcamentos = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    callback(orcamentos);
+  });
+  return unsub;
+}
 
 export class OrcamentosService extends BaseFirestoreService<Orcamento> {
   constructor() {

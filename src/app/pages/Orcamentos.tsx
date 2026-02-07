@@ -4,16 +4,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { toast } from "sonner";
 import { Orcamento, StatusOrcamento } from "../types/workflow";
-import { useWorkflow } from "../contexts/WorkflowContext";
+import { useOrcamentos } from "@/hooks/useOrcamentos";
+import { useOrdens } from "@/hooks/useOrdens";
 import { Badge } from "../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ListPage } from "../components/layout/ListPage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { OrcamentoForm } from "../components/workflow/OrcamentoForm";
-import { pdfService } from "@/domains/custos/pdf.service";
+import { pdfService } from "@/domains/custos";
 
 export default function Orcamentos() {
-  const { orcamentos, addOrcamento, converterOrcamentoEmOrdem } = useWorkflow();
+  const { orcamentos, createOrcamento } = useOrcamentos({ autoLoad: true });
+  const { createOrdemDeOrcamento } = useOrdens({ autoLoad: false });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusOrcamento | "all">("all");
   const [showFormulario, setShowFormulario] = useState(false);
@@ -200,9 +202,14 @@ export default function Orcamentos() {
         }
         
         try {
-          const ordem = converterOrcamentoEmOrdem(orc.id);
-          toast.success(`Orçamento ${orc.numero} convertido em ${ordem.numero}`, {
-            description: "A ordem de produção foi criada com sucesso"
+          createOrdemDeOrcamento(orc.id).then((result) => {
+            if (result.success && result.data) {
+              toast.success(`Orçamento ${orc.numero} convertido em ${result.data.numero}`, {
+                description: "A ordem de produção foi criada com sucesso"
+              });
+            } else {
+              toast.error(result.error || "Erro ao converter orçamento");
+            }
           });
         } catch (error) {
           toast.error(error instanceof Error ? error.message : "Erro ao converter orçamento");
@@ -219,15 +226,18 @@ export default function Orcamentos() {
   };
 
   const handleSubmitOrcamento = (data: Omit<Orcamento, "id" | "numero">) => {
-    try {
-      const novoOrcamento = addOrcamento(data);
-      toast.success(`Orçamento ${novoOrcamento.numero} criado com sucesso!`, {
-        description: `Cliente: ${novoOrcamento.clienteNome}`
-      });
-      setShowFormulario(false);
-    } catch (error) {
-      toast.error("Erro ao criar orçamento");
-    }
+    createOrcamento(data)
+      .then((result) => {
+        if (result.success && result.data) {
+          toast.success(`Orçamento ${result.data.numero} criado com sucesso!`, {
+            description: `Cliente: ${result.data.clienteNome}`
+          });
+          setShowFormulario(false);
+        } else {
+          toast.error(result.error || "Erro ao criar orçamento");
+        }
+      })
+      .catch(() => toast.error("Erro ao criar orçamento"));
   };
 
   const handleExport = () => {

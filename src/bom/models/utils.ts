@@ -12,6 +12,13 @@ export function r2(n: number): number {
 }
 
 /**
+ * Arredonda para 1 casa decimal
+ */
+export function r1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+/**
  * Calcula peso de chapa em kg
  */
 export function calcularPesoChapa(
@@ -88,6 +95,15 @@ export const ESPELHO_LATERAL_LARGURA = 150; // mm
 export const PRATELEIRA_OFFSET_L = -100; // mm (recuo)
 export const PRATELEIRA_OFFSET_C = -100; // mm (recuo)
 export const BORDA_AGUA_ALTURA_PADRAO = 50; // mm
+export const BANDEIRA_ALTURA = 150; // mm (reforço contraventado)
+
+/**
+ * Parâmetros de dobra (ajuste conforme desenho técnico)
+ * Soma (ABA + DOBRA + RAIO) = 70.65mm para fechar o blank base 1500x700
+ */
+export const ABA = 50; // mm
+export const DOBRA = 10; // mm
+export const RAIO = 10.65; // mm
 
 /**
  * Materiais padrão
@@ -96,6 +112,7 @@ export const BORDA_AGUA_ALTURA_PADRAO = 50; // mm
 export const MAT_CHAPA_08 = 'INOX_304_0.8mm';
 export const MAT_CHAPA_10 = 'INOX_304_1.0mm';
 export const MAT_CHAPA_12 = 'INOX_304_1.2mm';
+export const MAT_CHAPA_20 = 'INOX_304_2.0mm';
 export const MAT_TUBO_25 = 'TUBO_25x1.2mm'; // Contraventamento (1")
 export const MAT_TUBO_38 = 'TUBO_38x1.2mm'; // Pés e travessas
 

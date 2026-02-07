@@ -36,69 +36,69 @@ export type ModeloBOM =
 export const MODELOS_BOM: { value: ModeloBOM; label: string; categoria: string; descricao: string }[] = [
   { 
     value: "S152908", 
-    label: "S152908 – Encosto + 1 Cuba Central + Contraventada (4 pés)",
+    label: "Bancada de encosto com cuba central (4 pés)",
     categoria: "Com Cuba",
-    descricao: "Bancada de encosto com cuba central e estrutura contraventada de 4 pés"
+    descricao: "Modelo S152908. Encosto com cuba central e estrutura contraventada de 4 pés"
   },
   { 
     value: "MPVE", 
-    label: "MPVE – Encosto + Borda d'água + Cuba Dir + Contraventada (4 pés)",
+    label: "Bancada de encosto com borda d'água e cuba direita (4 pés)",
     categoria: "Com Cuba e Borda",
-    descricao: "Bancada de encosto com borda d'água, cuba direita e estrutura contraventada de 4 pés"
+    descricao: "Modelo MPVE. Encosto com borda d'água, cuba direita e estrutura contraventada de 4 pés"
   },
   { 
     value: "MPLC", 
-    label: "MPLC – Centro Contraventada (4 pés)",
+    label: "Bancada de centro contraventada (4 pés)",
     categoria: "Centro",
-    descricao: "Bancada de centro com estrutura contraventada de 4 pés"
+    descricao: "Modelo MPLC. Centro com estrutura contraventada de 4 pés"
   },
   { 
     value: "MPLC6", 
-    label: "MPLC6 – Centro Contraventada (6 pés)",
+    label: "Bancada de centro contraventada (6 pés)",
     categoria: "Centro",
-    descricao: "Bancada de centro com estrutura contraventada de 6 pés para comprimentos maiores"
+    descricao: "Modelo MPLC6. Centro com estrutura contraventada de 6 pés para comprimentos maiores"
   },
   { 
     value: "MPLCP6", 
-    label: "MPLCP6 – Centro com Prateleira (6 pés)",
+    label: "Bancada de centro com prateleira (6 pés)",
     categoria: "Centro",
-    descricao: "Bancada de centro com prateleira e 6 pés de apoio"
+    descricao: "Modelo MPLCP6. Centro com prateleira e 6 pés de apoio"
   },
   { 
     value: "MPLEP", 
-    label: "MPLEP – Encosto com Prateleira (4 pés)",
+    label: "Bancada de encosto com prateleira (4 pés)",
     categoria: "Encosto",
-    descricao: "Bancada de encosto com prateleira inferior e 4 pés de apoio"
+    descricao: "Modelo MPLEP. Encosto com prateleira inferior e 4 pés de apoio"
   },
   { 
     value: "MPLEP6", 
-    label: "MPLEP6 – Encosto com Prateleira (6 pés)",
+    label: "Bancada de encosto com prateleira (6 pés)",
     categoria: "Encosto",
-    descricao: "Bancada de encosto com prateleira inferior e 6 pés de apoio para comprimentos maiores"
+    descricao: "Modelo MPLEP6. Encosto com prateleira inferior e 6 pés de apoio para comprimentos maiores"
   },
   { 
     value: "MPLE4_INV_LE", 
-    label: "MPLE4 INV LE – Encosto Espelho Traseiro + Lateral Esq (4 pés)",
+    label: "Bancada de encosto com espelho traseiro e lateral esquerda (4 pés)",
     categoria: "Com Espelhos",
-    descricao: "Bancada de encosto com espelho traseiro e lateral esquerdo, 4 pés de apoio"
+    descricao: "Modelo MPLE4 INV LE. Encosto com espelho traseiro e lateral esquerda, 4 pés de apoio"
   },
   { 
     value: "MPLE4_INV_LE6", 
-    label: "MPLE4 INV LE6 – Encosto Espelho Traseiro + Lateral Esq (6 pés)",
+    label: "Bancada de encosto com espelho traseiro e lateral esquerda (6 pés)",
     categoria: "Com Espelhos",
-    descricao: "Bancada de encosto com espelho traseiro e lateral esquerdo, 6 pés de apoio"
+    descricao: "Modelo MPLE4 INV LE6. Encosto com espelho traseiro e lateral esquerda, 6 pés de apoio"
   },
   { 
     value: "MPLE4_INV_LD", 
-    label: "MPLE4 INV LD – Encosto Espelho Traseiro + Lateral Dir (4 pés)",
+    label: "Bancada de encosto com espelho traseiro e lateral direita (4 pés)",
     categoria: "Com Espelhos",
-    descricao: "Bancada de encosto com espelho traseiro e lateral direito, 4 pés de apoio"
+    descricao: "Modelo MPLE4 INV LD. Encosto com espelho traseiro e lateral direita, 4 pés de apoio"
   },
   { 
     value: "MPLE4_INV_LD6", 
-    label: "MPLE4 INV LD6 – Encosto Espelho Traseiro + Lateral Dir (6 pés)",
+    label: "Bancada de encosto com espelho traseiro e lateral direita (6 pés)",
     categoria: "Com Espelhos",
-    descricao: "Bancada de encosto com espelho traseiro e lateral direito, 6 pés de apoio"
+    descricao: "Modelo MPLE4 INV LD6. Encosto com espelho traseiro e lateral direita, 6 pés de apoio"
   },
 ];
 

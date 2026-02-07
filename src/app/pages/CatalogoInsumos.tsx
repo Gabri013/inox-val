@@ -14,8 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { useInsumos } from '@/domains/catalogo/hooks';
-import { Insumo, TipoInsumo } from '@/domains/catalogo/types';
+import { useInsumos, type Insumo, type TipoInsumo } from '@/domains/catalogo';
 
 const tipoInsumoLabels: Record<TipoInsumo, string> = {
   'materia-prima': 'Matéria Prima',

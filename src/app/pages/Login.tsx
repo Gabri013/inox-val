@@ -4,22 +4,36 @@
  * ============================================================================
  */
 
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
+import { Checkbox } from '@/app/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Building2, Loader2 } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  const firebaseReady = isFirebaseConfigured() && !!getFirebaseAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('login_email');
+    const remember = localStorage.getItem('login_remember');
+    if (saved && remember === 'true') {
+      setEmail(saved);
+      setRememberEmail(true);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,6 +45,13 @@ export function Login() {
     try {
       setLoading(true);
       await login(email, password);
+      if (rememberEmail) {
+        localStorage.setItem('login_email', email);
+        localStorage.setItem('login_remember', 'true');
+      } else {
+        localStorage.removeItem('login_email');
+        localStorage.removeItem('login_remember');
+      }
       navigate('/');
     } catch (error) {
       // Erro já tratado no AuthContext
@@ -54,6 +75,18 @@ export function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border ${
+                firebaseReady
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
+              }`}
+            >
+              <span className={`size-2 rounded-full ${firebaseReady ? 'bg-green-500' : 'bg-red-500'}`} />
+              {firebaseReady ? 'Firebase conectado' : 'Firebase não configurado'}
+            </div>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -81,7 +114,14 @@ export function Login() {
                 disabled={loading}
               />
             </div>
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Checkbox
+                  checked={rememberEmail}
+                  onCheckedChange={(value) => setRememberEmail(Boolean(value))}
+                />
+                Lembrar email
+              </label>
               <Link
                 to="/reset-password"
                 className="text-sm text-blue-600 hover:underline"

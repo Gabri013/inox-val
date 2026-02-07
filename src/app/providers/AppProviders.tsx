@@ -9,10 +9,10 @@ import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext'; // Novo Firebase AuthContext
 import { AuditProvider } from '../contexts/AuditContext';
 import { WorkflowProvider } from '../contexts/WorkflowContext';
-import { Toaster } from '../components/ui/sonner';
-import { initDB } from '@/services/storage/db';
-import { seedDatabase } from '@/services/storage/seed';
+import { PermissionsProvider } from '@/domains/usuarios';
+import { seedDatabaseOnce } from '@/services/storage/seed';
 
+import { Toaster } from 'sonner';
 /**
  * Configuração do React Query
  */
@@ -37,21 +37,28 @@ function InitializationProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    async function initialize() {
+    let active = true;
+    const init = async () => {
       try {
-        // Inicializa IndexedDB
-        await initDB();
-        
-        // Popula banco com dados iniciais (se vazio)
-        await seedDatabase();
-        
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Erro ao inicializar aplicação:', error);
-      }
-    }
+        const isDev = import.meta.env.DEV;
+        const shouldSeed = isDev && import.meta.env.VITE_USE_MOCK === 'true';
 
-    initialize();
+        if (shouldSeed) {
+          await seedDatabaseOnce();
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar dados locais:', error);
+      } finally {
+        if (active) {
+          setIsInitialized(true);
+        }
+      }
+    };
+
+    init();
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (!isInitialized) {
@@ -77,12 +84,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <InitializationProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <AuditProvider>
-              <WorkflowProvider>
-                {children}
-                <Toaster />
-              </WorkflowProvider>
-            </AuditProvider>
+            <PermissionsProvider>
+              <AuditProvider>
+                <WorkflowProvider>
+                  {children}
+                  <Toaster />
+                </WorkflowProvider>
+              </AuditProvider>
+            </PermissionsProvider>
           </AuthProvider>
         </QueryClientProvider>
       </InitializationProvider>

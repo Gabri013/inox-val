@@ -1,92 +1,120 @@
 /**
- * Serviço de Produtos
+ * Serviço de Produtos (Firestore)
  */
 
-import { getHttpClient, PaginatedResponse, PaginationParams } from '@/services/http/client';
-import { newId, type ID } from '@/shared/types/ids';
-import { toISOString } from '@/shared/lib/format';
+import { produtosService as firestoreProdutosService } from '@/services/firestore/produtos.service';
 import type { Produto, CreateProdutoInput, UpdateProdutoInput, ProdutoFilters } from './produtos.types';
-
-const BASE_URL = '/api/produtos';
+import type { ID } from '@/shared/types/ids';
+import { PaginationParams, PaginatedResponse } from '@/services/http/client';
 
 class ProdutosService {
-  async list(
-    params: PaginationParams & ProdutoFilters = {}
-  ): Promise<PaginatedResponse<Produto>> {
-    const client = getHttpClient();
-    
-    const apiParams: PaginationParams = {
-      page: params.page,
-      pageSize: params.pageSize,
-      search: params.search,
-      sortBy: params.sortBy,
-      sortOrder: params.sortOrder,
-    };
-    
+  async list(params: PaginationParams & ProdutoFilters = {}): Promise<PaginatedResponse<Produto>> {
+    const where = [] as { field: string; operator: any; value: any }[];
+
     if (params.tipo && params.tipo !== 'all') {
-      apiParams.tipo = params.tipo;
+      where.push({ field: 'tipo', operator: '==', value: params.tipo });
     }
-    
+
     if (params.ativo !== undefined) {
-      apiParams.ativo = params.ativo;
+      where.push({ field: 'ativo', operator: '==', value: params.ativo });
     }
-    
-    return client.get<PaginatedResponse<Produto>>(BASE_URL, { params: apiParams });
+
+    const result = await firestoreProdutosService.list({
+      where,
+      orderBy: [{ field: 'nome', direction: 'asc' }],
+    });
+
+    const items = result.success && result.data ? result.data.items : [];
+    const search = params.search?.toLowerCase() || '';
+
+    const filtered = search
+      ? items.filter((produto) =>
+          produto.nome.toLowerCase().includes(search) ||
+          produto.codigo.toLowerCase().includes(search) ||
+          (produto.descricao || '').toLowerCase().includes(search)
+        )
+      : items;
+
+    const page = params.page || 1;
+    const pageSize = params.pageSize || filtered.length || 1;
+    const start = (page - 1) * pageSize;
+    const pagedItems = filtered.slice(start, start + pageSize);
+
+    return {
+      items: pagedItems,
+      total: filtered.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(filtered.length / pageSize) || 1,
+    };
   }
 
   async getById(id: ID): Promise<Produto> {
-    const client = getHttpClient();
-    return client.get<Produto>(`${BASE_URL}/${id}`);
+    const result = await firestoreProdutosService.getById(String(id));
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Produto não encontrado');
+    }
+    return result.data;
   }
 
   async create(data: CreateProdutoInput): Promise<Produto> {
-    const client = getHttpClient();
-    
-    const produto: Produto = {
-      id: newId(),
-      ...data,
-      estoque: 0, // Estoque inicial sempre 0
-      criadoEm: toISOString(new Date()),
-      atualizadoEm: toISOString(new Date()),
-    };
-    
-    return client.post<Produto>(BASE_URL, produto);
+    const payload: Produto = {
+      id: '',
+      codigo: data.codigo,
+      nome: data.nome,
+      descricao: data.descricao,
+      tipo: data.tipo,
+      unidade: data.unidade,
+      preco: data.preco,
+      custo: data.custo,
+      estoque: 0,
+      estoqueMinimo: data.estoqueMinimo,
+      ativo: data.ativo,
+      observacoes: data.observacoes,
+      criadoEm: new Date().toISOString(),
+      atualizadoEm: new Date().toISOString(),
+    } as Produto;
+
+    const result = await firestoreProdutosService.create(payload as Produto);
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Erro ao criar produto');
+    }
+    return result.data;
   }
 
   async update(id: ID, data: UpdateProdutoInput): Promise<Produto> {
-    const client = getHttpClient();
-    
-    const updates = {
+    const result = await firestoreProdutosService.update(String(id), {
       ...data,
-      atualizadoEm: toISOString(new Date()),
-    };
-    
-    return client.put<Produto>(`${BASE_URL}/${id}`, updates);
+      atualizadoEm: new Date().toISOString(),
+    } as Partial<Produto>);
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Erro ao atualizar produto');
+    }
+    return result.data;
   }
 
   async delete(id: ID): Promise<void> {
-    const client = getHttpClient();
-    await client.delete(`${BASE_URL}/${id}`);
+    const result = await firestoreProdutosService.remove(String(id));
+    if (!result.success) {
+      throw new Error(result.error || 'Erro ao remover produto');
+    }
   }
 
   async getStats(): Promise<{
     total: number;
     ativos: number;
-    inativos: number;
     baixoEstoque: number;
     valorEstoque: number;
   }> {
-    const response = await this.list({ pageSize: 1000 });
-    
-    const stats = {
-      total: response.total,
-      ativos: response.items.filter(p => p.ativo).length,
-      inativos: response.items.filter(p => !p.ativo).length,
-      baixoEstoque: response.items.filter(p => p.estoque <= p.estoqueMinimo).length,
-      valorEstoque: response.items.reduce((acc, p) => acc + (p.estoque * p.custo), 0),
-    };
-    
-    return stats;
+    const list = await firestoreProdutosService.list({
+      orderBy: [{ field: 'nome', direction: 'asc' }],
+    });
+    const items = list.success && list.data ? list.data.items : [];
+    const total = items.length;
+    const ativos = items.filter((p) => p.ativo).length;
+    const baixoEstoque = items.filter((p) => p.estoque <= p.estoqueMinimo).length;
+    const valorEstoque = items.reduce((acc, p) => acc + p.estoque * p.custo, 0);
+    return { total, ativos, baixoEstoque, valorEstoque };
   }
 }
 

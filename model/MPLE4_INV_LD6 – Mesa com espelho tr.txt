@@ -1,0 +1,184 @@
+MPLE4_INV_LD6 – Mesa com espelho traseiro + lateral direito (6 PÉS)
+
+// src/bom/models/mple4_inv_ld/mple4_inv_ld6.ts
+import { BOMItem, BOMResult, Casquilhos, MesaConfig, Pes } from "../../types";
+import { r1 } from "../../shared/utils";
+
+/**
+ * MPLE4_INV_LD6 – Mesa com espelho traseiro + lateral direito (6 PÉS)
+ * Ajustes 6 pés (padrão estrutural):
+ * - pés = 6
+ * - niveladores = 6
+ * - casquilhos = 6
+ * - reforço frontal (bandeira) = 2 (era 1)
+ * - reforço inferior p/ tampo = 5 (era 3)  (apoio na linha dos pés)
+ * - contraventamentos: 2 laterais + 2 traseiros
+ */
+
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+
+const FOLGA_PE = 70;          // conforme seu modelo MPLE4 (A-70)
+const FOLGA_CONTRAV_L = 149;  // lateral: L-149
+const FOLGA_CONTRAV_C = 124;  // traseiro: C-124
+
+const CASQUILHO_DIM = 63.4;
+const CASQUILHO_ESP = 2.0;
+
+export function gerarBOM_MPLE4_INV_LD6(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const bom: BOMItem[] = [];
+
+  // TAMPO
+  bom.push({
+    desc: "TAMPO COM ESPELHO TRASEIRO E LATERAL DIREITO",
+    qtd: 1,
+    w: r1(c + 180),
+    h: r1(l + 180),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LD-PC01",
+  });
+
+  // REFORÇO FRONTAL (6 pés -> 2)
+  bom.push({
+    desc: "REFORÇO FRONTAL (BANDEIRA)",
+    qtd: 2,
+    w: r1(c - FOLGA_CONTRAV_C),
+    h: 113,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLE4-INV-LD-PC04",
+  });
+
+  // REFORÇO TRASEIRO
+  bom.push({
+    desc: "REFORÇO TRASEIRO",
+    qtd: 1,
+    w: r1(c - 5),
+    h: 86,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LD-PC02",
+  });
+
+  // REFORÇO LATERAL
+  bom.push({
+    desc: "REFORÇO LATERAL",
+    qtd: 1,
+    w: r1(l - 5),
+    h: 86,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LD-PC03",
+  });
+
+  // REFORÇO INFERIOR P/ TAMPO (6 pés -> 5)
+  bom.push({
+    desc: "REFORÇO INFERIOR P/ TAMPO",
+    qtd: 5,
+    w: 120,
+    h: r1(l - 43),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLE4-INV-LD-PC05",
+  });
+
+  // ESPELHOS
+  bom.push({
+    desc: "ESPELHO LADO DIREITO",
+    qtd: 1,
+    w: 20,
+    h: 148,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLE4-INV-LD-PC06",
+  });
+
+  bom.push({
+    desc: "ESPELHO LADO ESQUERDO",
+    qtd: 1,
+    w: 20,
+    h: 148,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LD-PC07",
+  });
+
+  // NIVELADORES (6)
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 6,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "1006036",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  // CASQUILHOS (6)
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 6,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LD-PC08",
+  });
+
+  // Tubos (itens explícitos)
+  bom.push({
+    desc: "PÉ (TUBO)",
+    qtd: 6,
+    w: r1(a - FOLGA_PE),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1.1/2"x1-1003004',
+    processo: "CORTE",
+    codigo: "PPB-02",
+  });
+
+  // Contravs: 2 laterais + 2 traseiros
+  bom.push({
+    desc: "CONTRAV. LATERAL",
+    qtd: 2,
+    w: r1(l - FOLGA_CONTRAV_L),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MPLE4-INV-LD-PT01",
+  });
+  bom.push({
+    desc: "CONTRAV. TRASEIRO",
+    qtd: 2,
+    w: r1(c - FOLGA_CONTRAV_C),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MPLE4-INV-LD-PT02",
+  });
+
+  const casquilhos: Casquilhos = { qtd: 6, dimensao: "63.4 x 63.4", espessura: CASQUILHO_ESP };
+  const pes: Pes = { qtd: 6, tubo: r1(a - FOLGA_PE) };
+
+  const contraventamentos = {
+    lateral: r1(l - FOLGA_CONTRAV_L),
+    traseiro: r1(c - FOLGA_CONTRAV_C),
+    qtd: 4, // 2 laterais + 2 traseiros
+  };
+
+  return { bom, pes, contraventamentos, casquilhos, prateleira: null };
+}

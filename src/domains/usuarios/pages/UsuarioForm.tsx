@@ -4,7 +4,7 @@
  */
 
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserPlus, Save, X } from 'lucide-react';
@@ -202,10 +202,15 @@ export default function UsuarioForm() {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Admin">Administrador</SelectItem>
+                  <SelectItem value="Administrador">Administrador</SelectItem>
+                  <SelectItem value="Dono">Dono</SelectItem>
+                  <SelectItem value="Gerencia">Ger?ncia</SelectItem>
+                  <SelectItem value="Compras">Compras</SelectItem>
+                  <SelectItem value="Financeiro">Financeiro</SelectItem>
                   <SelectItem value="Engenharia">Engenharia</SelectItem>
-                  <SelectItem value="Producao">Produção</SelectItem>
-                  <SelectItem value="Comercial">Comercial</SelectItem>
+                  <SelectItem value="Producao">Produ??o</SelectItem>
+                  <SelectItem value="Orcamentista">Or?amentista</SelectItem>
+                  <SelectItem value="Vendedor">Vendedor</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (

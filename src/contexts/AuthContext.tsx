@@ -26,11 +26,15 @@ import {
   updateProfile,
   type User,
 } from 'firebase/auth';
-import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { getFirebaseAuth, getFirestore, isFirebaseConfigured, setEmpresaContext } from '@/lib/firebase';
+import { COLLECTIONS } from '@/types/firebase';
 import { toast } from 'sonner';
+import { defaultPermissionsByRole, type PermissionsMap } from '@/domains/usuarios';
 
 interface AuthContextData {
   user: User | null;
+  profile: any | null;
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -56,38 +60,166 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const defaultEmpresaId = import.meta.env.VITE_DEFAULT_EMPRESA_ID || 'default';
+  const pendingApprovalPath = '/aguardando-liberacao';
+  const mockEnabled = import.meta.env.VITE_USE_MOCK === 'true';
+  const mockStorageKey = 'inoxval_mock_auth';
 
-  // Monitorar estado de autenticação
+  const buildMockProfile = (email: string, nome?: string) => {
+    const displayName = nome || email?.split('@')[0] || 'Admin Demo';
+    return {
+      id: 'mock-user',
+      empresaId: defaultEmpresaId,
+      email,
+      nome: displayName,
+      role: 'Administrador',
+      ativo: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'mock-user',
+      updatedBy: 'mock-user',
+      isDeleted: false,
+    };
+  };
+
+  const buildMockUser = (email: string, nome?: string) =>
+    ({
+      uid: 'mock-user',
+      email,
+      displayName: nome || email?.split('@')[0] || 'Admin Demo',
+      getIdToken: async () => 'mock-token',
+    } as User);
+
+  const markPendingApproval = (email?: string | null) => {
+    localStorage.setItem('inoxval_pending_approval', 'true');
+    if (email) {
+      localStorage.setItem('inoxval_pending_email', email);
+    }
+  };
+
+  // Monitorar estado de autenticação (persistência configurada no firebase.ts)
   useEffect(() => {
-    // Se Firebase não estiver configurado, apenas marcar como não autenticado
+    if (mockEnabled) {
+      const stored = localStorage.getItem(mockStorageKey);
+      if (stored) {
+        try {
+          const saved = JSON.parse(stored);
+          const email = saved.email || 'demo@inox.local';
+          const nome = saved.nome || saved.displayName;
+          const mockProfile = saved.profile || saved;
+          setUser(buildMockUser(email, nome));
+          setProfile(mockProfile);
+          setEmpresaContext(mockProfile?.empresaId || defaultEmpresaId);
+        } catch {
+          localStorage.removeItem(mockStorageKey);
+        }
+      }
+      setLoading(false);
+      return;
+    }
+
     if (!isFirebaseConfigured()) {
       setLoading(false);
       return;
     }
 
-    try {
-      const auth = getFirebaseAuth();
-      
-      if (!auth) {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        setUser(null);
+        setProfile(null);
+        setEmpresaContext(null);
         setLoading(false);
         return;
       }
 
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-      });
+      try {
+        await currentUser.getIdToken(true);
+        const db = getFirestore();
+        const userRef = doc(db, COLLECTIONS.users, currentUser.uid);
+        const userSnap = await getDoc(userRef);
 
-      return unsubscribe;
-    } catch (error) {
-      console.error('Erro ao inicializar autenticação:', error);
-      setLoading(false);
-    }
+        if (!userSnap.exists()) {
+          markPendingApproval(currentUser.email);
+          await setDoc(
+            userRef,
+            {
+              id: currentUser.uid,
+              empresaId: defaultEmpresaId,
+              email: currentUser.email,
+              nome: currentUser.displayName || currentUser.email || 'Usuário',
+              role: 'Vendedor',
+              ativo: false,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              createdBy: currentUser.uid,
+              updatedBy: currentUser.uid,
+              isDeleted: false,
+            },
+            { merge: true }
+          );
+          await signOut(auth);
+          setUser(null);
+          setProfile(null);
+          setEmpresaContext(null);
+          window.location.assign(pendingApprovalPath);
+          toast.error('Conta criada. Aguarde liberação do administrador.');
+          setLoading(false);
+          return;
+        }
+
+        const profile = userSnap.data() as { ativo?: boolean };
+        if (!profile?.ativo) {
+          markPendingApproval(currentUser.email);
+          await signOut(auth);
+          setUser(null);
+          setProfile(null);
+          setEmpresaContext(null);
+          window.location.assign(pendingApprovalPath);
+          toast.error('Conta aguardando liberação do administrador.');
+          setLoading(false);
+          return;
+        }
+
+        setUser(currentUser);
+        const userProfile = userSnap.data() as any;
+        setProfile(userProfile);
+        const empresaId = userProfile?.empresaId || currentUser.uid;
+        setEmpresaContext(empresaId);
+        setLoading(false);
+      } catch (error) {
+        console.error('Erro ao validar usuário:', error);
+        setUser(null);
+        setProfile(null);
+        setEmpresaContext(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Login
   const login = async (email: string, password: string) => {
+    if (mockEnabled) {
+      const mockProfile = buildMockProfile(email);
+      setUser(buildMockUser(email, mockProfile.nome));
+      setProfile(mockProfile);
+      setEmpresaContext(mockProfile.empresaId);
+      localStorage.setItem(mockStorageKey, JSON.stringify(mockProfile));
+      toast.success('Login realizado (demo mode)');
+      return;
+    }
+
     if (!isFirebaseConfigured()) {
       toast.error('Firebase não configurado. Configure as variáveis de ambiente.');
       throw new Error('Firebase não configurado');
@@ -100,7 +232,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       const result = await signInWithEmailAndPassword(auth, email, password);
+      await result.user.getIdToken(true);
+      const db = getFirestore();
+      const userRef = doc(db, COLLECTIONS.users, result.user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        markPendingApproval(result.user.email);
+        await setDoc(
+          userRef,
+          {
+            id: result.user.uid,
+            empresaId: defaultEmpresaId,
+            email: result.user.email,
+            nome: result.user.displayName || result.user.email || 'Usuário',
+            role: 'Vendedor',
+            ativo: false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: result.user.uid,
+            updatedBy: result.user.uid,
+            isDeleted: false,
+          },
+          { merge: true }
+        );
+        await signOut(auth);
+        setProfile(null);
+        window.location.assign(pendingApprovalPath);
+        throw new Error('Conta criada. Aguarde liberação do administrador.');
+      }
+
+      const profile = userSnap.data() as { ativo?: boolean };
+      if (!profile?.ativo) {
+        markPendingApproval(result.user.email);
+        await signOut(auth);
+        setProfile(null);
+        window.location.assign(pendingApprovalPath);
+        throw new Error('Conta aguardando liberação do administrador.');
+      }
+
       setUser(result.user);
+      setProfile(userSnap.data());
       toast.success('Login realizado com sucesso!');
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
@@ -114,6 +286,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           break;
         case 'auth/wrong-password':
           errorMessage = 'Senha incorreta';
+          break;
+        case 'auth/invalid-credential':
+          errorMessage = 'Email ou senha inválidos';
           break;
         case 'auth/invalid-email':
           errorMessage = 'Email inválido';
@@ -135,15 +310,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Signup
   const signup = async (email: string, password: string, nome: string) => {
+    if (mockEnabled) {
+      const mockProfile = buildMockProfile(email, nome);
+      setUser(buildMockUser(email, nome));
+      setProfile(mockProfile);
+      setEmpresaContext(mockProfile.empresaId);
+      localStorage.setItem(mockStorageKey, JSON.stringify(mockProfile));
+      toast.success('Conta criada (demo mode)');
+      return;
+    }
+
+    if (!isFirebaseConfigured()) {
+      toast.error('Firebase não configurado. Configure as variáveis de ambiente.');
+      throw new Error('Firebase não configurado');
+    }
+
     try {
       const auth = getFirebaseAuth();
+      if (!auth) {
+        throw new Error('Firebase Auth não disponível');
+      }
+
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      await result.user.getIdToken(true);
       
       // Atualizar perfil com nome
       await updateProfile(result.user, { displayName: nome });
       
-      setUser(result.user);
-      toast.success('Conta criada com sucesso!');
+      const db = getFirestore();
+      await setDoc(
+        doc(db, COLLECTIONS.users, result.user.uid),
+        {
+          id: result.user.uid,
+          empresaId: defaultEmpresaId,
+          email: result.user.email,
+          nome,
+          role: 'Vendedor',
+          ativo: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: result.user.uid,
+          updatedBy: result.user.uid,
+          isDeleted: false,
+        },
+        { merge: true }
+      );
+
+      markPendingApproval(result.user.email);
+      await signOut(auth);
+      setUser(null);
+      setProfile(null);
+      window.location.assign(pendingApprovalPath);
+      toast.success('Conta criada. Aguarde liberação do administrador.');
     } catch (error: any) {
       console.error('Erro ao criar conta:', error);
       
@@ -173,6 +391,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout
   const logout = async () => {
+    if (mockEnabled) {
+      localStorage.removeItem(mockStorageKey);
+      setUser(null);
+      setProfile(null);
+      setEmpresaContext(null);
+      toast.success('Logout realizado (demo mode)');
+      return;
+    }
+
     if (!isFirebaseConfigured()) {
       // Se Firebase não configurado, apenas limpar estado local
       setUser(null);
@@ -188,6 +415,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       await signOut(auth);
       setUser(null);
+      setProfile(null);
+      setEmpresaContext(null);
       toast.success('Logout realizado com sucesso');
     } catch (error: any) {
       console.error('Erro ao fazer logout:', error);
@@ -198,6 +427,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Reset de senha
   const resetPassword = async (email: string) => {
+    if (mockEnabled) {
+      toast.success('Demo mode: password reset not required.');
+      return;
+    }
+
     if (!isFirebaseConfigured()) {
       toast.error('Firebase não configurado. Configure as variáveis de ambiente.');
       throw new Error('Firebase não configurado');
@@ -232,14 +466,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Verificar permissão (placeholder para implementação futura)
+  const normalizeRole = (role?: string) => {
+    if (!role) return undefined;
+    const lower = role.toLowerCase();
+    if (lower === 'admin' || lower === 'administrador') return 'Administrador';
+    if (lower === 'dono') return 'Dono';
+    if (lower === 'financeiro') return 'Financeiro';
+    if (lower === 'engenharia') return 'Engenharia';
+    if (lower === 'producao') return 'Producao';
+    if (lower === 'orcamentista') return 'Orcamentista';
+    if (lower === 'vendedor') return 'Vendedor';
+    return role;
+  };
+
+  const getEffectivePermissions = (): PermissionsMap | null => {
+    if (!profile?.role) return null;
+    const role = normalizeRole(profile.role) as keyof typeof defaultPermissionsByRole;
+    const base = defaultPermissionsByRole[role];
+    return profile.permissoesCustomizadas || base || null;
+  };
+
+  // Verificar permissão de acesso ao módulo (view)
   const hasPermission = (module: string) => {
-    // Implementação futura para verificar permissões do usuário
-    return true;
+    const permissions = getEffectivePermissions();
+    if (!permissions) return false;
+    return permissions[module as keyof PermissionsMap]?.view === true;
   };
 
   const value: AuthContextData = {
     user,
+    profile,
     loading,
     isAuthenticated: !!user,
     login,

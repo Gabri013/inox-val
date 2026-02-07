@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { chatService } from './chat.service';
+import { chatService } from '@/services/firestore/chat.service';
 import type {
   ChatFilters,
   MensagensFilters,

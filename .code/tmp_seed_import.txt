@@ -1,0 +1,1 @@
+import { seedDatabase } from '@/services/storage/seed';

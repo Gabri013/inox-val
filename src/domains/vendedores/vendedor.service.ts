@@ -1,75 +1,106 @@
 /**
- * Service: Configurações do Vendedor
- * Gerencia configurações personalizadas de preços e preferências
+ * Service: Configurações do Vendedor (Firestore)
  */
 
-import { getHttpClient } from '@/services/http/client';
-import type { 
-  ConfiguracaoVendedor, 
-  CreateConfiguracaoVendedorDTO, 
-  UpdateConfiguracaoVendedorDTO 
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
+import { getFirestore } from '@/lib/firebase';
+import { getCurrentUserId, getCurrentUserProfile, getEmpresaId } from '@/services/firestore/base';
+import type {
+  ConfiguracaoVendedor,
+  CreateConfiguracaoVendedorDTO,
+  UpdateConfiguracaoVendedorDTO,
 } from './vendedor.types';
 
-const BASE_URL = '/api/configuracoes-vendedor';
+const COLLECTION = 'configuracoes_vendedores';
+
+const db = getFirestore();
+
+const mapDoc = (id: string, data: any): ConfiguracaoVendedor => ({
+  id,
+  ...(data as ConfiguracaoVendedor),
+});
 
 export const vendedorService = {
   /**
    * Buscar configuração do vendedor logado
    */
   async getMinhaConfiguracao(): Promise<ConfiguracaoVendedor | null> {
-    const client = getHttpClient();
-    const response = await client.get<ConfiguracaoVendedor[]>(BASE_URL);
-    // Retorna a primeira configuração do usuário atual
-    // Em produção, filtrar por usuarioId do contexto de autenticação
-    return response[0] || null;
+    const userId = await getCurrentUserId();
+    const ref = doc(db, COLLECTION, userId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return mapDoc(snap.id, snap.data());
   },
 
   /**
    * Buscar configuração por ID do vendedor
    */
   async getConfiguracaoPorUsuario(usuarioId: string): Promise<ConfiguracaoVendedor | null> {
-    const client = getHttpClient();
-    const response = await client.get<ConfiguracaoVendedor[]>(BASE_URL, {
-      params: { usuarioId }
-    });
-    return response[0] || null;
+    const ref = doc(db, COLLECTION, usuarioId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return mapDoc(snap.id, snap.data());
   },
 
   /**
    * Criar configuração inicial
    */
   async create(data: CreateConfiguracaoVendedorDTO): Promise<ConfiguracaoVendedor> {
-    const client = getHttpClient();
-    const agora = Date.now();
-    
-    const configuracao: Omit<ConfiguracaoVendedor, 'id'> & { id: string } = {
-      id: crypto.randomUUID(),
-      ...data,
-      criadoEm: agora,
-      atualizadoEm: agora,
-    };
+    const userId = await getCurrentUserId();
+    const empresaId = await getEmpresaId();
+    const profile = await getCurrentUserProfile();
 
-    return client.post<ConfiguracaoVendedor>(BASE_URL, configuracao);
+    const payload: Omit<ConfiguracaoVendedor, 'id'> & { empresaId: string } = {
+      ...data,
+      usuarioId: userId,
+      nomeVendedor: data.nomeVendedor || profile?.nome || profile?.email || 'Vendedor',
+      criadoEm: Date.now(),
+      atualizadoEm: Date.now(),
+      empresaId,
+    };
+    const ref = doc(db, COLLECTION, userId);
+    await setDoc(
+      ref,
+      {
+        ...payload,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: userId,
+        updatedBy: userId,
+        isDeleted: false,
+      },
+      { merge: true }
+    );
+    const snap = await getDoc(ref);
+    return mapDoc(snap.id, snap.data());
   },
 
   /**
    * Atualizar configuração
    */
   async update(id: string, data: UpdateConfiguracaoVendedorDTO): Promise<ConfiguracaoVendedor> {
-    const client = getHttpClient();
-    const updates = {
+    const userId = await getCurrentUserId();
+    await updateDoc(doc(db, COLLECTION, id), {
       ...data,
       atualizadoEm: Date.now(),
-    };
-
-    return client.put<ConfiguracaoVendedor>(`${BASE_URL}/${id}`, updates);
+      updatedAt: serverTimestamp(),
+      updatedBy: userId,
+    });
+    const snap = await getDoc(doc(db, COLLECTION, id));
+    return mapDoc(snap.id, snap.data());
   },
 
   /**
    * Atualizar apenas preços de materiais
    */
   async updatePrecosMateriais(
-    id: string, 
+    id: string,
     precos: ConfiguracaoVendedor['precosMateriais']
   ): Promise<ConfiguracaoVendedor> {
     return this.update(id, { precosMateriais: precos });
@@ -96,9 +127,9 @@ export const vendedorService = {
         '316': { precoPorKg: 35.60, dataAtualizacao: agora },
         '430': { precoPorKg: 18.90, dataAtualizacao: agora },
       },
-      margemLucroPadrao: 35, // 35%
+      margemLucroPadrao: 35,
       custoMaoDeObraPorHora: 45.00,
-      tempoMedioBancada: 8, // 8 horas
+      tempoMedioBancada: 8,
       materialPadrao: '304',
       acabamentoPadrao: 'escovado',
       espessuraPadrao: 0.8,

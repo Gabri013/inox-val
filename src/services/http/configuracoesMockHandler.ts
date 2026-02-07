@@ -6,7 +6,7 @@ import { newId } from '@/shared/types/ids';
 import { 
   ConfiguracoesUsuario, 
   DEFAULT_CONFIGURACOES 
-} from '@/domains/configuracoes/types';
+} from '@/domains/configuracoes';
 
 /**
  * Armazena configurações em localStorage

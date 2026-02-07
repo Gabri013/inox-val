@@ -3,7 +3,7 @@
  * Fornece layout, validação, dirty state e ações padrão
  */
 
-import { ReactNode, FormEvent, useEffect, useState } from 'react';
+import { ReactNode, FormEvent, useEffect, useState, isValidElement } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -144,14 +144,14 @@ export function EntityFormShell({
             <div className="flex items-start gap-3">
               {icon && (
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  {(() => {
-                    const IconComponent = icon;
-                    return typeof IconComponent === 'function' ? (
-                      <IconComponent className="size-6 text-primary" />
-                    ) : (
-                      IconComponent
-                    );
-                  })()}
+                  {isValidElement(icon) ? (
+                    icon
+                  ) : (
+                    (() => {
+                      const IconComponent = icon as React.ElementType;
+                      return <IconComponent className="size-6 text-primary" />;
+                    })()
+                  )}
                 </div>
               )}
               <div className="flex-1">

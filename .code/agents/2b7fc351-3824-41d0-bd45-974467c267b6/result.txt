@@ -1,0 +1,147 @@
+[2026-02-07T12:56:59] OpenAI Codex v0.0.0 (research preview)
+[2026-02-07T12:56:59] binary: C:\Users\Victoria\AppData\Local\just-every\code\0.6.59\code-x86_64-pc-windows-msvc.exe
+--------
+workdir: C:\Users\Victoria\Documents\GitHub\INOX-VAL
+model: gpt-5.1-codex-mini
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: auto
+--------
+[2026-02-07T12:56:59] User instructions:
+Context: Repo: C:\Users\Victoria\Documents\GitHub\INOX-VAL (Windows). package.json shows Vite 6, React Router 7, TanStack React Query 5, Firebase 12, firebase-admin 13, MUI + Radix, Zod. Constraints from prompt_noite.txt are strict. The /plan response should be comprehensive but safe and incremental.
+
+Agent: You are to propose a detailed, safe, incremental execution plan for the INOX-VAL repo following strict constraints: DO NOT change business logic, DO NOT change Firestore rules, DO NOT change Firestore collection structure, DO NOT add features, DO NOT refactor already-implemented production flows, DO NOT change React Query behavior. Goal: 'preparação silenciosa'—internal quality, organization, code safety without behavior changes.
+
+Plan must cover:
+1) dead-code cleanup (only 100% unused; if unsure comment instead)
+2) TypeScript typing improvements (replace any with domain types; ensure domain types like `producao.types.ts`, `cliente.types.ts`, `estoque.types.ts` are used correctly; no data-shape changes)
+3) internal naming standardization (variables only; never API/db fields)
+4) create documentation in `docs/`: `arquitetura-producao.md`, `fluxo-firestore.md`, `hooks-react-query.md`
+5) dependency map doc: `docs/dependencias-dominios.md`
+6) performance analysis report doc only: `docs/performance-analise.md` (no optimizations)
+7) security/risk report doc only: `docs/firestore-riscos.md` (no rules changes)
+8) safe quality improvements: JSDoc on services, comments on complex hooks, split large functions ONLY if behavior unchanged, remove forgotten console.logs
+9) create test scaffolding only (folders + empty placeholder test files)
+10) final required report: `docs/trabalho-noturno-relatorio.md` listing files changed/created/removed/commented and confirming no logic change.
+
+Also include: recommended command checklist to validate locally (vite build, typecheck if exists, etc.) and a risk checklist to avoid accidental behavior changes.
+
+You may briefly inspect the repo structure (assume Vite + React + TS + Firebase/Firestore, React Router, TanStack React Query). Look for likely locations: `src/domains/**`, `src/services/**`, hooks under `src/**/hooks`, and Firestore access layers. Suggest where to start, how to stage changes into PR-sized chunks, and how to document 'pendências' if blocked by product/architecture decisions.
+
+Output: a plan (steps + rationale) — not implementation.
+
+Desired output: A detailed, incremental plan with steps, rationale, validation commands, and risk/rollback checklist. No code changes.
+
+Files to consider: C:\Users\Victoria\Documents\GitHub\INOX-VAL\package.json, C:\Users\Victoria\Documents\GitHub\INOX-VAL\prompt_noite.txt
+
+[Running in read-only mode - no modifications allowed]
+
+[2026-02-07T12:57:01] thinking
+
+**Planning next steps**
+[2026-02-07T12:57:01] exec cat C:/Users/Victoria/.code/skills/.system/plan/SKILL.md in C:\Users\Victoria\Documents\GitHub\INOX-VAL
+[2026-02-07T12:57:01] cat C:/Users/Victoria/.code/skills/.system/plan/SKILL.md succeeded in 245ms:
+---
+name: plan
+description: Generate a plan for how an agent should accomplish a complex coding task. Use when a user asks for a plan, and optionally when they want to save, find, read, update, or delete plan files in $CODEX_HOME/plans (default ~/.codex/plans).
+metadata:
+  short-description: Generate a plan for a complex task
+---
+
+# Plan
+
+## Overview
+
+Draft structured plans that clarify intent, scope, requirements, action items, testing/validation, and risks.
+
+Optionally, save plans to disk as markdown files with YAML frontmatter and free-form content. When drafting in chat, output only the plan body without frontmatter; add frontmatter only when saving to disk. Only write to the plans folder; do not modify the repository codebase.
+
+This skill can also be used to draft codebase or system overviews.
+
+## Core rules
+
+- Resolve the plans directory as `$CODEX_HOME/plans` or `~/.codex/plans` when `CODEX_HOME` is not set.
+[2026-02-07T12:57:01] tokens used: 6.870
+
+[2026-02-07T12:57:05] thinking
+
+**Drafting comprehensive implementation plan**
+
+I'm putting together a detailed plan with clear steps for tasks like dead code cleanup, typing, naming standards, documentation, dependency mapping, performance and security reporting, quality improvements, test scaffolding, and final reporting. The plan will include validation commands such as building and type checking, risk assessments focused on avoiding behavior changes, and guidance on staging changes incrementally with checklists to help track progress and verify compliance with instructions.
+[2026-02-07T12:57:06] codex
+
+# Plan
+
+Align on a “preparação silenciosa” sweep: clean up unused bits, tighten types/naming, document architecture, capture insights in new docs, scaffold tests, and produce the required reports without altering any business logic, Firestore rules/shape, or React Query behaviour.
+
+## Requirements
+- Preserve all existing functionality and data contracts (no logic, API, Firestore rules, or schema changes).
+- Aggressively avoid speculative refactors; only touch files where work is guaranteed to be safe.
+- Prefer documentation + reporting over code churn; new artifacts go into `docs/`.
+- Incrementally build up the work so each PR-sized chunk is reviewable and auditable.
+
+## Scope
+- In: dead-code removal, typing/naming consistency, new docs/performance/security reports, JSdoc/comments, test scaffolding directories, final status report, staging guidance.
+- Out: new behavior, router/query logic alterations, Firestore rules edits, feature additions, wide refactors.
+
+## Files and entry points
+- `src/domains/**/*` (typing improvements, naming adjustments).
+- `src/services/**/*` (dead code audit, JSdoc, console cleanup).
+- Hooks under `src/**/hooks` (documentation, comments, naming).
+- `docs/*.md` (new documentation artifacts).
+- `package.json` scripts (to inform validation commands).
+- Reporting docs: `docs/arquitetura-producao.md`, `docs/fluxo-firestore.md`, `docs/hooks-react-query.md`, `docs/dependencias-dominios.md`, `docs/performance-analise.md`, `docs/firestore-riscos.md`, `docs/trabalho-noturno-relatorio.md`.
+
+## Data model / API changes
+- None. Type tightening must use existing domain types (e.g., `producao.types.ts`, `cliente.types.ts`, `estoque.types.ts`) without altering shapes.
+
+## Action items
+[ ] Inventory the codebase to flag 100%-unused exports (components, hooks, helpers) via `rg`/`tsc` hints; remove only provably dead code (or comment with rationale if uncertain).  
+[ ] Review `any` usage across domains/services and replace with the correct domain types; leverage `producao.types.ts`, `cliente.types.ts`, `estoque.types.ts`, and document decisions when the match isn’t obvious.  
+[ ] Standardize internal variable names (camelCase/clear descriptors) without touching API/DB field names; update only local vars/params where inconsistency is evident.  
+[ ] Add JSDoc to service functions, inline comments for complex hooks, and remove stray `console.log` calls; split large internal helpers only when it keeps the same behavior.  
+[ ] Create documentation stubs/contents for: `docs/arquitetura-producao.md`, `docs/fluxo-firestore.md`, `docs/hooks-react-query.md`, covering architecture, Firestore access flow, and hook/query patterns.  
+[ ] Draft `docs/dependencias-dominios.md` mapping domain modules to their dependencies (services/hooks and any third-party overlays).  
+[ ] Produce `docs/performance-analise.md` with observations (no optimizations) about hotspots, lazy-loading opportunities, bundle sizes, or query inefficiencies discovered during walkthroughs.  
+[ ] Produce `docs/firestore-riscos.md` listing security/risk notes for Firestore usage (collection access patterns, role boundaries, validation assumptions) without editing rules.  
+[ ] Add test scaffolding (new folders/files, e.g., `tests/` or `__tests__` placeholders) with minimal placeholder files per relevant area so future tests have entry points.  
+[ ] Produce `docs/trabalho-noturno-relatorio.md` listing every touched file (created/modified/deleted/commented) and explicitly state that no logic was changed.  
+[ ] Plan how to break work into smaller, reviewable chunks (e.g., per domain/type cleanup, per doc/report), and document any pending decisions as “pendências” inside the relevant doc (not in code).  
+[ ] Draft a staging checklist that includes `npm run build`, `npm run typecheck` (if available), and any domain-specific smoke checks; log any missing scripts in `docs/trabalho-noturno-relatorio.md`.  
+[ ] Outline risk-checklist bullet points to avoid accidental behavior change and include them in the final report.
+
+## Testing and validation
+- `npm run build` (`vite build`) to ensure production build still succeeds.
+- `npm run typecheck` (or `npm run check` / `tsc --noEmit`) to confirm typings stay consistent.
+- `npm run lint` if defined; otherwise note it in validation checklist.
+- Manual review of doc links referencing updated modules ensures accuracy.
+
+## Risks and edge cases
+- Removing “unused” exports when they’re consumed via dynamic imports or string-based references—prefer comments over deletions if uncertain.
+- Replacing `any` with incorrect domain types may break inferred usages; double-check with `tsc`.
+- Naming standardization might inadvertently change exported symbols; limit to locals only and verify by ensuring exported API names stay intact.
+- Documentation/reporting work must keep claims factual; rely on specific files/features rather than guesswork.
+
+## Open questions
+- Are there existing conventions (e.g., doc templates) for the new documentation files we should follow?
+- Should the test scaffolding mirror any particular test runner/framework the project plans to use?
+- What level of detail is expected in the “pendências” sections if a decision needs product/architecture input?
+
+## Validation checklist
+1. Run `npm run build` (Vite production build).  
+2. Run `npm run typecheck` (or equivalent `tsc --noEmit`).  
+3. Run `npm run lint` (if available) or note that it’s missing in `docs/trabalho-noturno-relatorio.md`.  
+4. Review docs for correctness (links, domain references).  
+5. Verify test scaffolding files exist (even empty) and are referenced in `docs/trabalho-noturno-relatorio.md`.
+
+## Risk checklist
+- [ ] Do not modify business logic, Firestore rules, or schema/collection structure.  
+- [ ] Avoid renaming API/DB fields; limit naming changes to local variables only.  
+- [ ] Only delete code that is unmistakably unused (100% confidence).  
+- [ ] When tightening types, ensure there’s no data-shape alteration and run typecheck afterward.  
+- [ ] When adding comments/docs, avoid introducing new behavior (no new imports or runtime code).
+
+If blocked by unresolved architecture/product questions, note the “pendência” inside the related doc and signal it in `docs/trabalho-noturno-relatorio.md` so reviewers know what needs follow-up.
+[2026-02-07T12:57:12] tokens used: 17.338

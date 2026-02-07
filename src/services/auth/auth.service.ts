@@ -38,7 +38,7 @@ class AuthService {
         nome: 'Admin Sistema',
         email: 'admin@erp.com',
         password: 'admin123',
-        role: 'admin',
+        role: 'administrador',
       },
       {
         id: '2',
@@ -56,10 +56,17 @@ class AuthService {
       },
       {
         id: '4',
-        nome: 'Com. Carlos Souza',
+        nome: 'Orç. Carlos Souza',
         email: 'carlos@erp.com',
-        password: 'com123',
-        role: 'comercial',
+        password: 'orc123',
+        role: 'orcamentista',
+      },
+      {
+        id: '5',
+        nome: 'Fin. Paula Ribeiro',
+        email: 'financeiro@erp.com',
+        password: 'fin123',
+        role: 'financeiro',
       },
     ];
     

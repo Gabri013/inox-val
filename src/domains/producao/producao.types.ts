@@ -90,6 +90,54 @@ export interface MovimentacaoSetor {
   fotos?: string[]; // URLs das fotos
 }
 
+// ============================================================================
+// Tipos fortes (subcoleções)
+// ============================================================================
+
+export type FirestoreTimestampLike =
+  | string
+  | Date
+  | import('firebase/firestore').Timestamp
+  | import('firebase/firestore').FieldValue
+  | null
+  | undefined;
+
+export type ProducaoItemId = ID;
+export type ProducaoOrderId = ID;
+
+export interface ProducaoItem extends OrdemProducaoItem {
+  id: ProducaoItemId;
+
+  // Multi-tenant e referência da ordem
+  empresaId: ID;
+  orderId: ProducaoOrderId;
+
+  // Campos obrigatórios para fila via collectionGroup('itens')
+  setorAtual: SetorProducao | null;
+  status: StatusProducaoItem;
+  updatedAt: FirestoreTimestampLike;
+
+  // Soft delete (padrão novo)
+  isDeleted?: boolean;
+
+  // Denormalização opcional para evitar N+1 reads
+  numeroOrdem?: string;
+  clienteNome?: string;
+}
+
+export interface MovimentacaoItem extends MovimentacaoSetor {
+  id: ID;
+  empresaId: ID;
+  orderId: ProducaoOrderId;
+  ordemItemId: ProducaoItemId;
+
+  createdAt?: FirestoreTimestampLike;
+  createdBy?: ID;
+  updatedAt?: FirestoreTimestampLike;
+  updatedBy?: ID;
+  isDeleted?: boolean;
+}
+
 export interface OrdemProducaoCompleta {
   id: ID;
   numero: string;

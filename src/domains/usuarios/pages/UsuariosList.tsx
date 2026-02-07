@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Users, Search, Filter } from 'lucide-react';
 import { PageHeader, DataTable, FiltersPanel } from '@/shared/components';
 import { Button } from '@/app/components/ui/button';
@@ -134,6 +134,22 @@ export default function UsuariosList() {
               <Filter className="w-4 h-4 mr-2" />
               Filtros
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/usuarios/aprovacoes')}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Aprovações
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/usuarios/permissoes')}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Permissões por função
+            </Button>
             <Button size="sm" onClick={() => navigate('/usuarios/novo')}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Usuário
@@ -173,11 +189,16 @@ export default function UsuariosList() {
                   <SelectValue placeholder="Todas as funções" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as funções</SelectItem>
-                  <SelectItem value="Admin">Administrador</SelectItem>
+                  <SelectItem value="">Todas as fun??es</SelectItem>
+                  <SelectItem value="Administrador">Administrador</SelectItem>
+                  <SelectItem value="Dono">Dono</SelectItem>
+                  <SelectItem value="Gerencia">Ger?ncia</SelectItem>
+                  <SelectItem value="Compras">Compras</SelectItem>
+                  <SelectItem value="Financeiro">Financeiro</SelectItem>
                   <SelectItem value="Engenharia">Engenharia</SelectItem>
-                  <SelectItem value="Producao">Produção</SelectItem>
-                  <SelectItem value="Comercial">Comercial</SelectItem>
+                  <SelectItem value="Producao">Produ??o</SelectItem>
+                  <SelectItem value="Orcamentista">Or?amentista</SelectItem>
+                  <SelectItem value="Vendedor">Vendedor</SelectItem>
                 </SelectContent>
               </Select>
             </div>

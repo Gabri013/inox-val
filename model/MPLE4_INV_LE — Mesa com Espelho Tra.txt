@@ -1,0 +1,124 @@
+MPLE4_INV_LE" — Mesa com Espelho Traseiro + Lateral Esquerdo
+
+import { BOMItem, BOMResult, Casquilhos, Contraventamentos, MesaConfig, Pes } from "../../types";
+import { r1 } from "../../shared/utils";
+
+const MAT_CHAPA = "#304-0,8-1000075";
+const MAT_CHAPA_2MM = "#304-2,0-1000108";
+
+export function gerarBOM_MPLE4_INV_LE(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const bom: BOMItem[] = [];
+
+  // TAMPO COM ESPELHOS
+  bom.push({
+    desc: "TAMPO COM ESPELHO TRASEIRO E LATERAL ESQUERDO",
+    qtd: 1,
+    w: r1(c + 180),
+    h: r1(l + 180),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LE-PC01"
+  });
+
+  // REFORÇOS
+  bom.push({
+    desc: "REFORÇO FRONTAL (BANDEIRA)",
+    qtd: 1,
+    w: r1(c - 124),
+    h: 113,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "GUILHOTINA",
+    codigo: "MPLE4-INV-LE-PC04"
+  });
+
+  bom.push({
+    desc: "REFORÇO TRASEIRO",
+    qtd: 1,
+    w: r1(c - 5),
+    h: 86,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LE-PC02"
+  });
+
+  bom.push({
+    desc: "REFORÇO LATERAL",
+    qtd: 1,
+    w: r1(l - 5),
+    h: 86,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LE-PC03"
+  });
+
+  bom.push({
+    desc: "REFORÇO INFERIOR P/ TAMPO",
+    qtd: 3,
+    w: 120,
+    h: r1(l - 43),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "GUILHOTINA",
+    codigo: "MPLE4-INV-LE-PC05"
+  });
+
+  // ESPELHOS
+  bom.push({
+    desc: "ESPELHO LADO ESQUERDO",
+    qtd: 1,
+    w: 20,
+    h: 148,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LE-PC07"
+  });
+
+  bom.push({
+    desc: "ESPELHO LADO DIREITO",
+    qtd: 1,
+    w: 20,
+    h: 148,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA,
+    processo: "GUILHOTINA",
+    codigo: "MPLE4-INV-LE-PC06"
+  });
+
+  // CASQUILHOS
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 4,
+    w: 63.4,
+    h: 63.4,
+    espessura: 2,
+    material: MAT_CHAPA_2MM,
+    processo: "LASER",
+    codigo: "MPLE4-INV-LE-PC08"
+  });
+
+  const casquilhos: Casquilhos = {
+    qtd: 4,
+    dimensao: "63.4 x 63.4",
+    espessura: 2
+  };
+
+  const pes: Pes = {
+    qtd: 4,
+    tubo: r1(a - 70)
+  };
+
+  const contraventamentos: Contraventamentos = {
+    lateral: r1(l - 149),
+    traseiro: r1(c - 124),
+    qtd: 3
+  };
+
+  return { bom, pes, contraventamentos, casquilhos, prateleira: null };
+}

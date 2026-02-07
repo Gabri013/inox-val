@@ -295,8 +295,8 @@ Todos os services têm validações automáticas:
 
 ### Clientes
 
-- ✅ CNPJ único por tenant
-- ✅ Email único por tenant
+- ✅ CNPJ único por empresa
+- ✅ Email único por empresa
 - ✅ CNPJ com 14 dígitos
 - ✅ Email válido
 
@@ -308,16 +308,16 @@ Todos os services têm validações automáticas:
 
 ---
 
-## 🔒 SEGURANÇA (MULTI-TENANT)
+## 🔒 SEGURANÇA (MULTI-EMPRESA)
 
 Todos os services automaticamente:
 
-✅ Adicionam `tenantId` ao criar documentos  
-✅ Filtram documentos por `tenantId` ao listar  
-✅ Validam `tenantId` ao buscar/atualizar/deletar  
+✅ Adicionam `empresaId` ao criar documentos  
+✅ Filtram documentos por `empresaId` ao listar  
+✅ Validam `empresaId` ao buscar/atualizar/deletar  
 ✅ Adicionam timestamps (`createdAt`, `updatedAt`)
 
-**Você não precisa se preocupar com multi-tenant - é automático!**
+**Você não precisa se preocupar com multi-empresa - é automático!**
 
 ---
 

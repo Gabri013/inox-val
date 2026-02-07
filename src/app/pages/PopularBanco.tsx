@@ -6,12 +6,12 @@
  * Esta página usa os Firebase Services (como no tutorial INTEGRATION_EXAMPLE)
  * para criar todos os dados iniciais do sistema.
  * 
- * ⚠️ NÃO PRECISA DE LOGIN - Usa tenantId fixo para demonstração
+ * ⚠️ NÃO PRECISA DE LOGIN - Usa empresaId fixo (ou UID) para demonstração
  * ============================================================================
  */
 
 import { useState, useEffect } from 'react';
-import { getFirebaseAuth, getCurrentTenantId } from '@/lib/firebase';
+import { getFirebaseAuth, setEmpresaContext } from '@/lib/firebase';
 import { signInAnonymously, createUserWithEmailAndPassword } from 'firebase/auth';
 import { clientesService } from '@/services/firebase/clientes.service';
 import { orcamentosService } from '@/services/firebase/orcamentos.service';
@@ -30,6 +30,7 @@ export default function PopularBanco() {
   const [totalCriado, setTotalCriado] = useState(0);
   const [autenticado, setAutenticado] = useState(false);
   const [autenticando, setAutenticando] = useState(true);
+  const defaultEmpresaId = import.meta.env.VITE_DEFAULT_EMPRESA_ID || null;
 
   // Fazer login anônimo automaticamente
   useEffect(() => {
@@ -42,13 +43,17 @@ export default function PopularBanco() {
 
         // Se já está autenticado, não precisa fazer nada
         if (auth.currentUser) {
+          const empresaId = defaultEmpresaId ?? auth.currentUser.uid ?? null;
+          setEmpresaContext(empresaId);
           setAutenticado(true);
           setAutenticando(false);
           return;
         }
 
         // Login anônimo
-        await signInAnonymously(auth);
+        const result = await signInAnonymously(auth);
+        const empresaId = defaultEmpresaId ?? result.user.uid;
+        setEmpresaContext(empresaId);
         setAutenticado(true);
         setAutenticando(false);
       } catch (error: any) {

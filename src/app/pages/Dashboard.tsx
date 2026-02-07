@@ -25,42 +25,57 @@ import {
   Cell,
   Legend
 } from "recharts";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
-// Dados de exemplo
-const salesData = [
-  { month: "Jan", vendas: 45000, custos: 32000, producao: 52 },
-  { month: "Fev", vendas: 52000, custos: 35000, producao: 61 },
-  { month: "Mar", vendas: 48000, custos: 33000, producao: 58 },
-  { month: "Abr", vendas: 61000, custos: 40000, producao: 72 },
-  { month: "Mai", vendas: 55000, custos: 38000, producao: 65 },
-  { month: "Jun", vendas: 67000, custos: 42000, producao: 78 },
-];
-
-const productCategories = [
-  { name: "Chapas", value: 35, color: "#8b5cf6" },
-  { name: "Tubos", value: 25, color: "#3b82f6" },
-  { name: "Perfis", value: 20, color: "#10b981" },
-  { name: "Outros", value: 20, color: "#f59e0b" },
-];
-
-// Materiais em estoque baixo (mock)
-const materiaisCriticos = [
-  { nome: "Perfil U 100mm", atual: 8, minimo: 15, porcentagem: 53, urgencia: "alta" },
-  { nome: "Chapa Galvanizada", atual: 0, minimo: 5, porcentagem: 0, urgencia: "critica" },
-  { nome: "Barra Chata 1/4", atual: 12, minimo: 20, porcentagem: 60, urgencia: "media" },
-];
+import { useDashboardMetrics } from "../hooks/useDashboardMetrics";
 
 export default function Dashboard() {
-  const { ordens, solicitacoes } = useWorkflow();
   const navigate = useNavigate();
+  const metrics = useDashboardMetrics();
+  const { ordensProducaoList, materiaisCriticos, loading, error } = metrics;
 
-  // Calcular estatísticas
-  const ordensEmAberto = ordens.filter(o => o.status === "Em Produção" || o.status === "Pendente");
-  const ordensEmProducao = ordens.filter(o => o.status === "Em Produção");
-  const comprasPendentes = solicitacoes.filter(s => 
-    s.status === "Solicitada" || s.status === "Cotação"
-  );
+  // BarChart: Produção e Faturamento dos últimos 6 meses
+  const now = new Date();
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return d;
+  });
+  const salesData = months.map((d) => {
+    // Faturamento e produção por mês
+    const faturamento = metrics.ordensProducaoList
+      .filter((op: any) => {
+        const data = op.dataConclusao ? new Date(op.dataConclusao) : null;
+        return data && data.getMonth() === d.getMonth() && data.getFullYear() === d.getFullYear();
+      })
+      .reduce((acc: number, op: any) => acc + (op.total ?? 0), 0);
+    const producao = metrics.ordensProducaoList
+      .filter((op: any) => {
+        const data = op.dataConclusao ? new Date(op.dataConclusao) : null;
+        return data && data.getMonth() === d.getMonth() && data.getFullYear() === d.getFullYear();
+      }).length;
+    return {
+      month: d.toLocaleString("pt-BR", { month: "short" }),
+      vendas: faturamento,
+      producao,
+    };
+  });
+
+  // PieChart: Categorias de Produtos
+  // Exemplo: Agrupar materiaisCriticos por tipo
+  const categoryMap: Record<string, number> = {};
+  materiaisCriticos.forEach((mat: any) => {
+    categoryMap[mat.tipo ?? "Outros"] = (categoryMap[mat.tipo ?? "Outros"] || 0) + 1;
+  });
+  const totalCat = Object.values(categoryMap).reduce((a, b) => a + b, 0);
+  const colors = ["#3b82f6", "#10b981", "#f59e42", "#a78bfa", "#ef4444", "#6366f1", "#fbbf24"];
+  const productCategories = Object.entries(categoryMap).map(([name, value], i) => ({
+    name,
+    value: totalCat ? Math.round((value / totalCat) * 100) : 0,
+    color: colors[i % colors.length],
+  }));
+
+  if (loading) return <div className="p-8 text-center text-lg">Carregando métricas...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">Erro: {error}</div>;
 
   return (
     <div className="space-y-6">
@@ -72,10 +87,12 @@ export default function Dashboard() {
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 328.000</div>
+            <div className="text-2xl font-bold">R$ {metrics.receitaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <TrendingUp className="size-3 text-green-500" />
-              <span className="text-green-500">+12.5%</span> em relação ao mês anterior
+              <span className={metrics.receitaVaria !== null && metrics.receitaVaria >= 0 ? "text-green-500" : "text-red-500"}>
+                {metrics.receitaVaria !== null ? `${metrics.receitaVaria.toFixed(1)}%` : "sem dados"}
+              </span> em relação ao mês anterior
             </p>
           </CardContent>
         </Card>
@@ -86,9 +103,9 @@ export default function Dashboard() {
             <Factory className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ordensEmAberto.length + 4}</div>
+            <div className="text-2xl font-bold">{metrics.ordensEmAberto}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {ordensEmProducao.length + 2} em produção
+              {metrics.ordensEmProducao} em produção
             </p>
           </CardContent>
         </Card>
@@ -99,9 +116,9 @@ export default function Dashboard() {
             <AlertTriangle className="size-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{materiaisCriticos.length}</div>
+            <div className="text-2xl font-bold text-yellow-600">{metrics.materiaisCriticos.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Necessitam reposição urgente
+              {metrics.materiaisCriticos.length > 0 ? "Necessitam reposição urgente" : "Nenhum material crítico"}
             </p>
           </CardContent>
         </Card>
@@ -112,9 +129,9 @@ export default function Dashboard() {
             <ShoppingCart className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{comprasPendentes.length + 3}</div>
+            <div className="text-2xl font-bold">{metrics.comprasPendentes}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Aguardando aprovação
+              {metrics.comprasPendentes > 0 ? "Aguardando aprovação" : "Módulo não implementado"}
             </p>
           </CardContent>
         </Card>
@@ -164,35 +181,34 @@ export default function Dashboard() {
                 <CardTitle>Ordens em Produção</CardTitle>
                 <CardDescription>Acompanhamento em tempo real</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate("/ordens")}>
+              <Button variant="outline" size="sm" onClick={() => navigate("/ordens")}> 
                 Ver Todas
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Mock de ordens em produção */}
-            {[
-              { numero: "OP-0145", cliente: "Empresa ABC", progresso: 75, previsao: "08/02/2026" },
-              { numero: "OP-0146", cliente: "Indústria XYZ", progresso: 45, previsao: "10/02/2026" },
-              { numero: "OP-0147", cliente: "Construções Norte", progresso: 90, previsao: "06/02/2026" },
-            ].map((ordem) => (
-              <div key={ordem.numero} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium font-mono text-sm">{ordem.numero}</p>
-                    <p className="text-xs text-muted-foreground">{ordem.cliente}</p>
+            {ordensProducaoList.length === 0 ? (
+              <div className="text-muted-foreground">Nenhuma ordem em produção</div>
+            ) : (
+              ordensProducaoList.map((op: any) => (
+                <div key={op.id} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium font-mono text-sm">{op.numero}</p>
+                      <p className="text-xs text-muted-foreground">{op.clienteNome}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{op.progresso ?? 0}%</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="size-3" />
+                        {op.dataPrevisao ? new Date(op.dataPrevisao).toLocaleDateString("pt-BR") : "-"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{ordem.progresso}%</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="size-3" />
-                      {ordem.previsao}
-                    </p>
-                  </div>
+                  <Progress value={op.progresso ?? 0} className="h-2" />
                 </div>
-                <Progress value={ordem.progresso} className="h-2" />
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -203,38 +219,42 @@ export default function Dashboard() {
                 <CardTitle>Materiais Abaixo do Mínimo</CardTitle>
                 <CardDescription>Necessitam reposição</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate("/estoque")}>
+              <Button variant="outline" size="sm" onClick={() => navigate("/estoque")}> 
                 Ver Estoque
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {materiaisCriticos.map((material, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    {material.urgencia === "critica" && (
-                      <AlertTriangle className="size-4 text-red-600" />
-                    )}
-                    {material.urgencia === "alta" && (
-                      <AlertTriangle className="size-4 text-yellow-600" />
-                    )}
-                    <span className="font-medium text-sm">{material.nome}</span>
+            {materiaisCriticos.length === 0 ? (
+              <div className="text-muted-foreground">Nenhum material abaixo do mínimo</div>
+            ) : (
+              materiaisCriticos.map((material: any, index: number) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      {material.urgencia === "critica" && (
+                        <AlertTriangle className="size-4 text-red-600" />
+                      )}
+                      {material.urgencia === "alta" && (
+                        <AlertTriangle className="size-4 text-yellow-600" />
+                      )}
+                      <span className="font-medium text-sm">{material.nome}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {material.saldoDisponivel} / {material.minimo} un
+                    </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {material.atual} / {material.minimo} un
-                  </span>
+                  <Progress 
+                    value={material.saldoDisponivel && material.minimo ? Math.round((material.saldoDisponivel / material.minimo) * 100) : 0} 
+                    className={`h-2 ${
+                      material.urgencia === "critica" ? "[&>div]:bg-red-600" :
+                      material.urgencia === "alta" ? "[&>div]:bg-yellow-600" :
+                      "[&>div]:bg-blue-600"
+                    }`}
+                  />
                 </div>
-                <Progress 
-                  value={material.porcentagem} 
-                  className={`h-2 ${
-                    material.urgencia === "critica" ? "[&>div]:bg-red-600" :
-                    material.urgencia === "alta" ? "[&>div]:bg-yellow-600" :
-                    "[&>div]:bg-blue-600"
-                  }`}
-                />
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
@@ -362,22 +382,6 @@ export default function Dashboard() {
               </div>
               <p className="text-xs text-muted-foreground text-left">
                 Requisitar materiais
-              </p>
-            </Button>
-
-            <Button 
-              variant="outline" 
-              className="h-auto flex-col items-start p-4 gap-2"
-              onClick={() => navigate("/calculadora-rapida")}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Package className="size-4 text-purple-600" />
-                </div>
-                <span className="font-semibold">Calculadora Rápida</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">
-                Calcular orçamentos técnicos
               </p>
             </Button>
           </div>

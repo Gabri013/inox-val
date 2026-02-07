@@ -4,131 +4,192 @@
  * REGRA: Pés = Ø38mm, Contraventamento = Ø25mm (1")
  */
 
-import { BOMResult, MesaConfig, BOMItem, CUSTOS_MAO_OBRA } from '../../types';
+import { BOMResult, MesaConfig, BOMItem, CUSTOS_MAO_OBRA, PRECOS_COMPONENTES } from '../../types';
 import {
+  r1,
   r2,
+  ABA,
+  DOBRA,
+  RAIO,
   calcularPesoChapa,
   calcularCustoChapa,
   calcularPesoTubo,
   calcularCustoTubo,
   validarConfig,
-  MAT_CHAPA_12,
+  MAT_CHAPA_08,
+  MAT_CHAPA_20,
   MAT_TUBO_25,
   MAT_TUBO_38,
 } from '../utils';
-import { PRECOS_COMPONENTES } from '../../types';
+
+const OFFSET_DESENHO = 1.8;
+const FOLGA_CONTRAV = 130;
+const FOLGA_PE = 72;
+
+const H_REFORCO_FRONTAL = 93;
+const CASQUILHO_DIM = 61;
+const CASQUILHO_ESP = 2.0;
 
 export function gerarBOM_MPLC(config: MesaConfig): BOMResult {
   const { l, c, h, material = 'INOX_304' } = config;
-  const espessura_chapa = config.espessura_chapa || 1.2;
+  const espessura_chapa = config.espessura_chapa || 0.8;
 
   const bom: BOMItem[] = [];
   const { avisos } = validarConfig(config);
 
-  // 1. TAMPO
-  const pesoTampo = calcularPesoChapa(l, c, espessura_chapa, material);
-  bom.push({
-    desc: 'TAMPO CENTRAL',
+  const somaDobras = ABA + DOBRA + RAIO;
+  const blankC = r1((c - OFFSET_DESENHO) + 2 * somaDobras);
+  const blankL = r1((l - OFFSET_DESENHO) + 2 * somaDobras);
+
+  const addChapaItem = (
+    item: Omit<BOMItem, 'peso' | 'pesoTotal' | 'custo' | 'custoTotal'>
+  ) => {
+    if (!item.w || !item.h || !item.espessura) {
+      bom.push({ ...item });
+      return;
+    }
+    const peso = calcularPesoChapa(item.h, item.w, item.espessura, material);
+    const custo = calcularCustoChapa(peso, material);
+    bom.push({
+      ...item,
+      peso,
+      pesoTotal: peso * item.qtd,
+      custo,
+      custoTotal: custo * item.qtd,
+    });
+  };
+
+  // 1. TAMPO (blank real)
+  addChapaItem({
+    desc: 'TAMPO LISO CENTRO',
     qtd: 1,
-    w: r2(c),
-    h: r2(l),
+    w: blankL,
+    h: blankC,
     espessura: espessura_chapa,
-    material: MAT_CHAPA_12,
+    material: MAT_CHAPA_08,
     processo: 'LASER',
-    codigo: `TAMPO-CENTRO-${l}X${c}`,
-    peso: pesoTampo,
-    pesoTotal: pesoTampo,
-    custo: calcularCustoChapa(pesoTampo, material),
-    custoTotal: calcularCustoChapa(pesoTampo, material),
+    codigo: 'MPLC-PC01',
     unidade: 'pç',
   });
 
-  // 2. ESTRUTURA CONTRAVENTADA (4 pés)
-  const alturaPerna = h - 50;
-  const numPes = 4;
-
-  bom.push({
-    desc: `PERNA ESTRUTURAL Ø38MM`,
-    qtd: numPes,
-    h: r2(alturaPerna),
-    material: MAT_TUBO_38,
-    processo: 'CORTE + SOLDA',
-    codigo: `PERNA-${alturaPerna}`,
-    peso: calcularPesoTubo(alturaPerna),
-    pesoTotal: calcularPesoTubo(alturaPerna) * numPes,
-    custo: calcularCustoTubo(alturaPerna),
-    custoTotal: calcularCustoTubo(alturaPerna) * numPes,
+  // 2. REFORÇO PADRÃO (PPB-30)
+  addChapaItem({
+    desc: 'REF. PADRÃO MESA LISA CENTRO',
+    qtd: 3,
+    w: 135.58,
+    h: r1(l - 50),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: 'GUILHOTINA',
+    codigo: 'PPB-30',
     unidade: 'pç',
   });
 
-  const comprimentoTravessa = l - 100;
+  // 3. PÉ NIVELADOR
   bom.push({
-    desc: `TRAVESSA LONGITUDINAL Ø38MM`,
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
     qtd: 4,
-    h: r2(comprimentoTravessa),
-    material: MAT_TUBO_38,
-    processo: 'CORTE + SOLDA',
-    codigo: `TRAV-LONG-${comprimentoTravessa}`,
-    peso: calcularPesoTubo(comprimentoTravessa),
-    pesoTotal: calcularPesoTubo(comprimentoTravessa) * 4,
-    custo: calcularCustoTubo(comprimentoTravessa),
-    custoTotal: calcularCustoTubo(comprimentoTravessa) * 4,
-    unidade: 'pç',
-  });
-
-  const comprimentoTravessaTransv = c - 100;
-  bom.push({
-    desc: `TRAVESSA TRANSVERSAL Ø38MM`,
-    qtd: 4,
-    h: r2(comprimentoTravessaTransv),
-    material: MAT_TUBO_38,
-    processo: 'CORTE + SOLDA',
-    codigo: `TRAV-TRANSV-${comprimentoTravessaTransv}`,
-    peso: calcularPesoTubo(comprimentoTravessaTransv),
-    pesoTotal: calcularPesoTubo(comprimentoTravessaTransv) * 4,
-    custo: calcularCustoTubo(comprimentoTravessaTransv),
-    custoTotal: calcularCustoTubo(comprimentoTravessaTransv) * 4,
-    unidade: 'pç',
-  });
-
-  const comprimentoDiagonal = Math.sqrt(alturaPerna ** 2 + comprimentoTravessaTransv ** 2);
-  bom.push({
-    desc: `CONTRAVENTAMENTO DIAGONAL Ø25MM`,
-    qtd: 4,
-    h: r2(comprimentoDiagonal),
-    material: MAT_TUBO_25,
-    processo: 'CORTE + SOLDA',
-    codigo: `CONTRAV-${Math.round(comprimentoDiagonal)}`,
-    peso: calcularPesoTubo(comprimentoDiagonal, 'TUBO_25x1_2'),
-    pesoTotal: calcularPesoTubo(comprimentoDiagonal, 'TUBO_25x1_2') * 4,
-    custo: calcularCustoTubo(comprimentoDiagonal, 'TUBO_25x1_2'),
-    custoTotal: calcularCustoTubo(comprimentoDiagonal, 'TUBO_25x1_2') * 4,
-    unidade: 'pç',
-  });
-
-  // 3. COMPONENTES
-  bom.push({
-    desc: 'PÉ REGULÁVEL INOX',
-    qtd: numPes,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: '1006036',
+    processo: 'ALMOXARIFADO',
+    codigo: '1006036',
     pesoTotal: 0,
     custo: PRECOS_COMPONENTES.PE_REGULAVEL,
-    custoTotal: PRECOS_COMPONENTES.PE_REGULAVEL * numPes,
+    custoTotal: PRECOS_COMPONENTES.PE_REGULAVEL * 4,
     unidade: 'un',
   });
 
+  // 4. REFORÇO FRONTAL (BANDEIRA) - 2x
+  addChapaItem({
+    desc: 'REFORÇO FRONTAL',
+    qtd: 2,
+    w: r1(c - FOLGA_CONTRAV),
+    h: H_REFORCO_FRONTAL,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: 'GUILHOTINA',
+    codigo: 'MPLC-PC03',
+    unidade: 'pç',
+  });
+
+  // 5. CASQUILHOS
+  addChapaItem({
+    desc: 'CASQUILHO',
+    qtd: 4,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: 'LASER',
+    codigo: 'PPB-01B',
+    unidade: 'pç',
+  });
+
+  // 6. PÉS (TUBO)
+  const comprimentoPe = r1(h - FOLGA_PE);
+  const pesoPe = calcularPesoTubo(comprimentoPe);
   bom.push({
-    desc: 'PARAFUSO M8X20 INOX',
-    qtd: numPes * 4 + 20,
-    pesoTotal: 0,
-    custo: PRECOS_COMPONENTES.PARAFUSO_M8,
-    custoTotal: PRECOS_COMPONENTES.PARAFUSO_M8 * (numPes * 4 + 20),
-    unidade: 'un',
+    desc: 'PÉ (TUBO)',
+    qtd: 4,
+    w: comprimentoPe,
+    h: 0,
+    espessura: 0,
+    material: MAT_TUBO_38,
+    processo: 'CORTE',
+    codigo: 'PPB-02',
+    peso: pesoPe,
+    pesoTotal: pesoPe * 4,
+    custo: calcularCustoTubo(comprimentoPe),
+    custoTotal: calcularCustoTubo(comprimentoPe) * 4,
+    unidade: 'pç',
+  });
+
+  // 7. CONTRAVENTAMENTOS
+  const contravL = r1(l - FOLGA_CONTRAV);
+  const contravC = r1(c - FOLGA_CONTRAV);
+  const pesoContravL = calcularPesoTubo(contravL, 'TUBO_25x1_2');
+  const pesoContravC = calcularPesoTubo(contravC, 'TUBO_25x1_2');
+
+  bom.push({
+    desc: 'CONTRAV. LATERAL',
+    qtd: 2,
+    w: contravL,
+    h: 0,
+    espessura: 0,
+    material: MAT_TUBO_25,
+    processo: 'CORTE',
+    codigo: 'MPLC-PT01',
+    peso: pesoContravL,
+    pesoTotal: pesoContravL * 2,
+    custo: calcularCustoTubo(contravL, 'TUBO_25x1_2'),
+    custoTotal: calcularCustoTubo(contravL, 'TUBO_25x1_2') * 2,
+    unidade: 'pç',
+  });
+  bom.push({
+    desc: 'CONTRAV. TRASEIRO',
+    qtd: 1,
+    w: contravC,
+    h: 0,
+    espessura: 0,
+    material: MAT_TUBO_25,
+    processo: 'CORTE',
+    codigo: 'MPLC-PT02',
+    peso: pesoContravC,
+    pesoTotal: pesoContravC,
+    custo: calcularCustoTubo(contravC, 'TUBO_25x1_2'),
+    custoTotal: calcularCustoTubo(contravC, 'TUBO_25x1_2'),
+    unidade: 'pç',
   });
 
   // TOTAIS
   const pesoTotal = bom.reduce((acc, item) => acc + (item.pesoTotal || 0), 0);
   const custoMaterial = bom.reduce((acc, item) => acc + (item.custoTotal || 0), 0);
-  const areaM2 = (l / 1000) * (c / 1000);
+  const areaM2 = bom.reduce((acc, item) => {
+    if (!item.w || !item.h || item.w <= 0 || item.h <= 0) return acc;
+    return acc + (item.w * item.h * item.qtd) / 1_000_000;
+  }, 0);
   const custoMaoObra = areaM2 * CUSTOS_MAO_OBRA.BANCADA_SIMPLES + CUSTOS_MAO_OBRA.SETUP;
   const custoTotal = custoMaterial + custoMaoObra;
 

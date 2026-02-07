@@ -4,7 +4,7 @@
  */
 
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Megaphone } from 'lucide-react';
 import { EntityFormShell } from '@/shared/components';

@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { EntityFormShell } from '@/shared/components/EntityFormShell';
 import { Input } from '@/app/components/ui/input';

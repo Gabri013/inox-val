@@ -5,8 +5,9 @@
  */
 
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
@@ -16,6 +17,8 @@ import { Building2, Loader2 } from 'lucide-react';
 export function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
+
+  const firebaseReady = isFirebaseConfigured() && !!getFirebaseAuth();
   
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -70,6 +73,18 @@ export function Signup() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border ${
+                firebaseReady
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
+              }`}
+            >
+              <span className={`size-2 rounded-full ${firebaseReady ? 'bg-green-500' : 'bg-red-500'}`} />
+              {firebaseReady ? 'Firebase conectado' : 'Firebase não configurado'}
+            </div>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md border border-red-200">

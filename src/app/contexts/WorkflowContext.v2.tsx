@@ -33,9 +33,9 @@ import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { useOrdens } from "@/hooks/useOrdens";
 import { useAudit } from "./AuditContext";
 import { isModeloValido } from "@/bom/models";
-import { CHAPAS_PADRAO } from "@/domains/calculadora/types";
-import type { ResultadoCalculadora } from "@/domains/calculadora/types";
-import { estoqueMateriaisService } from "@/domains/estoque/estoque-material.service";
+import { CHAPAS_PADRAO } from "@/domains/calculadora";
+import type { ResultadoCalculadora } from "@/domains/calculadora";
+import { estoqueMateriaisService } from "@/domains/estoque";
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 

@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, isValidElement } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -173,14 +173,14 @@ export function ListPage<T>({
         <div className="flex items-start gap-3">
           {icon && (
             <div className="p-2 bg-primary/10 rounded-lg mt-1">
-              {(() => {
-                const IconComponent = icon;
-                return typeof IconComponent === 'function' ? (
-                  <IconComponent className="size-8 text-primary" />
-                ) : (
-                  IconComponent
-                );
-              })()}
+              {isValidElement(icon) ? (
+                icon
+              ) : (
+                (() => {
+                  const IconComponent = icon as React.ElementType;
+                  return <IconComponent className="size-8 text-primary" />;
+                })()
+              )}
             </div>
           )}
           <div>
@@ -221,7 +221,16 @@ export function ListPage<T>({
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  {stat.icon}
+                  {stat.icon ? (
+                    isValidElement(stat.icon) ? (
+                      stat.icon
+                    ) : (
+                      (() => {
+                        const IconComponent = stat.icon as React.ElementType;
+                        return <IconComponent className="size-5 text-muted-foreground" />;
+                      })()
+                    )
+                  ) : null}
                 </div>
               </CardHeader>
               <CardContent>

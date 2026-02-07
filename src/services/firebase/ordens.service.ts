@@ -12,10 +12,33 @@
  * ============================================================================
  */
 
+
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { getEmpresaContext, getFirestore } from "@/lib/firebase";
 import { BaseFirestoreService, type ServiceResult } from './base.service';
 import { COLLECTIONS } from '@/types/firebase';
 import type { OrdemProducao, StatusOrdem } from '@/app/types/workflow';
 import { orcamentosService } from './orcamentos.service';
+
+export function getOrdensRef(callback: (ordens: any[]) => void): () => void {
+  const empresaInfo = getEmpresaContext();
+  if (!empresaInfo.empresaId) {
+    return () => {};
+  }
+
+  const db = getFirestore();
+  const ref = query(
+    collection(db, COLLECTIONS.ordens_producao),
+    where("empresaId", "==", empresaInfo.empresaId)
+  );
+
+  const unsub = onSnapshot(ref, (snap) => {
+    const ordens = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    callback(ordens);
+  });
+
+  return unsub;
+}
 
 const STATUS_TRANSITIONS: Record<StatusOrdem, StatusOrdem[]> = {
   'Pendente': ['Em Produção', 'Cancelada'],
@@ -111,7 +134,7 @@ export class OrdensService extends BaseFirestoreService<OrdemProducao> {
       ).padStart(6, '0')}`;
 
       // 5. Criar OP
-      const novaOrdem: Omit<OrdemProducao, 'id' | 'tenantId' | 'createdAt' | 'updatedAt'> = {
+      const novaOrdem: Omit<OrdemProducao, 'id' | 'empresaId' | 'createdAt' | 'updatedAt'> = {
         numero: numeroOrdem,
         orcamentoId: orcamento.data.id,
         clienteId: orcamento.data.clienteId,

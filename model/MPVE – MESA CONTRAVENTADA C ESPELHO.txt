@@ -1,0 +1,219 @@
+MPVE – MESA CONTRAVENTADA C/ ESPELHO TRASEIRO + TAMPO COM CUBA (DIR) + BORDA D'ÁGUA
+
+// src/bom/models/mpve/mpve.ts
+import { BOMItem, BOMResult, Casquilhos, MesaConfig, Pes } from "../../types";
+import { r1, r2 } from "../../shared/utils";
+
+/**
+ * MPVE – MESA CONTRAVENTADA C/ ESPELHO TRASEIRO + TAMPO COM CUBA (DIR) + BORDA D'ÁGUA
+ * Base: CONTRAVENTADA 4 PÉS (MPVE)
+ *
+ * - Tampo (blank): desenvolvido por segmentos (não usa ABA/DOBRA/RAIO do tampo liso)
+ * - BOM base (1500x700): blank 1639,93 x 875,13 :contentReference[oaicite:3]{index=3}
+ * - Itens do BOM: :contentReference[oaicite:4]{index=4}
+ */
+
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+
+// ===== Estrutura (M02) =====
+const FOLGA_PE = 72;      // 900 -> 828 :contentReference[oaicite:5]{index=5}
+const FOLGA_LATERAL = 135; // 700 -> 565 :contentReference[oaicite:6]{index=6}
+const FOLGA_TRASEIRO = 130; // 1500 -> 1370 :contentReference[oaicite:7]{index=7}
+
+// ===== Casquilho =====
+const CASQUILHO_DIM = 61;
+const CASQUILHO_ESP = 2.0;
+
+// ===== Reforços (conforme BOM MPVE) =====
+const REFORCO_PADRAO_W = 120.38;
+const REFORCO_PADRAO_L_FOLGA = 56; // 700 -> 644 :contentReference[oaicite:8]{index=8}
+const REFORCO_PADRAO_QTD = 2;       // :contentReference[oaicite:9]{index=9}
+const REFORCO_PADRAO_COD = "PPB-28";
+
+const REFORCO_TRASEIRO_W_FOLGA = 22; // 1500 -> 1478 :contentReference[oaicite:10]{index=10}
+const REFORCO_TRASEIRO_H = 104.28;
+const REFORCO_TRASEIRO_COD = "MPVE-PC02";
+
+// ===== Fechamentos do espelho =====
+const FECHAMENTO_W = 30.40;
+const FECHAMENTO_H = 148.37;
+
+// ===== Tampo com cuba (desenvolvimento por segmentos do desenho) =====
+// Comprimento: 1639,93 = (C - 80) + 2*(9,1+23,2+38,1+39,5)  (miolo 1420 no desenho) :contentReference[oaicite:11]{index=11}
+const C_MIOLO_FOLGA = 80;
+const C_LADO_SUM = 9.1 + 23.2 + 38.1 + 39.5;
+
+// Largura: 875,13 = (L - 70) + (90+32,5+12,8) + (39,5+38,1+23,2+9,1)  (miolo 630 no desenho) :contentReference[oaicite:12]{index=12}
+const L_MIOLO_FOLGA = 70;
+const L_LADO_AGUA = 90 + 32.5 + 12.8;
+const L_LADO_DOBRAS = 39.5 + 38.1 + 23.2 + 9.1;
+
+// Cuba (item almoxarifado do BOM)
+const CUBA_DESC = "CUBA -500X400X250 CH";
+const CUBA_COD = "CUBA";
+
+export function gerarBOM_MPVE(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const blankC = r2((c - C_MIOLO_FOLGA) + 2 * C_LADO_SUM);
+  const blankL = r2((l - L_MIOLO_FOLGA) + L_LADO_AGUA + L_LADO_DOBRAS);
+
+  const bom: BOMItem[] = [];
+
+  // Cuba
+  bom.push({
+    desc: CUBA_DESC,
+    qtd: 1,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: CUBA_COD,
+    processo: "ALMOXARIFADO",
+    codigo: CUBA_COD,
+  });
+
+  // Pé nivelador
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 4,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "1006036",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  // Contraventamentos (tubo) – conforme BOM: 2 laterais + 2 traseiros :contentReference[oaicite:13]{index=13}
+  bom.push({
+    desc: "CONTRAV. LATERAL",
+    qtd: 2,
+    w: r1(l - FOLGA_LATERAL),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MPVE-PT01",
+  });
+
+  bom.push({
+    desc: "CONTRAV. TRASEIRO",
+    qtd: 2,
+    w: r1(c - FOLGA_TRASEIRO),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1"x1-1003012',
+    processo: "CORTE",
+    codigo: "MPVE-PT02",
+  });
+
+  // Pés (tubo)
+  bom.push({
+    desc: 'TUBO ø38,1mm PÉ',
+    qtd: 4,
+    w: r1(a - FOLGA_PE),
+    h: 0,
+    espessura: 0,
+    material: 'TI-Ø1.1/2"x1-1003004',
+    processo: "CORTE",
+    codigo: "PPB-02",
+  });
+
+  // Reforço padrão mesa lisa (PPB-28) – qty 2 :contentReference[oaicite:14]{index=14}
+  bom.push({
+    desc: "REFORÇO PADRÃO MESA LISA",
+    qtd: REFORCO_PADRAO_QTD,
+    w: REFORCO_PADRAO_W,
+    h: r2(l - REFORCO_PADRAO_L_FOLGA),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: REFORCO_PADRAO_COD,
+  });
+
+  // Reforço traseiro
+  bom.push({
+    desc: "REFORÇO TRASEIRO",
+    qtd: 1,
+    w: r1(c - REFORCO_TRASEIRO_W_FOLGA),
+    h: REFORCO_TRASEIRO_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: REFORCO_TRASEIRO_COD,
+  });
+
+  // Fechamentos
+  bom.push({
+    desc: "FECHAMENTO DIR ESP TAMPO",
+    qtd: 1,
+    w: FECHAMENTO_W,
+    h: FECHAMENTO_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "PPB-04",
+  });
+
+  bom.push({
+    desc: "FECHAMENTO ESQ ESP TAMPO",
+    qtd: 1,
+    w: FECHAMENTO_W,
+    h: FECHAMENTO_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "PPB-04B",
+  });
+
+  // Tampo com cuba (DIR) – desenvolvimento por segmentos :contentReference[oaicite:15]{index=15}
+  bom.push({
+    desc: "TAMPO COM CUBA DIR",
+    qtd: 1,
+    w: blankL,
+    h: blankC,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPVE-PC01",
+  });
+
+  // Casquilhos
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 4,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "PPB-01B",
+  });
+
+  const casquilhos: Casquilhos = {
+    qtd: 4,
+    dimensao: "61 x 61",
+    espessura: CASQUILHO_ESP,
+  };
+
+  const pes: Pes = {
+    qtd: 4,
+    tubo: r1(a - FOLGA_PE),
+  };
+
+  // Mantém compatibilidade com seu retorno (mesmo tendo 2+2)
+  const contraventamentos = {
+    lateral: r1(l - FOLGA_LATERAL),
+    traseiro: r1(c - FOLGA_TRASEIRO),
+    qtd: 4,
+  };
+
+  return {
+    bom,
+    pes,
+    contraventamentos,
+    casquilhos,
+    prateleira: null,
+  };
+}

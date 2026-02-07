@@ -23,7 +23,7 @@ export interface Cliente {
   atualizadoEm: string; // ISO date string
   
   // Campos para Firebase (multi-tenant)
-  tenantId?: string; // ID da empresa (multi-tenant)
+  empresaId?: string; // ID da empresa (multi-tenant)
 }
 
 export interface CreateClienteInput {

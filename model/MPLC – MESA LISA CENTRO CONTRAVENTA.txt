@@ -1,0 +1,130 @@
+MPLC – MESA LISA CENTRO CONTRAVENTADA
+
+// src/bom/models/mplc/mplc.ts
+import { BOMItem, BOMResult, Casquilhos, Contraventamentos, MesaConfig, Pes } from "../../types";
+import { ABA, DOBRA, RAIO } from "../../shared/constants";
+import { r1 } from "../../shared/utils";
+
+/**
+ * MPLC – MESA LISA CENTRO CONTRAVENTADA
+ * Base PDF:
+ * - PC01: blank 1639,5 x 839,5 com medidas internas 1498,2 / 698,2
+ * - M02: contrav lateral = L-130 (2x), traseiro = C-130 (1x), pé = A-72 (4x)
+ */
+const OFFSET_DESENHO = 1.8;
+const FOLGA_CONTRAV = 130;
+const FOLGA_PE = 72;
+
+const H_REFORCO_FRONTAL = 93;
+const CASQUILHO_DIM = 61;
+const CASQUILHO_ESP = 2.0;
+
+// códigos/materiais conforme PDFs
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+const MAT_TUBO_PE = 'TI-Ø1.1/2"x1-1003004';
+const MAT_TUBO_CONTRAV = 'TI-Ø1"x1-1003012';
+
+export function gerarBOM_MPLC(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const somaDobras = ABA + DOBRA + RAIO;
+
+  // PC01 (blank)
+  const blankC = r1((c - OFFSET_DESENHO) + 2 * somaDobras);
+  const blankL = r1((l - OFFSET_DESENHO) + 2 * somaDobras);
+
+  const bom: BOMItem[] = [];
+
+  // M01 (tampo + ref. padrão)
+  bom.push({
+    desc: "TAMPO LISO CENTRO",
+    qtd: 1,
+    w: blankL,
+    h: blankC,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLC-PC01",
+  });
+
+  // No M01 aparece “PPB-30 3x”. No CSV do MPLCP ele tem dimensões.
+  // Mantido como peça de chapa (guilhotina) padrão da mesa lisa centro.
+  bom.push({
+    desc: "REF. PADRÃO MESA LISA CENTRO",
+    qtd: 3,
+    w: 135.58,
+    h: r1(l - 50),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "PPB-30",
+  });
+
+  // M02 (estrutura)
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 4,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "1006036",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  // Reforço frontal (2x)
+  bom.push({
+    desc: "REFORÇO FRONTAL",
+    qtd: 2,
+    w: r1(c - FOLGA_CONTRAV),
+    h: H_REFORCO_FRONTAL,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLC-PC03",
+  });
+
+  // Casquilhos (4x)
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 4,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "PPB-01B",
+  });
+
+  const casquilhos: Casquilhos = {
+    qtd: 4,
+    dimensao: "61 x 61",
+    espessura: CASQUILHO_ESP,
+  };
+
+  // Pés (tubo) – A-72
+  const pes: Pes = {
+    qtd: 4,
+    tubo: r1(a - FOLGA_PE),
+  };
+
+  // Contraventamentos – (L-130) / (C-130)
+  const contraventamentos: Contraventamentos = {
+    lateral: r1(l - FOLGA_CONTRAV),
+    traseiro: r1(c - FOLGA_CONTRAV),
+    qtd: 3,
+  };
+
+  // Observação: os cortes de tubo podem ser retornados como itens também, se você quiser.
+  // Aqui mantive como antes: pés/contravs fora do nesting e fora do "bom" principal,
+  // mas se seu app precisar, é só adicionar itens "CORTE" com material MAT_TUBO_*.
+
+  return {
+    bom,
+    pes,
+    contraventamentos,
+    casquilhos,
+    prateleira: null,
+  };
+}

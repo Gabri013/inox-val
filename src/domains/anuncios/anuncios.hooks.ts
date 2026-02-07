@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { anunciosService } from './anuncios.service';
+import { anunciosService } from '@/services/firestore/anuncios.service';
 import type {
   AnunciosFilters,
   CreateAnuncioDTO,

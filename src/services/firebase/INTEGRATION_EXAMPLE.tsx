@@ -15,7 +15,7 @@ import { useState, useEffect } from 'react';
 import { clientesService } from './clientes.service';
 import { orcamentosService } from './orcamentos.service';
 import { ordensService } from './ordens.service';
-import type { Cliente } from '@/domains/clientes/clientes.types';
+import type { Cliente } from '@/domains/clientes';
 import type { Orcamento, OrdemProducao } from '@/app/types/workflow';
 import { toast } from 'sonner';
 
@@ -376,18 +376,21 @@ export function ExemploListaClientesComPaginacao() {
  */
 
 import { onSnapshot, collection, query, where } from 'firebase/firestore';
-import { getFirestore } from '@/lib/firebase';
+import { getFirestore, getEmpresaContext } from '@/lib/firebase';
 
 export function ExemploRealtimeOrcamentos() {
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
   useEffect(() => {
     const db = getFirestore();
-    const tenantId = 'seu-tenant-id'; // Obter do contexto de autenticação
+    const empresaInfo = getEmpresaContext();
+    if (!empresaInfo.empresaId) {
+      return;
+    }
 
     const q = query(
       collection(db, 'orcamentos'),
-      where('tenantId', '==', tenantId),
+      where('empresaId', '==', empresaInfo.empresaId),
       where('status', '==', 'Enviado')
     );
 
@@ -447,7 +450,7 @@ function useClientes() {
     carregar();
   }, []);
 
-  async function criar(cliente: Omit<Cliente, 'id' | 'tenantId'>) {
+  async function criar(cliente: Omit<Cliente, 'id' | 'empresaId'>) {
     const result = await clientesService.create(cliente);
     
     if (result.success && result.data) {

@@ -1,1 +1,21 @@
 node_modules
+
+# Build artifacts
+dist
+
+# Logs
+*.log
+firestore-debug.log
+
+# Env and secrets
+.env
+serviceAccountKey.json
+.secrets/
+
+# Tooling caches
+.firebase
+.vite
+.turbo
+
+# OS files
+.DS_Store

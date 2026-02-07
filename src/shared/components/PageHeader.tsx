@@ -2,7 +2,7 @@
  * Componente PageHeader padrão para todas as páginas do ERP
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, isValidElement } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -99,14 +99,14 @@ export function PageHeader({
         <div className="flex items-start gap-3">
           {icon && (
             <div className="p-2 bg-primary/10 rounded-lg mt-1">
-              {(() => {
-                const IconComponent = icon;
-                return typeof IconComponent === 'function' ? (
-                  <IconComponent className="size-8 text-primary" />
-                ) : (
-                  IconComponent
-                );
-              })()}
+              {isValidElement(icon) ? (
+                icon
+              ) : (
+                (() => {
+                  const IconComponent = icon as React.ElementType;
+                  return <IconComponent className="size-8 text-primary" />;
+                })()
+              )}
             </div>
           )}
           <div>

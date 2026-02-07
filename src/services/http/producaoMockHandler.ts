@@ -3,7 +3,7 @@
  * Simula lógica de backend para controle de produção
  */
 
-import { ordensMock, dashboardMock, materiaisMock } from '@/domains/producao/producao.seed';
+import { ordensMock, dashboardMock, materiaisMock } from '@/domains/producao';
 import type { 
   OrdemProducaoCompleta, 
   OrdemProducaoItem,
@@ -11,7 +11,7 @@ import type {
   ConsultaMaterial,
   SetorProducao,
   MovimentacaoSetor 
-} from '@/domains/producao/producao.types';
+} from '@/domains/producao';
 import { newId } from '@/shared/types/ids';
 
 // Estado em memória (poderia usar IndexedDB também)

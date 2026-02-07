@@ -9,9 +9,9 @@ import {
 } from "../types/workflow";
 import { useAudit } from "./AuditContext";
 import { isModeloValido, getModelo } from "@/bom/models";
-import { CHAPAS_PADRAO } from "@/domains/calculadora/types";
-import type { ResultadoCalculadora } from "@/domains/calculadora/types";
-import { estoqueMateriaisService } from "@/domains/estoque/estoque-material.service";
+import { CHAPAS_PADRAO } from "@/domains/calculadora";
+import type { ResultadoCalculadora } from "@/domains/calculadora";
+import { estoqueMateriaisService } from "@/domains/estoque";
 import type { BOMItem } from "@/bom/types";
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);

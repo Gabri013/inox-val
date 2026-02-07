@@ -13,7 +13,7 @@
 
 import { BaseFirestoreService, type ServiceResult } from './base.service';
 import { COLLECTIONS } from '@/types/firebase';
-import type { Cliente, ClienteStatus } from '@/domains/clientes/clientes.types';
+import type { Cliente, ClienteStatus } from '@/domains/clientes';
 
 export class ClientesService extends BaseFirestoreService<Cliente> {
   constructor() {

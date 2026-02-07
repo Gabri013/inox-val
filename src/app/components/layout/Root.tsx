@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router";
+import { useState } from "react";
+import { Navigate, Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { 
   LayoutDashboard, 
@@ -15,7 +15,7 @@ import {
   UserCog, 
   Settings, 
   Shield, 
-  Zap, 
+  Calculator,
   HelpCircle, 
   X, 
   Menu, 
@@ -36,10 +36,11 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/app/hooks/usePermissions";
+import type { Module } from "@/domains/usuarios";
 
-const navigation = [
+const navigation: Array<{ name: string; href: string; icon: any; module?: Module; highlight?: boolean }> = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, module: "dashboard" },
-  { name: "Calculadora Rápida", href: "/calculadora-rapida", icon: Zap, highlight: true },
   { name: "Clientes", href: "/clientes", icon: Users, module: "clientes" },
   { name: "Produtos", href: "/produtos", icon: Package, module: "produtos" },
   { name: "Estoque", href: "/estoque", icon: Warehouse, module: "estoque" },
@@ -47,10 +48,10 @@ const navigation = [
   { name: "Ordens", href: "/ordens", icon: ClipboardList, module: "ordens" },
   { name: "Compras", href: "/compras", icon: ShoppingCart, module: "compras" },
   { name: "Controle de Produção", href: "/controle-producao", icon: Factory, module: "producao" },
-  { name: "Chat", href: "/chat", icon: MessageCircle },
-  { name: "Anúncios", href: "/anuncios", icon: Megaphone },
+  { name: "Calculadora", href: "/calculadora", icon: Calculator, module: "calculadora", highlight: true },
+  { name: "Chat", href: "/chat", icon: MessageCircle, module: "chat" },
+  { name: "Anúncios", href: "/anuncios", icon: Megaphone, module: "anuncios" },
   { name: "Usuários", href: "/usuarios", icon: UserCog, module: "usuarios" },
-  { name: "Configuração de Custos", href: "/configuracao-custos", icon: Settings },
   { name: "Auditoria", href: "/auditoria", icon: Shield, module: "auditoria" },
 ];
 
@@ -59,22 +60,32 @@ export default function Root() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+  const { canAccess } = usePermissions();
 
-  // Verificar autenticação
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
-  }, [user, navigate]);
+  // Filtrar menu por permissão do usuário
+  const visibleNavigation = navigation.filter(
+    (item) => !item.module || canAccess(item.module)
+  );
 
-  if (!user) {
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   const getUserInitials = () => {
@@ -85,13 +96,6 @@ export default function Root() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
-
-  const roleColors: Record<string, string> = {
-    Admin: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-    Engenharia: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    Producao: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-    Comercial: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
   };
 
   return (
@@ -126,9 +130,8 @@ export default function Root() {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const isActive = location.pathname === item.href;
-            // Temporariamente, mostrar todos os itens (Firebase Auth não tem hasPermission ainda)
             
             return (
               <Link
@@ -150,20 +153,6 @@ export default function Root() {
 
         {/* Footer */}
         <div className="p-4 border-t border-border space-y-2">
-          {/* Calculadora Rápida */}
-          <Link
-            to="/calculadora-rapida"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-              location.pathname === "/calculadora-rapida"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            <Zap className="size-5 flex-shrink-0" />
-            {sidebarOpen && <span className="truncate">Calc. Rápida</span>}
-          </Link>
-
           {/* Ajuda */}
           <Link
             to="/ajuda"
@@ -240,10 +229,12 @@ export default function Root() {
                   <User className="size-4 mr-2" />
                   Meu Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
-                  <Settings className="size-4 mr-2" />
-                  Configurações
-                </DropdownMenuItem>
+                {canAccess("configuracoes") && (
+                  <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
+                    <Settings className="size-4 mr-2" />
+                    Configurações
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="size-4 mr-2" />
                   Sair

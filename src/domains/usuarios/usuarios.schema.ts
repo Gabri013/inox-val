@@ -7,7 +7,17 @@ import { z } from 'zod';
 /**
  * Schema para role
  */
-export const userRoleSchema = z.enum(['Admin', 'Engenharia', 'Producao', 'Comercial']);
+export const userRoleSchema = z.enum([
+  'Administrador',
+  'Dono',
+  'Compras',
+  'Gerencia',
+  'Financeiro',
+  'Producao',
+  'Engenharia',
+  'Orcamentista',
+  'Vendedor',
+]);
 
 /**
  * Schema para status

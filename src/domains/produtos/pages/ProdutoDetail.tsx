@@ -2,7 +2,7 @@
  * Página de detalhes do Produto
  */
 
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';

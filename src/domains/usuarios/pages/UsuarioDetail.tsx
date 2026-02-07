@@ -3,7 +3,7 @@
  * Acesso: Apenas Admin
  */
 
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Edit, Trash2, Shield, User, Mail, Phone, Calendar, Briefcase } from 'lucide-react';
 import { PageHeader } from '@/shared/components';
 import { Button } from '@/app/components/ui/button';

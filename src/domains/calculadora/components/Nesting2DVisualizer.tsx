@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import type { ResultadoNesting } from '@/domains/calculadora/types';
+import type { ResultadoNesting } from '@/domains/calculadora';
 
 interface Nesting2DVisualizerProps {
   resultado: ResultadoNesting;

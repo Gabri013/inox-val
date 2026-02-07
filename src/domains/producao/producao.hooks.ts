@@ -1,182 +1,87 @@
 /**
  * Hooks React Query para Produção
+ * Fonte oficial: itens em subcoleções via collectionGroup('itens')
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { producaoService } from './producao.service';
-import type { SetorProducao } from './producao.types';
+
+import { getEmpresaId } from '@/services/firestore/base';
+import type { SetorProducao, StatusProducaoItem } from './producao.types';
+import { producaoItensService } from './services/producao-itens.service';
 
 const QUERY_KEY = 'producao';
 
-/**
- * Hook para listar ordens de produção
- */
-export function useOrdensProducao(filters?: any) {
-  return useQuery({
-    queryKey: [QUERY_KEY, 'ordens', filters],
-    queryFn: () => producaoService.listOrdens(filters),
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
-  });
-}
-
-/**
- * Hook para buscar ordem específica
- */
-export function useOrdemProducao(id: string | null) {
-  return useQuery({
-    queryKey: [QUERY_KEY, 'ordem', id],
-    queryFn: () => producaoService.getOrdem(id!),
-    enabled: !!id,
-    refetchInterval: 15000, // Atualiza a cada 15 segundos
-  });
-}
-
-/**
- * Hook para itens de um setor
- */
 export function useItensSetor(setor: SetorProducao | null) {
   return useQuery({
     queryKey: [QUERY_KEY, 'setor', setor],
-    queryFn: () => producaoService.getItensPorSetor(setor!),
+    queryFn: async () => {
+      const empresaId = await getEmpresaId();
+      return producaoItensService.getItensPorSetor(empresaId, setor!);
+    },
     enabled: !!setor,
-    refetchInterval: 10000, // Atualiza a cada 10 segundos
+    refetchInterval: 10000,
   });
 }
 
-/**
- * Hook para dashboard de setores
- */
-export function useDashboardSetores(setor?: SetorProducao) {
-  return useQuery({
-    queryKey: [QUERY_KEY, 'dashboard', setor],
-    queryFn: () => producaoService.getDashboardSetor(setor),
-    refetchInterval: 5000, // Atualiza a cada 5 segundos
-  });
-}
-
-/**
- * Hook para consultar materiais
- */
-export function useConsultaMateriais(itemId: string | null) {
-  return useQuery({
-    queryKey: [QUERY_KEY, 'materiais', itemId],
-    queryFn: () => producaoService.consultarMateriais(itemId!),
-    enabled: !!itemId,
-  });
-}
-
-/**
- * Hook para dar entrada em setor
- */
-export function useEntradaSetor() {
+export function useMoverItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ itemId, setor, observacoes }: { 
-      itemId: string; 
-      setor: SetorProducao; 
-      observacoes?: string 
-    }) => producaoService.entradaSetor(itemId, setor, observacoes),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success(`Item movido para ${variables.setor}`);
+    mutationFn: async (input: {
+      orderId: string;
+      itemId: string;
+      novoSetor: SetorProducao;
+      setorAnterior?: SetorProducao | null;
+      operadorId?: string;
+      operadorNome?: string;
+      observacoes?: string;
+    }) => {
+      await producaoItensService.moverItemDeSetor(input.orderId, input.itemId, input.novoSetor, {
+        setorOrigem: input.setorAnterior ?? null,
+        setorDestino: input.novoSetor,
+        operadorId: input.operadorId,
+        operadorNome: input.operadorNome,
+        observacoes: input.observacoes,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.setorAnterior) {
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY, 'setor', variables.setorAnterior] });
+      }
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, 'setor', variables.novoSetor] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, 'setor'] });
     },
     onError: (error: Error) => {
-      toast.error(`Erro ao dar entrada: ${error.message}`);
+      toast.error(`Erro ao mover item: ${error.message}`);
     },
   });
 }
 
-/**
- * Hook para dar saída de setor
- */
-export function useSaidaSetor() {
+export function useAtualizarStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ itemId, observacoes }: { itemId: string; observacoes?: string }) =>
-      producaoService.saidaSetor(itemId, observacoes),
+    mutationFn: async (input: {
+      orderId: string;
+      itemId: string;
+      status: StatusProducaoItem;
+      operadorId?: string;
+      operadorNome?: string;
+      observacoes?: string;
+    }) => {
+      await producaoItensService.atualizarStatusItem(input.orderId, input.itemId, input.status, {
+        operadorId: input.operadorId,
+        operadorNome: input.operadorNome,
+        observacoes: input.observacoes,
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success('Item finalizado no setor');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, 'setor'] });
     },
     onError: (error: Error) => {
-      toast.error(`Erro ao dar saída: ${error.message}`);
+      toast.error(`Erro ao atualizar status: ${error.message}`);
     },
   });
 }
 
-/**
- * Hook para atualizar progresso
- */
-export function useAtualizarProgresso() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ itemId, progresso }: { itemId: string; progresso: number }) =>
-      producaoService.atualizarProgresso(itemId, progresso),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar progresso: ${error.message}`);
-    },
-  });
-}
-
-/**
- * Hook para rejeitar item
- */
-export function useRejeitarItem() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ itemId, motivo }: { itemId: string; motivo: string }) =>
-      producaoService.rejeitarItem(itemId, motivo),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.error('Item rejeitado');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao rejeitar item: ${error.message}`);
-    },
-  });
-}
-
-/**
- * Hook para pausar item
- */
-export function usePausarItem() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ itemId, motivo }: { itemId: string; motivo: string }) =>
-      producaoService.pausarItem(itemId, motivo),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.warning('Produção pausada');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao pausar: ${error.message}`);
-    },
-  });
-}
-
-/**
- * Hook para retomar item
- */
-export function useRetomarItem() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (itemId: string) => producaoService.retomarItem(itemId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success('Produção retomada');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao retomar: ${error.message}`);
-    },
-  });
-}

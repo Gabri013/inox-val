@@ -4,7 +4,7 @@
  * ============================================================================
  * 
  * Service genérico para operações CRUD no Firestore com suporte a:
- * - Multi-tenant (isolamento por tenantId)
+ * - Multi-tenant (isolamento por empresaId)
  * - Timestamps automáticos (createdAt, updatedAt)
  * - Paginação
  * - Filtros complexos
@@ -34,7 +34,7 @@ import {
   serverTimestamp,
   type Timestamp,
 } from 'firebase/firestore';
-import { getFirestore, getCurrentTenantId } from '@/lib/firebase';
+import { getFirestore, getEmpresaContext } from '@/lib/firebase';
 import type { FirebaseDocument } from '@/types/firebase';
 
 export interface PaginationOptions {
@@ -80,22 +80,22 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
   }
 
   /**
-   * Obtém o tenantId atual (multi-tenant)
+  * Obtém o empresaId atual (multi-tenant)
    */
-  protected getTenantId(): string {
-    const tenantId = getCurrentTenantId();
-    if (!tenantId) {
-      throw new Error('TenantId não configurado. Usuário não autenticado?');
+  protected getEmpresaId(): string {
+    const { empresaId } = getEmpresaContext();
+    if (!empresaId) {
+      throw new Error('EmpresaId não configurado. Usuário não autenticado?');
     }
-    return tenantId;
+    return empresaId;
   }
 
   /**
-   * Adiciona metadados ao documento (tenantId, timestamps)
+  * Adiciona metadados ao documento (empresaId, timestamps)
    */
   protected addMetadata(data: Partial<T>, isUpdate = false): any {
     const metadata: any = {
-      tenantId: this.getTenantId(),
+      empresaId: this.getEmpresaId(),
     };
 
     if (!isUpdate) {
@@ -142,11 +142,13 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
         ...docSnap.data(),
       });
 
-      // Validar tenantId (segurança)
-      if (data.tenantId !== this.getTenantId()) {
+      // Validar empresaId (segurança)
+      const empresaId = this.getEmpresaId();
+      const docEmpresaId = (data as any).empresaId;
+      if (docEmpresaId !== empresaId) {
         return {
           success: false,
-          error: 'Acesso negado: documento de outro tenant',
+          error: 'Acesso negado: documento de outra empresa',
         };
       }
 
@@ -168,8 +170,9 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
    */
   async list(options?: QueryOptions): Promise<ServiceResult<ListResult<T>>> {
     try {
+      const empresaId = this.getEmpresaId();
       const constraints: QueryConstraint[] = [
-        where('tenantId', '==', this.getTenantId()),
+        where('empresaId', '==', empresaId),
       ];
 
       // Adicionar filtros
@@ -231,7 +234,7 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
   /**
    * Cria novo documento
    */
-  async create(data: Omit<T, 'id' | 'tenantId' | 'createdAt' | 'updatedAt'>): Promise<ServiceResult<T>> {
+  async create(data: Omit<T, 'id' | 'empresaId' | 'createdAt' | 'updatedAt'>): Promise<ServiceResult<T>> {
     try {
       // Validar antes de criar (implementado nas subclasses)
       const validation = await this.validate(data as Partial<T>);
@@ -257,7 +260,7 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
   /**
    * Atualiza documento existente
    */
-  async update(id: string, data: Partial<Omit<T, 'id' | 'tenantId' | 'createdAt'>>): Promise<ServiceResult<T>> {
+  async update(id: string, data: Partial<Omit<T, 'id' | 'empresaId' | 'createdAt'>>): Promise<ServiceResult<T>> {
     try {
       // Verificar se documento existe e pertence ao tenant
       const existing = await this.getById(id);
@@ -276,7 +279,7 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
 
       // Remover campos que não devem ser atualizados
       delete (docData as any).id;
-      delete (docData as any).tenantId;
+      delete (docData as any).empresaId;
       delete (docData as any).createdAt;
 
       await updateDoc(docRef, docData);

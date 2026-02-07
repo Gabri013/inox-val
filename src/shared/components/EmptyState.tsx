@@ -2,7 +2,7 @@
  * Componente de estado vazio reutilizável
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, isValidElement } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 
@@ -54,7 +54,16 @@ export function EmptyState({
       
       {action && (
         <Button onClick={action.onClick}>
-          {action.icon}
+          {action.icon ? (
+            isValidElement(action.icon) ? (
+              action.icon
+            ) : (
+              (() => {
+                const IconComponent = action.icon as React.ElementType;
+                return <IconComponent className="mr-2 size-4" />;
+              })()
+            )
+          ) : null}
           {action.label}
         </Button>
       )}

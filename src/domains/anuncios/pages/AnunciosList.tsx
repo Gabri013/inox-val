@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Megaphone, Filter } from 'lucide-react';
 import { PageHeader, DataTable, FiltersPanel } from '@/shared/components';
 import { Button } from '@/app/components/ui/button';

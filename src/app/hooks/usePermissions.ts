@@ -3,41 +3,94 @@
  */
 
 import { useAuth } from '@/contexts/AuthContext';
-import type { Module, Permission } from '@/domains/usuarios/usuarios.types';
-import { hasPermission, hasModuleAccess } from '@/domains/usuarios/usuarios.types';
+import type { Module, Permission } from '@/domains/usuarios';
+import { defaultPermissionsByRole, type PermissionsMap, useRolePermissions } from '@/domains/usuarios';
 
 export function usePermissions() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
+  const { rolePermissions } = useRolePermissions();
+
+  const normalizeRole = (role?: string) => {
+    if (!role) return undefined;
+    const lower = role.toLowerCase();
+    const map: Record<string, keyof typeof defaultPermissionsByRole> = {
+      admin: 'Administrador',
+      administrador: 'Administrador',
+      adminstrador: 'Administrador',
+      dono: 'Dono',
+      owner: 'Dono',
+      financeiro: 'Financeiro',
+      engenharia: 'Engenharia',
+      engineering: 'Engenharia',
+      producao: 'Producao',
+      production: 'Producao',
+      orcamentista: 'Orcamentista',
+      vendedor: 'Vendedor',
+      compras: 'Compras',
+      gerencia: 'Gerencia',
+      'gerência': 'Gerencia',
+      manager: 'Gerencia',
+    };
+    if (map[lower]) return map[lower];
+    const knownRoles = Object.keys(defaultPermissionsByRole) as Array<
+      keyof typeof defaultPermissionsByRole
+    >;
+    if (knownRoles.includes(role as keyof typeof defaultPermissionsByRole)) {
+      return role as keyof typeof defaultPermissionsByRole;
+    }
+    return role;
+  };
+
+  const getProfileForPermissions = () => {
+    if (!profile) return null;
+    return {
+      ...profile,
+      role: normalizeRole(profile.role),
+      status: profile.ativo ? 'ativo' : 'inativo',
+    } as any;
+  };
+
+  const getEffectivePermissions = (): PermissionsMap | null => {
+    const userProfile = getProfileForPermissions();
+    if (!userProfile?.role) return null;
+    const role = userProfile.role as keyof typeof defaultPermissionsByRole;
+    const base = rolePermissions?.[role] || defaultPermissionsByRole[role];
+    return userProfile.permissoesCustomizadas || base;
+  };
 
   /**
    * Verifica se usuário tem permissão específica em um módulo
    */
   const can = (module: Module, permission: Permission): boolean => {
-    if (!user) return false;
-    return hasPermission(user as any, module, permission);
+    const permissions = getEffectivePermissions();
+    if (!permissions) return false;
+    return permissions[module]?.[permission] === true;
   };
 
   /**
    * Verifica se usuário tem acesso ao módulo (pelo menos view)
    */
   const canAccess = (module: Module): boolean => {
-    if (!user) return false;
-    return hasModuleAccess(user as any, module);
+    const permissions = getEffectivePermissions();
+    if (!permissions) return false;
+    return permissions[module]?.view === true;
   };
 
   /**
    * Verifica se usuário é Admin
    */
   const isAdmin = (): boolean => {
-    return user?.role === 'Admin';
+    const role = normalizeRole(profile?.role);
+    return role === 'Administrador' || role === 'Dono';
   };
 
   /**
    * Verifica se usuário tem uma das roles especificadas
    */
   const hasRole = (...roles: string[]): boolean => {
-    if (!user) return false;
-    return roles.includes(user.role);
+    const role = normalizeRole(profile?.role);
+    if (!role) return false;
+    return roles.includes(role);
   };
 
   return {
@@ -45,6 +98,6 @@ export function usePermissions() {
     canAccess,
     isAdmin,
     hasRole,
-    user,
+    user: profile,
   };
 }

@@ -75,11 +75,91 @@ const CONFIGURACAO_PADRAO: ConfiguracaoCustos = {
  */
 let configuracaoAtual: ConfiguracaoCustos = { ...CONFIGURACAO_PADRAO };
 
+const STORAGE_PREFIX = 'custos-config:';
+const cachePorUsuario = new Map<string, ConfiguracaoCustos>();
+
+function cloneConfig(config: ConfiguracaoCustos): ConfiguracaoCustos {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(config);
+  }
+  return JSON.parse(JSON.stringify(config));
+}
+
+function normalizarConfiguracao(parcial: Partial<ConfiguracaoCustos>): ConfiguracaoCustos {
+  return {
+    ...CONFIGURACAO_PADRAO,
+    ...parcial,
+    empresa: {
+      ...CONFIGURACAO_PADRAO.empresa,
+      ...parcial.empresa,
+    },
+    impostos: {
+      ...CONFIGURACAO_PADRAO.impostos,
+      ...parcial.impostos,
+    },
+    custosIndiretos: {
+      ...CONFIGURACAO_PADRAO.custosIndiretos,
+      ...parcial.custosIndiretos,
+    },
+    margens: {
+      ...CONFIGURACAO_PADRAO.margens,
+      ...parcial.margens,
+      margensPorCategoria: {
+        ...CONFIGURACAO_PADRAO.margens.margensPorCategoria,
+        ...parcial.margens?.margensPorCategoria,
+      },
+    },
+    descontos: {
+      ...CONFIGURACAO_PADRAO.descontos,
+      ...parcial.descontos,
+      descontoPorQuantidade:
+        parcial.descontos?.descontoPorQuantidade || CONFIGURACAO_PADRAO.descontos.descontoPorQuantidade,
+      descontoPorValor:
+        parcial.descontos?.descontoPorValor || CONFIGURACAO_PADRAO.descontos.descontoPorValor,
+    },
+  };
+}
+
+function getStorageKey(userId: string) {
+  return `${STORAGE_PREFIX}${userId}`;
+}
+
+function loadConfigFromStorage(userId: string): ConfiguracaoCustos | null {
+  if (!userId || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(getStorageKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ConfiguracaoCustos>;
+    return normalizarConfiguracao(parsed);
+  } catch {
+    return null;
+  }
+}
+
+function saveConfigToStorage(userId: string, config: ConfiguracaoCustos) {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(getStorageKey(userId), JSON.stringify(config));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 /**
  * Obter configuração atual
  */
-export function obterConfiguracao(): ConfiguracaoCustos {
-  return { ...configuracaoAtual };
+export function obterConfiguracao(usuarioId?: string): ConfiguracaoCustos {
+  if (!usuarioId) {
+    return cloneConfig(configuracaoAtual);
+  }
+
+  const cached = cachePorUsuario.get(usuarioId);
+  if (cached) return cloneConfig(cached);
+
+  const stored = loadConfigFromStorage(usuarioId);
+  const resolved = stored ? stored : cloneConfig(CONFIGURACAO_PADRAO);
+  cachePorUsuario.set(usuarioId, resolved);
+  return cloneConfig(resolved);
 }
 
 /**
@@ -87,15 +167,29 @@ export function obterConfiguracao(): ConfiguracaoCustos {
  */
 export function atualizarConfiguracao(
   parcial: Partial<ConfiguracaoCustos>,
-  usuario: string
+  usuario: string,
+  usuarioId?: string
 ): ConfiguracaoCustos {
-  configuracaoAtual = {
-    ...configuracaoAtual,
+  if (!usuarioId) {
+    configuracaoAtual = {
+      ...configuracaoAtual,
+      ...parcial,
+      atualizadoEm: new Date().toISOString(),
+      atualizadoPor: usuario,
+    };
+    return cloneConfig(configuracaoAtual);
+  }
+
+  const base = obterConfiguracao(usuarioId);
+  const atualizado = normalizarConfiguracao({
+    ...base,
     ...parcial,
     atualizadoEm: new Date().toISOString(),
     atualizadoPor: usuario,
-  };
-  return { ...configuracaoAtual };
+  });
+  cachePorUsuario.set(usuarioId, atualizado);
+  saveConfigToStorage(usuarioId, atualizado);
+  return cloneConfig(atualizado);
 }
 
 /**
@@ -106,9 +200,10 @@ export function calcularPrecoDetalhado(
   custoMaoObra: number,
   categoria: string = 'BANCADA_SIMPLES',
   quantidade: number = 1,
-  valorTotalPedido: number = 0
+  valorTotalPedido: number = 0,
+  configuracao?: ConfiguracaoCustos
 ): CalculoPrecoDetalhado {
-  const config = obterConfiguracao();
+  const config = configuracao ? normalizarConfiguracao(configuracao) : obterConfiguracao();
   
   // 1. Custos diretos
   const custoTotal = custoMaterial + custoMaoObra;
@@ -215,9 +310,16 @@ export function calcularPrecoDetalhado(
 /**
  * Resetar para configuração padrão
  */
-export function resetarConfiguracao(): ConfiguracaoCustos {
-  configuracaoAtual = { ...CONFIGURACAO_PADRAO };
-  return { ...configuracaoAtual };
+export function resetarConfiguracao(usuarioId?: string): ConfiguracaoCustos {
+  if (!usuarioId) {
+    configuracaoAtual = { ...CONFIGURACAO_PADRAO };
+    return cloneConfig(configuracaoAtual);
+  }
+
+  const reset = cloneConfig(CONFIGURACAO_PADRAO);
+  cachePorUsuario.set(usuarioId, reset);
+  saveConfigToStorage(usuarioId, reset);
+  return cloneConfig(reset);
 }
 
 export const custosService = {

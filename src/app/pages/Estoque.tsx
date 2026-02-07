@@ -1,4 +1,4 @@
-import EstoqueSaldos from '@/domains/estoque/pages/EstoqueSaldos';
+import { EstoqueSaldos } from '@/domains/estoque';
 
 export default function Estoque() {
   return <EstoqueSaldos />;

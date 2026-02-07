@@ -4,7 +4,9 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Progress } from "../components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { useWorkflow } from "../contexts/WorkflowContext";
+import { useOrdens } from "@/hooks/useOrdens";
+import { useCompras } from "@/hooks/useCompras";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Factory, 
   Play, 
@@ -27,7 +29,9 @@ import {
 } from "../components/ui/dialog";
 
 export default function Ordens() {
-  const { ordens, iniciarProducao, concluirProducao, verificarNecessidadeCompra, addSolicitacao } = useWorkflow();
+  const { ordens, iniciarProducao, concluirProducao, verificarNecessidadeCompra } = useOrdens({ autoLoad: true });
+  const { createCompra } = useCompras({ autoLoad: false });
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusOrdem | "all">("all");
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemProducao | null>(null);
@@ -177,9 +181,8 @@ export default function Ordens() {
   ];
 
   // Handler para iniciar produção
-  const handleIniciarProducao = (ordem: OrdemProducao) => {
-    // Verificar necessidade de compra
-    const faltantes = verificarNecessidadeCompra(ordem.id);
+  const handleIniciarProducao = async (ordem: OrdemProducao) => {
+    const faltantes = await verificarNecessidadeCompra(ordem.id);
     
     if (faltantes.length > 0) {
       setMateriaisFaltantes(faltantes);
@@ -189,35 +192,41 @@ export default function Ordens() {
     }
 
     // Iniciar produção
-    const sucesso = iniciarProducao(ordem.id);
-    
-    if (sucesso) {
+    const operador = user?.displayName || user?.email || "Sistema";
+    const result = await iniciarProducao(ordem.id, operador);
+
+    if (result.success) {
       toast.success(`Produção iniciada para ${ordem.numero}`, {
         description: "Materiais consumidos do estoque"
       });
     } else {
       toast.error("Não foi possível iniciar a produção", {
-        description: "Verifique a disponibilidade de materiais"
+        description: result.error || "Verifique a disponibilidade de materiais"
       });
     }
   };
 
   // Handler para criar solicitação de compra
-  const handleCriarSolicitacao = () => {
+  const handleCriarSolicitacao = async () => {
     if (!selectedOrdem) return;
 
-    const solicitacao = addSolicitacao({
+    const total = materiaisFaltantes.reduce((acc, item) => acc + item.subtotal, 0);
+    const result = await createCompra({
       ordemId: selectedOrdem.id,
       data: new Date(),
       status: "Solicitada",
       itens: materiaisFaltantes,
-      total: materiaisFaltantes.reduce((acc, item) => acc + item.subtotal, 0),
+      total,
       justificativa: `Materiais necessários para ordem ${selectedOrdem.numero}`
     });
 
-    toast.success(`Solicitação ${solicitacao.numero} criada com sucesso`, {
-      description: "Encaminhada para o setor de compras"
-    });
+    if (result.success && result.data) {
+      toast.success(`Solicitação ${result.data.numero} criada com sucesso`, {
+        description: "Encaminhada para o setor de compras"
+      });
+    } else {
+      toast.error(result.error || "Erro ao criar solicitação");
+    }
 
     setShowCompraDialog(false);
     setSelectedOrdem(null);

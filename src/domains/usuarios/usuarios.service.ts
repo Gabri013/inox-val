@@ -1,269 +1,212 @@
 /**
- * Serviço de usuários com mock via IndexedDB
- * Preparado para backend futuro
+ * Servi??o de usu??rios (Firestore)
  */
 
-import { Storage } from '@/services/storage/db';
 import type { ID } from '@/shared/types/ids';
+import { FirestoreService } from '@/services/firestore/base';
+import { COLLECTIONS } from '@/types/firebase';
 import type { Usuario, CreateUsuarioInput, UpdateUsuarioInput, UsuariosFilters } from './usuarios.types';
-import { usuariosSeed } from './usuarios.seed';
-import { defaultPermissionsByRole } from './usuarios.types';
 
-/**
- * Storage para usuários
- */
-const usuariosStorage = new Storage<Usuario>('usuarios' as any);
+interface UsuarioDoc {
+  nome: string;
+  email: string;
+  role: Usuario['role'];
+  ativo: boolean;
+  status?: Usuario['status'];
+  telefone?: string;
+  cargo?: string;
+  departamento?: string;
+  dataAdmissao?: string;
+  permissoesCustomizadas?: Usuario['permissoesCustomizadas'];
+  empresaId?: string;
+  createdAt?: any;
+  updatedAt?: any;
+  createdBy?: string;
+  updatedBy?: string;
+  isDeleted?: boolean;
+}
 
-/**
- * Inicializa dados seed se necessário
- */
-async function initSeedData() {
-  try {
-    const existing = await usuariosStorage.getAll();
-    if (existing.length === 0) {
-      console.log('[UsuariosService] Inicializando dados seed...');
-      for (const usuario of usuariosSeed) {
-        await usuariosStorage.create(usuario);
-      }
-      console.log('[UsuariosService] Dados seed inicializados com sucesso!');
-    }
-  } catch (error) {
-    console.error('[UsuariosService] Erro ao inicializar seed:', error);
+class UsuariosFirestoreService extends FirestoreService<UsuarioDoc> {
+  constructor() {
+    super(COLLECTIONS.users, { softDelete: true });
   }
 }
 
-// Inicializar dados ao carregar o módulo
-initSeedData();
+const usuariosFirestore = new UsuariosFirestoreService();
 
-/**
- * Serviço de usuários
- */
+const timestampToISO = (value?: any) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value?.toDate === 'function') return value.toDate().toISOString();
+  return new Date(value).toISOString();
+};
+
+const mapDocToUsuario = (doc: { id: string } & UsuarioDoc): Usuario => {
+  const status = doc.status || (doc.ativo ? 'ativo' : 'inativo');
+  return {
+    id: doc.id,
+    nome: doc.nome || 'Usu??rio',
+    email: doc.email || '',
+    role: doc.role,
+    status,
+    avatar: undefined,
+    telefone: doc.telefone,
+    cargo: doc.cargo,
+    departamento: doc.departamento || '',
+    dataAdmissao: doc.dataAdmissao || '',
+    dataCriacao: timestampToISO(doc.createdAt),
+    dataAtualizacao: timestampToISO(doc.updatedAt),
+    permissoesCustomizadas: doc.permissoesCustomizadas,
+  } as Usuario;
+};
+
 class UsuariosService {
   /**
-   * Lista todos os usuários (com filtros)
+   * Lista todos os usu??rios (com filtros)
    */
   async getAll(filters?: UsuariosFilters): Promise<Usuario[]> {
-    await new Promise(resolve => setTimeout(resolve, 300)); // Simula latência
+    const where = [] as { field: string; operator: any; value: any }[];
 
-    let usuarios = await usuariosStorage.getAll();
-
-    // Remover senhas antes de retornar
-    usuarios = usuarios.map(u => {
-      const { senha, ...usuarioSemSenha } = u;
-      return usuarioSemSenha as Usuario;
-    });
-
-    // Aplicar filtros
-    if (filters) {
-      if (filters.search) {
-        const search = filters.search.toLowerCase();
-        usuarios = usuarios.filter(u =>
-          u.nome.toLowerCase().includes(search) ||
-          u.email.toLowerCase().includes(search) ||
-          u.departamento.toLowerCase().includes(search)
-        );
-      }
-
-      if (filters.role) {
-        usuarios = usuarios.filter(u => u.role === filters.role);
-      }
-
-      if (filters.status) {
-        usuarios = usuarios.filter(u => u.status === filters.status);
-      }
-
-      if (filters.departamento) {
-        usuarios = usuarios.filter(u => u.departamento === filters.departamento);
-      }
+    if (filters?.role) {
+      where.push({ field: 'role', operator: '==', value: filters.role });
     }
 
-    // Ordenar por nome
-    usuarios.sort((a, b) => a.nome.localeCompare(b.nome));
+    if (filters?.status === 'ativo') {
+      where.push({ field: 'ativo', operator: '==', value: true });
+    }
+
+    if (filters?.status === 'inativo') {
+      where.push({ field: 'ativo', operator: '==', value: false });
+    }
+
+    if (filters?.status === 'ferias') {
+      where.push({ field: 'status', operator: '==', value: 'ferias' });
+    }
+
+    if (filters?.departamento) {
+      where.push({ field: 'departamento', operator: '==', value: filters.departamento });
+    }
+
+    const result = await usuariosFirestore.list({ where, orderBy: [{ field: 'nome', direction: 'asc' }] });
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Erro ao listar usu??rios');
+    }
+
+    let usuarios = result.data.items.map((item) => mapDocToUsuario(item as any));
+
+    if (filters?.search) {
+      const search = filters.search.toLowerCase();
+      usuarios = usuarios.filter(
+        (u) =>
+          u.nome.toLowerCase().includes(search) ||
+          u.email.toLowerCase().includes(search) ||
+          (u.departamento || '').toLowerCase().includes(search)
+      );
+    }
 
     return usuarios;
   }
 
   /**
-   * Busca usuário por ID
+   * Busca usu??rio por ID
    */
   async getById(id: ID): Promise<Usuario> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    const usuario = await usuariosStorage.getById(id);
-    if (!usuario) {
-      throw new Error(`Usuário ${id} não encontrado`);
+    const result = await usuariosFirestore.getById(String(id));
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Usu??rio n??o encontrado');
     }
-
-    // Remover senha
-    const { senha, ...usuarioSemSenha } = usuario;
-    return usuarioSemSenha as Usuario;
+    return mapDocToUsuario({ id: String(id), ...(result.data as UsuarioDoc) });
   }
 
   /**
-   * Busca usuário por email (para login)
-   */
-  async getByEmail(email: string): Promise<Usuario | null> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    const usuarios = await usuariosStorage.getAll();
-    const usuario = usuarios.find(u => u.email === email);
-
-    if (!usuario) {
-      return null;
-    }
-
-    return usuario;
-  }
-
-  /**
-   * Realiza login (retorna usuário se credenciais válidas)
-   */
-  async login(email: string, password: string): Promise<Usuario | null> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const usuarios = await usuariosStorage.getAll();
-    const usuario = usuarios.find(u => u.email === email && u.senha === password);
-
-    if (!usuario) {
-      return null;
-    }
-
-    // Verificar se usuário está ativo
-    if (usuario.status !== 'ativo') {
-      throw new Error('Usuário inativo. Entre em contato com o administrador.');
-    }
-
-    return usuario;
-  }
-
-  /**
-   * Cria novo usuário
+   * Cria novo usu??rio (somente Firestore; Auth deve ser criado via signup)
    */
   async create(data: CreateUsuarioInput): Promise<Usuario> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Validar se email já existe
-    const existente = await this.getByEmail(data.email);
-    if (existente) {
-      throw new Error('Email já cadastrado');
-    }
-
-    // Gerar ID único
-    const id = `usr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    const now = new Date().toISOString();
-
-    const novoUsuario: Usuario = {
-      id,
+    const payload: UsuarioDoc = {
       nome: data.nome,
-      email: data.email,
-      senha: data.senha, // Em produção, seria hash
+      email: data.email.toLowerCase(),
       role: data.role,
+      ativo: data.status ? data.status === 'ativo' : true,
       status: data.status || 'ativo',
       telefone: data.telefone,
+      cargo: data.cargo,
       departamento: data.departamento,
-      dataAdmissao: data.dataAdmissao || now.split('T')[0],
-      dataCriacao: now,
-      dataAtualizacao: now,
+      dataAdmissao: data.dataAdmissao,
       permissoesCustomizadas: data.permissoesCustomizadas,
     };
 
-    await usuariosStorage.create(novoUsuario);
+    const result = await usuariosFirestore.create(payload);
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Erro ao criar usu??rio');
+    }
 
-    // Retornar sem senha
-    const { senha, ...usuarioSemSenha } = novoUsuario;
-    return usuarioSemSenha as Usuario;
+    return mapDocToUsuario({ id: (result.data as any).id, ...(result.data as UsuarioDoc) });
   }
 
   /**
-   * Atualiza usuário
+   * Atualiza usu??rio
    */
   async update(id: ID, data: UpdateUsuarioInput): Promise<Usuario> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Verificar se existe
-    const existente = await usuariosStorage.getById(id);
-    if (!existente) {
-      throw new Error(`Usuário ${id} não encontrado`);
-    }
-
-    // Se está alterando email, validar se não existe outro com mesmo email
-    if (data.email && data.email !== existente.email) {
-      const outroUsuario = await this.getByEmail(data.email);
-      if (outroUsuario && outroUsuario.id !== id) {
-        throw new Error('Email já cadastrado para outro usuário');
-      }
-    }
-
-    const atualizado: Usuario = {
-      ...existente,
-      ...data,
-      id, // Garantir que ID não muda
-      dataAtualizacao: new Date().toISOString(),
+    const payload: Partial<UsuarioDoc> = {
+      nome: data.nome,
+      email: data.email?.toLowerCase(),
+      role: data.role,
+      telefone: data.telefone,
+      cargo: data.cargo,
+      departamento: data.departamento,
+      dataAdmissao: data.dataAdmissao,
+      permissoesCustomizadas: data.permissoesCustomizadas,
     };
 
-    await usuariosStorage.update(id, atualizado);
+    if (data.status) {
+      payload.status = data.status;
+      payload.ativo = data.status === 'ativo';
+    }
 
-    // Retornar sem senha
-    const { senha, ...usuarioSemSenha } = atualizado;
-    return usuarioSemSenha as Usuario;
+    const result = await usuariosFirestore.update(String(id), payload);
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Erro ao atualizar usu??rio');
+    }
+
+    return mapDocToUsuario({ id: String(id), ...(result.data as UsuarioDoc) });
   }
 
   /**
-   * Deleta usuário
+   * Deleta usu??rio
    */
   async delete(id: ID): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const usuario = await usuariosStorage.getById(id);
-    if (!usuario) {
-      throw new Error(`Usuário ${id} não encontrado`);
+    const result = await usuariosFirestore.remove(String(id));
+    if (!result.success) {
+      throw new Error(result.error || 'Erro ao remover usu??rio');
     }
-
-    // Não permitir deletar o próprio usuário logado (verificação adicional no frontend)
-    await usuariosStorage.delete(id);
   }
 
   /**
-   * Altera senha do usuário
-   */
-  async changePassword(id: ID, senhaAtual: string, novaSenha: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const usuario = await usuariosStorage.getById(id);
-    if (!usuario) {
-      throw new Error('Usuário não encontrado');
-    }
-
-    // Validar senha atual
-    if (usuario.senha !== senhaAtual) {
-      throw new Error('Senha atual incorreta');
-    }
-
-    // Atualizar senha
-    await usuariosStorage.update(id, {
-      ...usuario,
-      senha: novaSenha,
-      dataAtualizacao: new Date().toISOString(),
-    });
-  }
-
-  /**
-   * Atualiza permissões customizadas do usuário
+   * Atualiza permiss??es customizadas do usu??rio
    */
   async updatePermissoes(id: ID, permissoes: Usuario['permissoesCustomizadas']): Promise<Usuario> {
     return this.update(id, { permissoesCustomizadas: permissoes });
   }
 
   /**
-   * Reset permissões para padrão do role
+   * Reset permiss??es para padr??o do role
    */
   async resetPermissoes(id: ID): Promise<Usuario> {
     return this.update(id, { permissoesCustomizadas: undefined });
   }
 
   /**
-   * Obtém estatísticas de usuários
+   * Altera senha do usu??rio (n??o suportado no client)
+   */
+  async changePassword(id: ID, senhaAtual: string, novaSenha: string): Promise<void> {
+    void id;
+    void senhaAtual;
+    void novaSenha;
+    throw new Error('Altera????o de senha deve ser feita pelo pr??prio usu??rio via Firebase Auth.');
+  }
+
+  /**
+   * Obt??m estat??sticas de usu??rios
    */
   async getStats(): Promise<{
     total: number;
@@ -272,21 +215,16 @@ class UsuariosService {
     ferias: number;
     porRole: Record<string, number>;
   }> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    const usuarios = await usuariosStorage.getAll();
-
+    const usuarios = await this.getAll();
     const stats = {
       total: usuarios.length,
-      ativos: usuarios.filter(u => u.status === 'ativo').length,
-      inativos: usuarios.filter(u => u.status === 'inativo').length,
-      ferias: usuarios.filter(u => u.status === 'ferias').length,
-      porRole: {
-        Admin: usuarios.filter(u => u.role === 'Admin').length,
-        Engenharia: usuarios.filter(u => u.role === 'Engenharia').length,
-        Producao: usuarios.filter(u => u.role === 'Producao').length,
-        Comercial: usuarios.filter(u => u.role === 'Comercial').length,
-      },
+      ativos: usuarios.filter((u) => u.status === 'ativo').length,
+      inativos: usuarios.filter((u) => u.status === 'inativo').length,
+      ferias: usuarios.filter((u) => u.status === 'ferias').length,
+      porRole: usuarios.reduce((acc, u) => {
+        acc[u.role] = (acc[u.role] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
     };
 
     return stats;

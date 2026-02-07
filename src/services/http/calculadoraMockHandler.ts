@@ -10,12 +10,12 @@ import {
   ItemCalculadora,
   ConsumoMaterial,
   ResultadoCalculadora
-} from '@/domains/catalogo/types';
+} from '@/domains/catalogo';
 import { 
   todosInsumos, 
   produtosPadronizados,
   materiasPrimas 
-} from '@/domains/catalogo/seed-data';
+} from '@/domains/catalogo';
 
 const DB_NAME = 'erp-calculadora-db';
 const DB_VERSION = 1;

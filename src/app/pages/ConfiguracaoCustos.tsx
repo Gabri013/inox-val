@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Settings, Save, RotateCcw, Building2, Calculator, DollarSign, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -8,12 +8,27 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
-import { custosService } from "@/domains/custos/custos.service";
-import type { ConfiguracaoCustos, RegimeTributario } from "@/domains/custos/custos-config.types";
+import { custosService } from "@/domains/custos";
+import type { ConfiguracaoCustos, RegimeTributario } from "@/domains/custos";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default function ConfiguracaoCustos() {
-  const [config, setConfig] = useState<ConfiguracaoCustos>(custosService.obterConfiguracao());
+type ConfiguracaoCustosFormProps = {
+  embedded?: boolean;
+};
+
+export function ConfiguracaoCustosForm({ embedded = false }: ConfiguracaoCustosFormProps) {
+  const { user, profile } = useAuth();
+  const usuarioId = user?.uid;
+  const nomeUsuario = profile?.nome || user?.displayName || user?.email || "Usuário";
+  const [config, setConfig] = useState<ConfiguracaoCustos>(() =>
+    custosService.obterConfiguracao(usuarioId)
+  );
   const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    setConfig(custosService.obterConfiguracao(usuarioId));
+    setHasChanges(false);
+  }, [usuarioId]);
 
   const handleChange = (field: string, value: any) => {
     setConfig((prev) => {
@@ -34,7 +49,7 @@ export default function ConfiguracaoCustos() {
 
   const handleSave = () => {
     try {
-      custosService.atualizarConfiguracao(config, "Administrador"); // TODO: pegar usuário logado
+      custosService.atualizarConfiguracao(config, nomeUsuario, usuarioId);
       setHasChanges(false);
       toast.success("Configurações salvas com sucesso!");
     } catch (error) {
@@ -43,48 +58,71 @@ export default function ConfiguracaoCustos() {
   };
 
   const handleReset = () => {
-    const novaConfig = custosService.resetarConfiguracao();
+    const novaConfig = custosService.resetarConfiguracao(usuarioId);
     setConfig(novaConfig);
     setHasChanges(false);
     toast.info("Configurações resetadas para o padrão");
   };
 
+  const containerClass = embedded ? "space-y-6" : "container mx-auto py-8 px-4 max-w-6xl";
+
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
-              <Settings className="size-6 text-primary" />
+    <div className={containerClass}>
+      {!embedded && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
+                <Settings className="size-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Configurações de Custos</h1>
+                <p className="text-muted-foreground">
+                  Configure margens, impostos e regras de precificação
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Configurações de Custos</h1>
-              <p className="text-muted-foreground">
-                Configure margens, impostos e regras de precificação
-              </p>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                disabled={!hasChanges}
+              >
+                <RotateCcw className="size-4 mr-2" />
+                Resetar
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={!hasChanges}
+              >
+                <Save className="size-4 mr-2" />
+                Salvar Alterações
+              </Button>
             </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              disabled={!hasChanges}
-            >
-              <RotateCcw className="size-4 mr-2" />
-              Resetar
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!hasChanges}
-            >
-              <Save className="size-4 mr-2" />
-              Salvar Alterações
-            </Button>
           </div>
         </div>
-      </div>
+      )}
+
+      {embedded && (
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={!hasChanges}
+          >
+            <RotateCcw className="size-4 mr-2" />
+            Resetar
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!hasChanges}
+          >
+            <Save className="size-4 mr-2" />
+            Salvar Alterações
+          </Button>
+        </div>
+      )}
 
       {hasChanges && (
         <div className="mb-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 p-4 border border-yellow-200 dark:border-yellow-900">
@@ -449,4 +487,8 @@ export default function ConfiguracaoCustos() {
       </Tabs>
     </div>
   );
+}
+
+export default function ConfiguracaoCustos() {
+  return <ConfiguracaoCustosForm />;
 }

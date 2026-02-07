@@ -1,4 +1,4 @@
-import ProdutosList from '@/domains/produtos/pages/ProdutosList';
+import { ProdutosList } from '@/domains/produtos';
 
 export default function Produtos() {
   return <ProdutosList />;

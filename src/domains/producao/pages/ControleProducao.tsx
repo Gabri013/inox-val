@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -41,8 +41,8 @@ import {
   QrCode,
   Tv,
 } from 'lucide-react';
-import { SetorProducao } from '../producao.types';
-import { useItensSetor, useEntradaSetor, useSaidaSetor, useConsultaMateriais } from '../producao.hooks';
+import type { MaterialNecessario, ProducaoItem, SetorProducao } from '../producao.types';
+import { useItensSetor, useMoverItem, useAtualizarStatus } from '../producao.hooks';
 import { formatNumber } from '@/shared/lib/format';
 
 const SETORES: { id: SetorProducao; nome: string; cor: string }[] = [
@@ -59,42 +59,53 @@ export default function ControleProducao() {
   const navigate = useNavigate();
   const [setorSelecionado, setSetorSelecionado] = useState<SetorProducao>('Corte');
   const [codigoBusca, setCodigoBusca] = useState('');
-  const [itemSelecionado, setItemSelecionado] = useState<any>(null);
+  const [itemSelecionado, setItemSelecionado] = useState<ProducaoItem | null>(null);
   const [showMateriais, setShowMateriais] = useState(false);
   const [showMovimentacao, setShowMovimentacao] = useState(false);
   const [observacoes, setObservacoes] = useState('');
 
   const { data: itens, isLoading } = useItensSetor(setorSelecionado);
-  const { data: materiais } = useConsultaMateriais(itemSelecionado?.id);
-  const entradaMutation = useEntradaSetor();
-  const saidaMutation = useSaidaSetor();
+  const moverItemMutation = useMoverItem();
+  const atualizarStatusMutation = useAtualizarStatus();
 
   const handleBuscar = () => {
     // Implementar busca por código/QR
     console.log('Buscar:', codigoBusca);
   };
 
-  const handleEntrada = (item: any) => {
+  const handleEntrada = (item: ProducaoItem) => {
     setItemSelecionado(item);
     setShowMovimentacao(true);
   };
 
-  const handleSaida = (item: any) => {
-    saidaMutation.mutate({ itemId: item.id, observacoes: '' });
+  const handleSaida = (item: ProducaoItem) => {
+    const setoresOrdem = SETORES.map((s) => s.id);
+    const idx = setoresOrdem.indexOf(item.setorAtual);
+    const proximo = idx >= 0 && idx < setoresOrdem.length - 1 ? setoresOrdem[idx + 1] : null;
+    if (!proximo) {
+      atualizarStatusMutation.mutate({ orderId: item.orderId, itemId: item.id, status: 'Concluido' });
+      return;
+    }
+    moverItemMutation.mutate({
+      orderId: item.orderId,
+      itemId: item.id,
+      novoSetor: proximo,
+      setorAnterior: item.setorAtual,
+    });
   };
 
-  const handleConsultarMateriais = (item: any) => {
+  const handleConsultarMateriais = (item: ProducaoItem) => {
     setItemSelecionado(item);
     setShowMateriais(true);
   };
 
   const confirmarMovimentacao = () => {
     if (!itemSelecionado) return;
-    
-    entradaMutation.mutate({
+
+    atualizarStatusMutation.mutate({
+      orderId: itemSelecionado.orderId,
       itemId: itemSelecionado.id,
-      setor: setorSelecionado,
-      observacoes,
+      status: 'Em Producao',
     });
 
     setShowMovimentacao(false);
@@ -206,7 +217,7 @@ export default function ControleProducao() {
             </div>
           ) : (
             <div className="space-y-4">
-              {itens.map((item: any) => (
+              {(itens as ProducaoItem[]).map((item) => (
                 <Card key={item.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
@@ -307,7 +318,7 @@ export default function ControleProducao() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {materiais?.map((material) => (
+            {(itemSelecionado?.materiaisNecessarios || []).map((material: MaterialNecessario) => (
               <div
                 key={material.produtoId}
                 className="flex items-center justify-between p-4 border rounded-lg"

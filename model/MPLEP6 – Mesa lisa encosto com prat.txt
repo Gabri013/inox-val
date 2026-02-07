@@ -1,0 +1,192 @@
+MPLEP6 – Mesa lisa encosto com prateleira (6 PÉS)
+
+// src/bom/models/mplep/mplep6.ts
+import { BOMItem, BOMResult, Casquilhos, MesaConfig, Pes } from "../../types";
+import { ABA, DOBRA, RAIO } from "../../shared/constants";
+import { r1, r2 } from "../../shared/utils";
+
+/**
+ * MPLEP6 – Mesa lisa encosto com prateleira (6 PÉS)
+ * Ajustes 6 pés:
+ * - pés = 6
+ * - niveladores = 6
+ * - casquilhos = 6
+ * - reforço padrão (PPB-27) = 5 (era 3)
+ * - reforço frontal (bandeira) = 2 (era 1)
+ * Demais itens mantidos.
+ */
+
+const MAT_CHAPA_08 = "#304-0,8-1000075";
+const MAT_CHAPA_20 = "#304-2,0-1000108";
+
+const FOLGA_PE = 72;
+
+// Itens fixos
+const FECHAMENTO_W = 30.4;
+const FECHAMENTO_H = 148.37;
+
+const REFORCO_PADRAO_W = 133.58;
+const REFORCO_PADRAO_L_FOLGA = 54.7;
+
+const REFORCO_TRASEIRO_ESPELHO_W_FOLGA = 22;
+const REFORCO_TRASEIRO_ESPELHO_H = 104;
+
+const REFORCO_FRONTAL_FOLGA_C = 130;
+const REFORCO_FRONTAL_H = 92.98;
+
+const REFORCO_PRATELEIRA_W = 112.98;
+const REFORCO_PRATELEIRA_FOLGA_C = 120.10;
+
+const PRATELEIRA_OFFSET_C = 1.82;
+const PRATELEIRA_OFFSET_L = -2.88;
+
+const CASQUILHO_DIM = 61;
+const CASQUILHO_ESP = 2.0;
+
+// MPLE-PC01 (blank real)
+const OFFSET_INTERNO_C = 1.8;
+const REDUCAO_L_INTERNA = 31;
+const ENCOSTO_83 = 83;
+const ENCOSTO_32_5 = 32.5;
+const ENCOSTO_12_8 = 12.8;
+
+export function gerarBOM_MPLEP6(config: MesaConfig): BOMResult {
+  const { c, l, a, espessura_chapa } = config;
+
+  const somaDobras = ABA + DOBRA + RAIO;
+
+  const blankC = r1((c - OFFSET_INTERNO_C) + 2 * somaDobras);
+  const blankL = r1(
+    (ABA + DOBRA + RAIO) +
+      (l - REDUCAO_L_INTERNA) +
+      ENCOSTO_83 +
+      ENCOSTO_32_5 +
+      ENCOSTO_12_8
+  );
+
+  const bom: BOMItem[] = [];
+
+  // Niveladores (6)
+  bom.push({
+    desc: 'PÉ NIVELADOR 1 1/2" - NYLON',
+    qtd: 6,
+    w: 0,
+    h: 0,
+    espessura: 0,
+    material: "1006036",
+    processo: "ALMOXARIFADO",
+    codigo: "1006036",
+  });
+
+  // Fechamentos
+  bom.push({
+    desc: "FECHAMENTO DIR ESP TAMPO",
+    qtd: 1,
+    w: FECHAMENTO_W,
+    h: FECHAMENTO_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "PPB-04",
+  });
+  bom.push({
+    desc: "FECHAMENTO ESQ ESP TAMPO",
+    qtd: 1,
+    w: FECHAMENTO_W,
+    h: FECHAMENTO_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "PPB-04B",
+  });
+
+  // Reforço padrão (6 pés -> 5)
+  bom.push({
+    desc: "REFORÇO PADRÃO MESA LISA",
+    qtd: 5,
+    w: REFORCO_PADRAO_W,
+    h: r2(l - REFORCO_PADRAO_L_FOLGA),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "PPB-27",
+  });
+
+  // Reforço traseiro espelho (mantém 1)
+  bom.push({
+    desc: "REFORÇO TRASEIRO ESPELHO",
+    qtd: 1,
+    w: r1(c - REFORCO_TRASEIRO_ESPELHO_W_FOLGA),
+    h: REFORCO_TRASEIRO_ESPELHO_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLE-PC02",
+  });
+
+  // Reforço frontal (6 pés -> 2)
+  bom.push({
+    desc: "REFORÇO FRONTAL (BANDEIRA)",
+    qtd: 2,
+    w: r1(c - REFORCO_FRONTAL_FOLGA_C),
+    h: REFORCO_FRONTAL_H,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "MPLE-PC03",
+  });
+
+  // Reforço prateleira (mantém 1)
+  bom.push({
+    desc: "REFORÇO PRATELEIRA LISA",
+    qtd: 1,
+    w: REFORCO_PRATELEIRA_W,
+    h: r2(c - REFORCO_PRATELEIRA_FOLGA_C),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "GUILHOTINA",
+    codigo: "LISA-ME-1500X700-PC02",
+  });
+
+  // Tampo MPLE-PC01
+  bom.push({
+    desc: "TAMPO LISO ENCOSTO",
+    qtd: 1,
+    w: blankL,
+    h: blankC,
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "MPLE-PC01",
+  });
+
+  // Casquilhos (6)
+  bom.push({
+    desc: "CASQUILHO",
+    qtd: 6,
+    w: CASQUILHO_DIM,
+    h: CASQUILHO_DIM,
+    espessura: CASQUILHO_ESP,
+    material: MAT_CHAPA_20,
+    processo: "LASER",
+    codigo: "PPB-01B",
+  });
+
+  // Prateleira inferior
+  const prateleira: BOMItem = {
+    desc: "PRATELEIRA INFERIOR LISA",
+    qtd: 1,
+    w: r2(c + PRATELEIRA_OFFSET_C),
+    h: r2(l + PRATELEIRA_OFFSET_L),
+    espessura: espessura_chapa,
+    material: MAT_CHAPA_08,
+    processo: "LASER",
+    codigo: "LISA-ME-1500X700-PC01",
+  };
+  bom.push(prateleira);
+
+  const casquilhos: Casquilhos = { qtd: 6, dimensao: "61 x 61", espessura: CASQUILHO_ESP };
+  const pes: Pes = { qtd: 6, tubo: r1(a - FOLGA_PE) };
+
+  return { bom, pes, contraventamentos: null, casquilhos, prateleira };
+}

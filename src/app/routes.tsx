@@ -1,11 +1,11 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import Root from "./components/layout/Root";
-import ProtectedRoute from "./components/layout/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
-import PopularBanco from "./pages/PopularBanco";
+import AguardandoLiberacao from "./pages/AguardandoLiberacao";
 import Clientes from "./pages/Clientes";
 import Produtos from "./pages/Produtos";
 import Estoque from "./pages/Estoque";
@@ -13,34 +13,28 @@ import Orcamentos from "./pages/Orcamentos";
 import Ordens from "./pages/Ordens";
 import Compras from "./pages/Compras";
 import Auditoria from "./pages/Auditoria";
-import MinhasConfiguracoes from "@/domains/vendedores/pages/MinhasConfiguracoes";
+import { MinhasConfiguracoes } from "@/domains/vendedores";
 import NotFound from "./pages/NotFound";
 import Ajuda from "./pages/Ajuda";
-import CalculadoraRapida from "./pages/CalculadoraRapida";
 import Perfil from "./pages/Perfil";
 import Configuracoes from "./pages/Configuracoes";
-import ConfiguracaoCustos from "./pages/ConfiguracaoCustos";
+import CalculadoraMesasWizard from "./pages/CalculadoraMesasWizard";
 
 // Importar páginas de Clientes e Produtos
-import ClienteForm from "@/domains/clientes/pages/ClienteForm";
-import ClienteDetail from "@/domains/clientes/pages/ClienteDetail";
-import ProdutoForm from "@/domains/produtos/pages/ProdutoForm";
-import ProdutoDetail from "@/domains/produtos/pages/ProdutoDetail";
+import { ClienteDetail, ClienteForm } from "@/domains/clientes";
+import { ProdutoDetail, ProdutoForm } from "@/domains/produtos";
 
 // Importar páginas de Produção
-import ControleProducao from "@/domains/producao/pages/ControleProducao";
-import DashboardTV from "@/domains/producao/pages/DashboardTV";
-import ApontamentoOP from "@/domains/producao/pages/ApontamentoOP";
+import { ApontamentoOP, ControleProducao, DashboardTV } from "@/domains/producao";
 
 // Importar páginas de Usuários
-import { UsuariosList, UsuarioForm, UsuarioDetail } from "@/domains/usuarios";
+import { UsuariosList, UsuarioForm, UsuarioDetail, UsuariosApproval, PermissoesPorFuncao } from "@/domains/usuarios";
 
 // Importar páginas de Chat
-import ChatPage from "@/domains/chat/pages/ChatPage";
+import { ChatPage } from "@/domains/chat";
 
 // Importar páginas de Anúncios
-import AnunciosList from "@/domains/anuncios/pages/AnunciosList";
-import AnuncioForm from "@/domains/anuncios/pages/AnuncioForm";
+import { AnuncioForm, AnunciosList } from "@/domains/anuncios";
 
 export const router = createBrowserRouter([
   {
@@ -56,8 +50,8 @@ export const router = createBrowserRouter([
     Component: ResetPassword,
   },
   {
-    path: "/popular-banco",
-    Component: PopularBanco,
+    path: "/aguardando-liberacao",
+    Component: AguardandoLiberacao,
   },
   {
     path: "/",
@@ -117,7 +111,7 @@ export const router = createBrowserRouter([
       },
       { 
         path: "auditoria", 
-        element: <ProtectedRoute><Auditoria /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="auditoria"><Auditoria /></ProtectedRoute>
       },
       { 
         path: "minhas-configuracoes", 
@@ -128,36 +122,40 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute><Ajuda /></ProtectedRoute>
       },
       { 
-        path: "calculadora-rapida", 
-        element: <ProtectedRoute><CalculadoraRapida /></ProtectedRoute>
-      },
-      { 
         path: "perfil", 
         element: <ProtectedRoute><Perfil /></ProtectedRoute>
       },
       { 
         path: "configuracoes", 
-        element: <ProtectedRoute><Configuracoes /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="configuracoes"><Configuracoes /></ProtectedRoute>
       },
       { 
-        path: "configuracao-custos", 
-        element: <ProtectedRoute><ConfiguracaoCustos /></ProtectedRoute>
+        path: "calculadora", 
+        element: <ProtectedRoute requiredModule="calculadora"><CalculadoraMesasWizard /></ProtectedRoute>
       },
       { 
         path: "controle-producao", 
-        element: <ProtectedRoute><ControleProducao /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="producao"><ControleProducao /></ProtectedRoute>
       },
       { 
         path: "dashboard-tv", 
-        element: <ProtectedRoute><DashboardTV /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="producao"><DashboardTV /></ProtectedRoute>
       },
       { 
         path: "apontamento-op", 
-        element: <ProtectedRoute><ApontamentoOP /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="producao"><ApontamentoOP /></ProtectedRoute>
       },
       { 
         path: "usuarios", 
         element: <ProtectedRoute requiredModule="usuarios"><UsuariosList /></ProtectedRoute>
+      },
+      { 
+        path: "usuarios/aprovacoes", 
+        element: <ProtectedRoute requiredModule="usuarios"><UsuariosApproval /></ProtectedRoute>
+      },
+      { 
+        path: "usuarios/permissoes", 
+        element: <ProtectedRoute requiredModule="usuarios"><PermissoesPorFuncao /></ProtectedRoute>
       },
       { 
         path: "usuarios/novo", 
@@ -173,19 +171,19 @@ export const router = createBrowserRouter([
       },
       { 
         path: "chat", 
-        element: <ProtectedRoute><ChatPage /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="chat"><ChatPage /></ProtectedRoute>
       },
       { 
         path: "anuncios", 
-        element: <ProtectedRoute><AnunciosList /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="anuncios"><AnunciosList /></ProtectedRoute>
       },
       { 
         path: "anuncios/novo", 
-        element: <ProtectedRoute><AnuncioForm /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="anuncios"><AnuncioForm /></ProtectedRoute>
       },
       { 
         path: "anuncios/:id/editar", 
-        element: <ProtectedRoute><AnuncioForm /></ProtectedRoute>
+        element: <ProtectedRoute requiredModule="anuncios"><AnuncioForm /></ProtectedRoute>
       },
       { path: "*", Component: NotFound },
     ],
