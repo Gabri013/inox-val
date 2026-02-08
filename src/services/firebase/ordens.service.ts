@@ -269,7 +269,7 @@ export class OrdensService extends BaseFirestoreService<OrdemProducao> {
       };
     }
 
-    const pausas = [...apontamento.pausas, { inicio: new Date(), motivo }];
+    const pausas = [...(apontamento.pausas || []), { inicio: new Date(), motivo }];
 
     return this.update(id, {
       status: 'Pausada',
@@ -305,7 +305,7 @@ export class OrdensService extends BaseFirestoreService<OrdemProducao> {
     }
 
     // Finalizar última pausa
-    const pausas = [...apontamento.pausas];
+    const pausas = [...(apontamento.pausas || [])];
     const ultimaPausa = pausas[pausas.length - 1];
     if (ultimaPausa && !ultimaPausa.fim) {
       ultimaPausa.fim = new Date();
@@ -338,7 +338,7 @@ export class OrdensService extends BaseFirestoreService<OrdemProducao> {
 
     const apontamento = existing.data.apontamento;
     if (apontamento) {
-      apontamento.dataFim = new Date();
+      (apontamento as any).dataFim = new Date();
     }
 
     return this.update(id, {

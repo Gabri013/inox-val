@@ -154,10 +154,12 @@ export const NestingCanvas: React.FC<NestingCanvasProps> = ({ chapas, width = 80
     ctx.restore();
 
     // Desenhar peças com visual melhorado
-    chapa.pecas.forEach((peca, pidx) => {
+    chapa.pecas.forEach((peca) => {
+      const x = typeof peca.x === "number" ? peca.x : 0;
+      const y = typeof peca.y === "number" ? peca.y : 0;
       const hasPos = typeof peca.x === "number" && typeof peca.y === "number";
-      const px = hasPos ? xOffset + peca.x * scale : xOffset + 8;
-      const py = hasPos ? yOffset + peca.y * scale : yOffset + 40;
+      const px = hasPos ? xOffset + x * scale : xOffset + 8;
+      const py = hasPos ? yOffset + y * scale : yOffset + 40;
       const pw = peca.w * scale;
       const ph = peca.h * scale;
       

@@ -4,10 +4,8 @@
 
 import type { 
   OrdemProducaoCompleta, 
-  OrdemProducaoItem,
   DashboardSetorData,
-  ConsultaMaterial,
-  SetorProducao 
+  ConsultaMaterial
 } from './producao.types';
 
 // Mock de Ordens de Produção

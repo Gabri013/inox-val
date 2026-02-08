@@ -11,6 +11,7 @@ import { getEmpresaId } from '@/services/firestore/base';
 import { producaoItensService } from '../services/producao-itens.service';
 import type { ProducaoItem } from '../producao.types';
 import type { SetorProducao } from '../producao.types';
+import { toFirestoreErrorView } from '@/shared/lib/firestoreErrors';
 
 const SETORES: SetorProducao[] = ['Corte', 'Dobra', 'Solda', 'Acabamento', 'Montagem', 'Qualidade', 'Expedicao'];
 
@@ -22,7 +23,7 @@ function formatarTempo(segundos: number) {
 }
 
 export default function DashboardTV() {
-  const { data: itens = [] } = useQuery({
+  const { data: itens = [], isError, error, isLoading } = useQuery({
     queryKey: ['producao', 'tv', 'itens'],
     queryFn: async () => {
       const empresaId = await getEmpresaId();
@@ -31,6 +32,24 @@ export default function DashboardTV() {
     },
     refetchInterval: 5000,
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="text-2xl">Carregando…</div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    const view = toFirestoreErrorView(error);
+    return (
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="text-3xl font-bold mb-2">{view.title}</div>
+        <div className="text-zinc-300">{view.description}</div>
+      </div>
+    );
+  }
 
   const itensEmProducao = useMemo(() => (itens as ProducaoItem[]).filter((i) => i.status === 'Em Producao'), [itens]);
   const itensAguardando = useMemo(() => (itens as ProducaoItem[]).filter((i) => i.status === 'Aguardando'), [itens]);

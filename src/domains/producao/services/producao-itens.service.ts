@@ -223,7 +223,7 @@ class ProducaoItensService {
       updatedAt: serverTimestamp(),
       updatedBy: userId,
       isDeleted: false,
-    } satisfies Omit<MovimentacaoItem, 'id'>;
+    } as Omit<MovimentacaoItem, 'id'>;
 
     const movRef = await addDoc(collection(db, 'ordens_producao', orderId, 'movimentacoes'), payload);
 

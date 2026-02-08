@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, Download, Settings, Maximize2 } from "lucide-react";
-import type { GrupoResultado, CATALOGO_CHAPAS, ChapasPadrao } from "../lib/nestingProfissional";
+import type { GrupoResultado } from "../lib/nestingProfissional";
 import { CATALOGO_CHAPAS as CATALOGO } from "../lib/nestingProfissional";
 
 interface Props {

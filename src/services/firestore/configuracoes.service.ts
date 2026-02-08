@@ -1,4 +1,4 @@
-import { FirestoreService, ListParams } from "./base";
+import { FirestoreService } from "./base";
 import { COLLECTIONS } from "@/types/firebase";
 
 export type ConfigTipo = "CUSTOS" | "CALCULADORA" | "GERAL";

@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { requiredString, requiredNumber, quantitySchema } from '@/shared/lib/validators';
+import { requiredString, quantitySchema } from '@/shared/lib/validators';
 
 export const createMovimentoSchema = z.object({
   produtoId: requiredString('Produto é obrigatório'),

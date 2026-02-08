@@ -13,7 +13,7 @@ import {
   type DadosPrecificacao,
   VALORES_PADRAO,
 } from '../types';
-import { ChevronDown, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 interface FormularioEntradaProps {
   onCalcular: (entrada: EntradaCalculadora) => void;
@@ -46,6 +46,7 @@ export function FormularioEntrada({ onCalcular, carregando }: FormularioEntradaP
   const [precificacao, setPrecificacao] = useState<DadosPrecificacao>(VALORES_PADRAO);
 
   const modeloInfo = MODELOS_BOM.find(m => m.value === modeloSelecionado);
+  void modeloInfo;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

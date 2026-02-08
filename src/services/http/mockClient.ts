@@ -9,7 +9,7 @@ import {
   PaginatedResponse, 
   PaginationParams 
 } from './client';
-import { Storage, StoreName, getDB } from '../storage/db';
+import { Storage, StoreName } from '../storage/db';
 import { ApiError, NotFoundError } from '@/shared/lib/errors';
 import type { ID } from '@/shared/types/ids';
 import { handleProducaoRequest } from './producaoMockHandler';
@@ -54,19 +54,19 @@ async function simulateNetworkDelay(ms: number = 300): Promise<void> {
 /**
  * Extrai o nome da store a partir da URL
  */
-function getStoreFromUrl(url: string): StoreName {
+function getStoreFromUrl(url: string): string {
   // Remove query string e trailing slash
   const cleanUrl = url.split('?')[0].replace(/\/$/, '');
   
   // Tenta match exato primeiro
   if (URL_TO_STORE_MAP[cleanUrl]) {
-    return URL_TO_STORE_MAP[cleanUrl];
+    return URL_TO_STORE_MAP[cleanUrl] as unknown as string;
   }
   
   // Tenta match por prefixo (para rotas com ID)
   for (const [prefix, store] of Object.entries(URL_TO_STORE_MAP)) {
     if (cleanUrl.startsWith(prefix)) {
-      return store;
+      return store as unknown as string;
     }
   }
   
@@ -170,6 +170,34 @@ function applyPagination<T>(
  * Mock Client implementando a interface HttpClient
  */
 export class MockHttpClient implements HttpClient {
+  private _checkCustomHandlerRef!: typeof this.checkCustomHandler;
+
+  constructor() {
+    this._checkCustomHandlerRef = this.checkCustomHandler;
+    void this._checkCustomHandlerRef;
+  }
+  async getById<T>(storeName: StoreName, id: ID): Promise<T | undefined> {
+    const storage = new Storage<T & { id: ID }>(storeName as any);
+    return storage.getById(id);
+  }
+
+  async create<T extends { id: ID }>(storeName: StoreName, data: T): Promise<T> {
+    const storage = new Storage<T>(storeName as any);
+    return storage.create(data);
+  }
+
+  async update<T extends { id: ID }>(storeName: StoreName, id: ID, data: Partial<T>): Promise<T> {
+    const storage = new Storage<T>(storeName as any);
+    return storage.update(id, data);
+  }
+
+  async deleteById<T>(storeName: StoreName, id: ID): Promise<T | undefined> {
+    const storage = new Storage<T & { id: ID }>(storeName as any);
+    const item = await storage.getById(id);
+    if (!item) return undefined;
+    await storage.delete(id);
+    return item as T;
+  }
   async get<T>(url: string, config?: RequestConfig): Promise<T> {
     await simulateNetworkDelay();
     
@@ -185,12 +213,12 @@ export class MockHttpClient implements HttpClient {
     
     // Interceptar rotas de configurações
     if (url.startsWith('/api/configuracoes-usuario/')) {
-      return handleConfiguracoesRequest('GET', url) as Promise<T>;
+      return handleConfiguracoesRequest('GET', url, undefined) as Promise<T>;
     }
     
     const id = extractIdFromUrl(url);
     const storeName = getStoreFromUrl(url);
-    const storage = new Storage(storeName);
+    const storage = new Storage<any>(storeName as any);
     
     // GET por ID
     if (id) {
@@ -229,6 +257,7 @@ export class MockHttpClient implements HttpClient {
   }
 
   async post<T>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    void config;
     await simulateNetworkDelay();
     
     // Interceptar rotas de produção
@@ -247,7 +276,7 @@ export class MockHttpClient implements HttpClient {
     }
     
     const storeName = getStoreFromUrl(url);
-    const storage = new Storage(storeName);
+    const storage = new Storage<any>(storeName as any);
     
     // Validação básica
     if (!data || !data.id) {
@@ -259,6 +288,7 @@ export class MockHttpClient implements HttpClient {
   }
 
   async put<T>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    void config;
     await simulateNetworkDelay();
     
     const id = extractIdFromUrl(url);
@@ -267,7 +297,7 @@ export class MockHttpClient implements HttpClient {
     }
     
     const storeName = getStoreFromUrl(url);
-    const storage = new Storage(storeName);
+    const storage = new Storage<any>(storeName as any);
     
     const updated = await storage.update(id, data);
     return updated as T;
@@ -289,6 +319,7 @@ export class MockHttpClient implements HttpClient {
   }
 
   async delete<T>(url: string, config?: RequestConfig): Promise<T> {
+    void config;
     await simulateNetworkDelay();
     
     const id = extractIdFromUrl(url);
@@ -297,7 +328,7 @@ export class MockHttpClient implements HttpClient {
     }
     
     const storeName = getStoreFromUrl(url);
-    const storage = new Storage(storeName);
+    const storage = new Storage<any>(storeName as any);
     
     // Busca o item antes de deletar (para retornar)
     const item = await storage.getById(id);
@@ -314,54 +345,67 @@ export class MockHttpClient implements HttpClient {
    */
   
   async setAll<T extends { id: ID }>(storeName: StoreName, items: T[]): Promise<void> {
-    const storage = new Storage<T>(storeName);
+    const storage = new Storage<T>(storeName as any);
     await storage.setAll(items);
   }
 
   async getAll<T>(storeName: StoreName): Promise<T[]> {
-    const storage = new Storage<T & { id: ID }>(storeName);
+    const storage = new Storage<T & { id: ID }>(storeName as any);
     return storage.getAll();
   }
 
   async clearStore(storeName: StoreName): Promise<void> {
-    const storage = new Storage(storeName);
+    const storage = new Storage(storeName as any);
     await storage.clear();
   }
 
   /**
    * Registrar handlers customizados para rotas específicas
    */
-  private customHandlers: Map<string, (url: string, data?: any) => Promise<any>> = new Map();
+  private customHandlers: Map<string, (url: any, data?: any, matches?: RegExpMatchArray | null) => Promise<any>> = new Map();
 
-  onGet(pattern: string, handler: (url: string) => Promise<any>): void {
-    this.customHandlers.set(`GET:${pattern}`, handler);
+  onGet(pattern: string | RegExp, handler: (url: any, matches?: RegExpMatchArray | null) => Promise<any>): void {
+    this.customHandlers.set(`GET:${pattern}`, handler as any);
   }
 
-  onPost(pattern: string, handler: (url: string, data: any) => Promise<any>): void {
-    this.customHandlers.set(`POST:${pattern}`, handler);
+  onPost(pattern: string | RegExp, handler: (url: any, data: any, matches?: RegExpMatchArray | null) => Promise<any>): void {
+    this.customHandlers.set(`POST:${pattern}`, handler as any);
   }
 
-  onPut(pattern: string, handler: (url: string, data: any) => Promise<any>): void {
-    this.customHandlers.set(`PUT:${pattern}`, handler);
+  onPut(pattern: string | RegExp, handler: (url: any, data: any, matches?: RegExpMatchArray | null) => Promise<any>): void {
+    this.customHandlers.set(`PUT:${pattern}`, handler as any);
   }
 
-  onDelete(pattern: string, handler: (url: string) => Promise<any>): void {
-    this.customHandlers.set(`DELETE:${pattern}`, handler);
+  onDelete(pattern: string | RegExp, handler: (url: any, matches?: RegExpMatchArray | null) => Promise<any>): void {
+    this.customHandlers.set(`DELETE:${pattern}`, handler as any);
   }
 
-  private async checkCustomHandler<T>(method: string, url: string, data?: any): Promise<T | null> {
+  protected async checkCustomHandler<T>(method: string, url: string, data?: any): Promise<T | null> {
+    void method;
+    void url;
+    void data;
     const key = `${method}:${url}`;
     const handler = this.customHandlers.get(key);
     
     if (handler) {
-      return handler(url, data) as Promise<T>;
+      return handler(url, data, null) as Promise<T>;
     }
 
     // Tentar match por padrão (ex: /chat/* match /chat/usuarios)
     for (const [handlerKey, handlerFn] of this.customHandlers.entries()) {
-      const [handlerMethod, handlerPattern] = handlerKey.split(':');
-      if (handlerMethod === method && url.startsWith(handlerPattern.replace('*', ''))) {
-        return handlerFn(url, data) as Promise<T>;
+      const [handlerMethod, ...patternParts] = handlerKey.split(':');
+      const handlerPattern = patternParts.join(':');
+      if (handlerMethod !== method) continue;
+
+      if (handlerPattern.startsWith('/') && url.startsWith(handlerPattern.replace('*', ''))) {
+        return handlerFn(url, data, null) as Promise<T>;
+      }
+
+      if (handlerPattern.startsWith('/') === false) {
+        const match = url.match(new RegExp(handlerPattern));
+        if (match) {
+          return (handlerFn as any)(url, data, match) as Promise<T>;
+        }
       }
     }
 

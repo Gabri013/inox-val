@@ -3,12 +3,11 @@
  * Simula lógica de backend para controle de produção
  */
 
-import { ordensMock, dashboardMock, materiaisMock } from '@/domains/producao';
+import { ordensMock, dashboardMock } from '@/domains/producao';
 import type { 
   OrdemProducaoCompleta, 
   OrdemProducaoItem,
   DashboardSetorData,
-  ConsultaMaterial,
   SetorProducao,
   MovimentacaoSetor 
 } from '@/domains/producao';
@@ -82,13 +81,12 @@ export async function handleProducaoRequest(
 
     // Encontrar item
     let foundItem: OrdemProducaoItem | null = null;
-    let foundOrdem: OrdemProducaoCompleta | null = null;
 
     for (const ordem of ordens) {
       const item = ordem.itens.find(i => i.id === itemId);
       if (item) {
         foundItem = item;
-        foundOrdem = ordem;
+        void ordem;
         break;
       }
     }

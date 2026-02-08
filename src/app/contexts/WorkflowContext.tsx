@@ -4,11 +4,10 @@ import {
   OrdemProducao,
   SolicitacaoCompra,
   MovimentacaoEstoque,
-  WorkflowContextType,
-  ItemMaterial
+  WorkflowContextType
 } from "../types/workflow";
 import { useAudit } from "./AuditContext";
-import { isModeloValido, getModelo } from "@/bom/models";
+import { isModeloValido } from "@/bom/models";
 import { CHAPAS_PADRAO } from "@/domains/calculadora";
 import type { ResultadoCalculadora } from "@/domains/calculadora";
 import { estoqueMateriaisService } from "@/domains/estoque";
@@ -16,62 +15,62 @@ import type { BOMItem } from "@/bom/types";
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 
-// Funções auxiliares
+// FunÃ§Ãµes auxiliares
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 const generateNumero = (prefix: string, count: number) => `${prefix}-${String(count + 1).padStart(4, '0')}`;
 
 /**
- * VALIDAÇÕES RUNTIME (Fase 1)
- * Bloqueia criação de orçamentos fora das regras, mesmo que UI tente forçar
+ * VALIDAÃ‡Ã•ES RUNTIME (Fase 1)
+ * Bloqueia criaÃ§Ã£o de orÃ§amentos fora das regras, mesmo que UI tente forÃ§ar
  */
 function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; erros: string[] } {
   const erros: string[] = [];
 
   // Validar itens
   if (!orcamento.itens || orcamento.itens.length === 0) {
-    erros.push("Orçamento precisa ter pelo menos 1 item");
+    erros.push("OrÃ§amento precisa ter pelo menos 1 item");
   }
 
   if (orcamento.itens && orcamento.itens.length > 200) {
-    erros.push("Orçamento não pode ter mais de 200 itens");
+    erros.push("OrÃ§amento nÃ£o pode ter mais de 200 itens");
   }
 
   orcamento.itens?.forEach((item, index) => {
     // Validar modeloId
     if (!item.modeloId) {
-      erros.push(`Item ${index + 1}: modeloId é obrigatório`);
+      erros.push(`Item ${index + 1}: modeloId Ã© obrigatÃ³rio`);
     } else if (!isModeloValido(item.modeloId)) {
-      erros.push(`Item ${index + 1}: modeloId "${item.modeloId}" não existe no registry`);
+      erros.push(`Item ${index + 1}: modeloId "${item.modeloId}" nÃ£o existe no registry`);
     }
 
     // Validar snapshots
     if (!item.calculoSnapshot) {
-      erros.push(`Item ${index + 1}: calculoSnapshot é obrigatório`);
+      erros.push(`Item ${index + 1}: calculoSnapshot Ã© obrigatÃ³rio`);
     } else {
       const snapshot = item.calculoSnapshot as ResultadoCalculadora;
       
-      if (!snapshot.bom || !snapshot.bom.itens || snapshot.bom.itens.length === 0) {
-        erros.push(`Item ${index + 1}: BOM vazia ou inválida`);
+      if (!snapshot.bomResult || !snapshot.bomResult.bom || snapshot.bomResult.bom.length === 0) {
+        erros.push(`Item ${index + 1}: BOM vazia ou invalida`);
       }
 
       if (!snapshot.nesting || !snapshot.nesting.melhorOpcao) {
-        erros.push(`Item ${index + 1}: Nesting vazio ou inválido`);
+        erros.push(`Item ${index + 1}: Nesting vazio ou invalido`);
       } else {
-        // Validar chapas (só 2000×1250 e 3000×1250)
+        // Validar chapas (sÃ³ 2000Ã—1250 e 3000Ã—1250)
         const chapaUsada = snapshot.nesting.melhorOpcao.chapa;
         const chapaValida = CHAPAS_PADRAO.some(
           c => c.comprimento === chapaUsada.comprimento && c.largura === chapaUsada.largura
         );
         if (!chapaValida) {
           erros.push(
-            `Item ${index + 1}: Chapa ${chapaUsada.comprimento}×${chapaUsada.largura} não permitida. ` +
-            `Apenas 2000×1250 e 3000×1250 são aceitas`
+            `Item ${index + 1}: Chapa ${chapaUsada.comprimento}Ã—${chapaUsada.largura} nÃ£o permitida. ` +
+            `Apenas 2000Ã—1250 e 3000Ã—1250 sÃ£o aceitas`
           );
         }
       }
 
       if (!snapshot.custos || snapshot.custos.categorias.length === 0) {
-        erros.push(`Item ${index + 1}: Custos vazios ou inválidos`);
+        erros.push(`Item ${index + 1}: Custos vazios ou invalidos`);
       }
     }
   });
@@ -86,12 +85,12 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoCompra[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
 
-  // ============= ORÇAMENTOS =============
+  // ============= ORÃ‡AMENTOS =============
   
   const addOrcamento = useCallback<WorkflowContextType["addOrcamento"]>((data) => {
     const validacao = validarOrcamento(data);
     if (!validacao.valido) {
-      throw new Error(`Erros de validação: ${validacao.erros.join(", ")}`);
+      throw new Error(`Erros de validaÃ§Ã£o: ${validacao.erros.join(", ")}`);
     }
 
     const newOrcamento: Orcamento = {
@@ -107,7 +106,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "orcamentos",
       recordId: newOrcamento.id,
       recordName: newOrcamento.numero,
-      description: `Criou orçamento ${newOrcamento.numero} para ${newOrcamento.clienteNome}`,
+      description: `Criou orÃ§amento ${newOrcamento.numero} para ${newOrcamento.clienteNome}`,
       newData: newOrcamento
     });
     
@@ -126,7 +125,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         module: "orcamentos",
         recordId: id,
         recordName: orcamento.numero,
-        description: `Atualizou orçamento ${orcamento.numero}`,
+        description: `Atualizou orÃ§amento ${orcamento.numero}`,
         oldData: orcamento,
         newData: data
       });
@@ -135,14 +134,14 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
 
   const converterOrcamentoEmOrdem = useCallback<WorkflowContextType["converterOrcamentoEmOrdem"]>((orcamentoId) => {
     const orcamento = orcamentos.find(o => o.id === orcamentoId);
-    if (!orcamento) throw new Error("Orçamento não encontrado");
+    if (!orcamento) throw new Error("OrÃ§amento nÃ£o encontrado");
 
-    // REGRA DE NEGÓCIO: OP só pode ser criada de orçamento APROVADO
+    // REGRA DE NEGÃ“CIO: OP sÃ³ pode ser criada de orÃ§amento APROVADO
     if (orcamento.status !== "Aprovado") {
-      throw new Error("Apenas orçamentos aprovados podem ser convertidos em ordem de produção");
+      throw new Error("Apenas orÃ§amentos aprovados podem ser convertidos em ordem de produÃ§Ã£o");
     }
 
-    // Criar ordem de produção
+    // Criar ordem de produÃ§Ã£o
     const novaOrdem: OrdemProducao = {
       id: generateId(),
       numero: generateNumero("OP", ordens.length),
@@ -164,14 +163,14 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       })),
       total: orcamento.total,
       prioridade: "Normal",
-      observacoes: `Convertido do orçamento ${orcamento.numero}`,
+      observacoes: `Convertido do orÃ§amento ${orcamento.numero}`,
       materiaisReservados: false,
       materiaisConsumidos: false
     };
 
     setOrdens(prev => [...prev, novaOrdem]);
 
-    // Atualizar orçamento
+    // Atualizar orÃ§amento
     updateOrcamento(orcamentoId, {
       status: "Convertido",
       ordemId: novaOrdem.id
@@ -182,14 +181,14 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "ordens",
       recordId: novaOrdem.id,
       recordName: novaOrdem.numero,
-      description: `Converteu orçamento ${orcamento.numero} em ordem de produção ${novaOrdem.numero}`,
+      description: `Converteu orÃ§amento ${orcamento.numero} em ordem de produÃ§Ã£o ${novaOrdem.numero}`,
       newData: novaOrdem
     });
 
     return novaOrdem;
   }, [orcamentos, ordens.length, updateOrcamento, addLog]);
 
-  // ============= ORDENS DE PRODUÇÃO =============
+  // ============= ORDENS DE PRODUÃ‡ÃƒO =============
 
   const addOrdem = useCallback<WorkflowContextType["addOrdem"]>((data) => {
     const newOrdem: OrdemProducao = {
@@ -205,7 +204,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "ordens",
       recordId: newOrdem.id,
       recordName: newOrdem.numero,
-      description: `Criou ordem de produção ${newOrdem.numero}`,
+      description: `Criou ordem de produÃ§Ã£o ${newOrdem.numero}`,
       newData: newOrdem
     });
     
@@ -232,14 +231,17 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   }, [ordens, addLog]);
 
   const verificarDisponibilidade = useCallback<WorkflowContextType["verificarDisponibilidade"]>((produtoId, quantidade) => {
-    return estoqueMateriaisService.verificarDisponibilidade(produtoId, quantidade);
+    const faltantes = estoqueMateriaisService.verificarDisponibilidade([
+      { materialId: produtoId, quantidade }
+    ]);
+    return faltantes.length === 0;
   }, []);
 
   const reservarMateriais = useCallback<WorkflowContextType["reservarMateriais"]>((ordemId) => {
     const ordem = ordens.find(o => o.id === ordemId);
     if (!ordem) return false;
 
-    // Verificar se todos os materiais estão disponíveis
+    // Verificar se todos os materiais estÃ£o disponÃ­veis
     const todosMaterialsDisponiveis = ordem.itens.every(item =>
       verificarDisponibilidade(item.produtoId, item.quantidade)
     );
@@ -265,7 +267,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     if (!ordem) return false;
 
     // Consumir materiais do estoque
-    const novoEstoque = { ...estoqueMateriaisService.getEstoque() };
+    const novoEstoque = { ...estoqueMateriaisService.getEstoque?.() };
     const novasMovimentacoes: MovimentacaoEstoque[] = [];
 
     ordem.itens.forEach(item => {
@@ -278,14 +280,14 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         produtoId: item.produtoId,
         produtoNome: item.produtoNome,
         quantidade: -item.quantidade,
-        origem: `Ordem de Produção ${ordem.numero}`,
+        origem: `Ordem de Producao ${ordem.numero}`,
         referencia: ordem.id,
         usuarioId: "user-001",
         usuarioNome: "Administrador"
       });
     });
 
-    estoqueMateriaisService.setEstoque(novoEstoque);
+    estoqueMateriaisService.setEstoque?.(novoEstoque);
     setMovimentacoes(prev => [...novasMovimentacoes, ...prev]);
     updateOrdem(ordemId, { materiaisConsumidos: true });
 
@@ -331,22 +333,22 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   // ============= COMPRAS =============
 
   /**
-   * Extrai lista de materiais da BOM de uma ordem de produção
+   * Extrai lista de materiais da BOM de uma ordem de produÃ§Ã£o
    */
   const extrairMateriaisDaOrdem = (ordem: OrdemProducao): { materialId: string; quantidade: number; unidade: string; nome: string }[] => {
     const materiaisAgrupados = new Map<string, { quantidade: number; unidade: string; nome: string }>();
     
-    // Buscar orçamento original para ter acesso à BOM completa
+    // Buscar orÃ§amento original para ter acesso Ã  BOM completa
     const orcamento = orcamentos.find(o => o.id === ordem.orcamentoId);
     if (!orcamento) return [];
     
-    // Iterar por cada item do orçamento
+    // Iterar por cada item do orÃ§amento
     orcamento.itens.forEach(itemOrcamento => {
       const snapshot = itemOrcamento.calculoSnapshot as ResultadoCalculadora | undefined;
-      if (!snapshot?.bom?.itens) return;
+      if (!snapshot?.bomResult?.bom) return;
       
       // Extrair materiais da BOM
-      snapshot.bom.itens.forEach((bomItem: BOMItem) => {
+      snapshot.bomResult.bom.forEach((bomItem: BOMItem) => {
         const materialId = bomItem.material || 'DESCONHECIDO';
         const quantidade = (bomItem.pesoTotal || bomItem.qtd || 0) * itemOrcamento.quantidade;
         const unidade = bomItem.unidade || 'un';
@@ -372,7 +374,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     const ordem = ordens.find(o => o.id === ordemId);
     if (!ordem) return [];
 
-    // ✅ NOVA LÓGICA: Extrair materiais da BOM real
+    // âœ… NOVA LÃ“GICA: Extrair materiais da BOM real
     const materiaisNecessarios = extrairMateriaisDaOrdem(ordem);
     
     // Verificar disponibilidade no estoque
@@ -387,7 +389,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       produtoNome: f.materialNome,
       quantidade: f.falta,
       unidade: f.unidade,
-      precoUnitario: 0, // TODO: buscar preço do material
+      precoUnitario: 0, // TODO: buscar preÃ§o do material
       subtotal: 0,
     }));
   }, [ordens, orcamentos]);
@@ -406,7 +408,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "compras",
       recordId: newSolicitacao.id,
       recordName: newSolicitacao.numero,
-      description: `Criou solicitação de compra ${newSolicitacao.numero}`,
+      description: `Criou solicitaÃ§Ã£o de compra ${newSolicitacao.numero}`,
       newData: newSolicitacao
     });
     
@@ -425,7 +427,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         module: "compras",
         recordId: id,
         recordName: solicitacao.numero,
-        description: `Atualizou solicitação ${solicitacao.numero}`,
+        description: `Atualizou solicitaÃ§Ã£o ${solicitacao.numero}`,
         oldData: solicitacao,
         newData: data
       });

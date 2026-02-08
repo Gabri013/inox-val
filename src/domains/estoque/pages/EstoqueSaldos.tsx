@@ -5,8 +5,9 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, PackageX, AlertTriangle, TrendingUp, Eye } from 'lucide-react';
+import { Package, PackageX, AlertTriangle, Eye } from 'lucide-react';
 import { ListPage } from '@/app/components/layout/ListPage';
+import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { useSaldosEstoque, useEstoqueStats } from '../estoque.hooks';
 import { SaldoEstoque } from '../estoque.types';
@@ -16,7 +17,7 @@ export default function EstoqueSaldos() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   
-  const { data: saldos = [], isLoading } = useSaldosEstoque();
+  const { data: saldos = [] } = useSaldosEstoque();
   const { data: stats } = useEstoqueStats();
   
   // Filtrar saldos
@@ -211,7 +212,7 @@ export default function EstoqueSaldos() {
         { label: "Estoque" }
       ]}
       title="Estoque"
-      subtitle="Visualize e gerencie os saldos de estoque"
+      description="Visualize e gerencie os saldos de estoque"
       icon={Package}
       stats={statsData}
       searchPlaceholder="Buscar por código ou nome do produto..."
@@ -219,18 +220,16 @@ export default function EstoqueSaldos() {
       onSearchChange={setSearch}
       onNew={() => navigate('/estoque/movimento/novo')}
       newButtonLabel="Novo Movimento"
-      secondaryActions={[
-        {
-          label: "Ver Movimentos",
-          onClick: () => navigate('/estoque/movimentos'),
-          variant: "outline"
-        }
-      ]}
+      customActions={(
+        <Button variant="outline" onClick={() => navigate('/estoque/movimentos')}>
+          Ver Movimentos
+        </Button>
+      )}
       data={filteredSaldos}
-      columns={columns}
-      renderCell={renderCell}
-      actions={actions}
-      isLoading={isLoading}
+      columns={columns as any}
+      renderCell={renderCell as any}
+      actions={actions as any}
+      keyExtractor={(saldo) => saldo.produtoId}
       emptyMessage="Nenhum produto no estoque"
       showPagination={false}
     />

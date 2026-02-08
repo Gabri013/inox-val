@@ -1,5 +1,5 @@
-/**
- * ServiÃ§o de aprovaÃ§Ã£o de usuÃ¡rios (Firestore)
+﻿/**
+ * Servico de aprovacao de usuarios (Firestore)
  */
 
 import {
@@ -16,6 +16,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { getFirestore } from '@/lib/firebase';
+import { writeAuditLog } from '@/services/firestore/base';
 
 export type ApprovalStatus = 'pendente' | 'aprovado' | 'todos';
 
@@ -122,7 +123,7 @@ class UsuariosApprovalService {
 
     await addDoc(collection(db, 'usuarios_aprovacoes'), {
       userId: usuarioId,
-      nome: usuario?.nome || 'UsuÃ¡rio',
+      nome: usuario?.nome || 'Usuario',
       email: usuario?.email || null,
       role,
       approvedBy: actor.uid || null,
@@ -130,9 +131,27 @@ class UsuariosApprovalService {
       empresaId: empresaId || null,
       createdAt: serverTimestamp(),
     });
+
+    if (empresaId && actor.uid) {
+      await writeAuditLog({
+        action: 'update',
+        collection: 'usuarios',
+        documentId: usuarioId,
+        before: null,
+        after: {
+          ativo: true,
+          role,
+          approvedBy: actor.uid || null,
+          approvedByEmail: actor.email || null,
+        },
+        empresaId,
+        userId: actor.uid,
+      });
+    }
   }
 
   async setActive(
+    empresaId: string | null,
     usuarioId: string,
     ativo: boolean,
     actor: ApprovalActor
@@ -151,6 +170,22 @@ class UsuariosApprovalService {
           }
         : {}),
     });
+
+    if (empresaId && actor.uid) {
+      await writeAuditLog({
+        action: 'update',
+        collection: 'usuarios',
+        documentId: usuarioId,
+        before: null,
+        after: {
+          ativo,
+          updatedBy: actor.uid || null,
+          updatedByEmail: actor.email || null,
+        },
+        empresaId,
+        userId: actor.uid,
+      });
+    }
   }
 }
 

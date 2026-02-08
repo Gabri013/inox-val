@@ -19,21 +19,23 @@ import Ajuda from "./pages/Ajuda";
 import Perfil from "./pages/Perfil";
 import Configuracoes from "./pages/Configuracoes";
 import CalculadoraMesasWizard from "./pages/CalculadoraMesasWizard";
+import SemAcesso from "./pages/SemAcesso";
+import PrecificacaoPage from "@/domains/precificacao/pages/Precificacao";
 
-// Importar páginas de Clientes e Produtos
+// Importar pÃ¡ginas de Clientes e Produtos
 import { ClienteDetail, ClienteForm } from "@/domains/clientes";
 import { ProdutoDetail, ProdutoForm } from "@/domains/produtos";
 
-// Importar páginas de Produção
+// Importar pÃ¡ginas de ProduÃ§Ã£o
 import { ApontamentoOP, ControleProducao, DashboardTV } from "@/domains/producao";
 
-// Importar páginas de Usuários
+// Importar pÃ¡ginas de UsuÃ¡rios
 import { UsuariosList, UsuarioForm, UsuarioDetail, UsuariosApproval, PermissoesPorFuncao } from "@/domains/usuarios";
 
-// Importar páginas de Chat
+// Importar pÃ¡ginas de Chat
 import { ChatPage } from "@/domains/chat";
 
-// Importar páginas de Anúncios
+// Importar pÃ¡ginas de AnÃºncios
 import { AnuncioForm, AnunciosList } from "@/domains/anuncios";
 
 export const router = createBrowserRouter([
@@ -52,6 +54,10 @@ export const router = createBrowserRouter([
   {
     path: "/aguardando-liberacao",
     Component: AguardandoLiberacao,
+  },
+  {
+    path: "/sem-acesso",
+    Component: SemAcesso,
   },
   {
     path: "/",
@@ -132,6 +138,10 @@ export const router = createBrowserRouter([
       { 
         path: "calculadora", 
         element: <ProtectedRoute requiredModule="calculadora"><CalculadoraMesasWizard /></ProtectedRoute>
+      },
+      { 
+        path: "precificacao", 
+        element: <ProtectedRoute requiredModule="precificacao"><PrecificacaoPage /></ProtectedRoute>
       },
       { 
         path: "controle-producao", 

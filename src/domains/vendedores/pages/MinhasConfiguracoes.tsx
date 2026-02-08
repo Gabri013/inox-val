@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Settings, DollarSign, Package, Percent, Clock, Save, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -13,7 +12,6 @@ import { Label } from '@/app/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Separator } from '@/app/components/ui/separator';
-import { Badge } from '@/app/components/ui/badge';
 import { Switch } from '@/app/components/ui/switch';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { useMinhaConfiguracao, useCreateConfiguracao, useUpdateConfiguracao } from '../vendedor.hooks';
@@ -31,7 +29,6 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/shared/lib/format';
 
 export default function MinhasConfiguracoes() {
-  const navigate = useNavigate();
   const { data: config, isLoading } = useMinhaConfiguracao();
   const { mutate: createConfig, isPending: isCreating } = useCreateConfiguracao();
   const { mutate: updateConfig, isPending: isUpdating } = useUpdateConfiguracao();
@@ -107,7 +104,7 @@ export default function MinhasConfiguracoes() {
       setEspessuraPadrao(config.espessuraPadrao);
       setEmbalagemPadrao(config.embalagemPadrao);
       setEmbalagens(config.embalagens);
-      setCustosAdicionais(config.custosAdicionais || { transporte: 0, impostos: 0, outros: 0 });
+      setCustosAdicionais((config.custosAdicionais || { transporte: 0, impostos: 0, outros: 0 }) as any);
     }
   }, [config]);
 

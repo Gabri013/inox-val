@@ -169,16 +169,16 @@ export default function Auditoria() {
         );
       
       case 'action':
-        const Icon = actionIcons[log.action];
+        const Icon = actionIcons[log.action as AuditActionType];
         return (
-          <Badge className={`gap-1 ${actionColors[log.action]}`}>
+          <Badge className={`gap-1 ${actionColors[log.action as AuditActionType]}`}>
             <Icon className="size-3" />
-            {actionLabels[log.action]}
+            {actionLabels[log.action as AuditActionType]}
           </Badge>
         );
       
       case 'module':
-        return <Badge variant="outline">{moduleLabels[log.module]}</Badge>;
+        return <Badge variant="outline">{moduleLabels[log.module as AuditModule]}</Badge>;
       
       case 'description':
         return <p className="text-sm truncate max-w-xs">{log.description}</p>;
@@ -208,13 +208,13 @@ export default function Auditoria() {
         { label: "Auditoria" }
       ]}
       title="Auditoria"
-      subtitle="Registro completo de ações do sistema"
+      description="Registro completo de ações do sistema"
       icon={Shield}
       stats={statsData}
       searchPlaceholder="Buscar por descrição, registro ou usuário..."
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
-      filters={
+      filterContent={
         <div className="flex gap-2">
           <Select value={actionFilter} onValueChange={(value) => setActionFilter(value as any)}>
             <SelectTrigger className="w-[180px]">
@@ -248,12 +248,12 @@ export default function Auditoria() {
           </Select>
         </div>
       }
-      data={filteredLogs.slice(0, 50)}
-      columns={columns}
+      data={filteredLogs.slice(0, 50) as any[]}
+      columns={columns as any}
       renderCell={renderCell}
-      isLoading={false}
       emptyMessage="Nenhum log encontrado"
       showPagination={false}
+      keyExtractor={(log: any) => `${log.id || log.timestamp}-${log.recordId || ''}`}
     />
   );
 }

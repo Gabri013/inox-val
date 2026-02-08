@@ -93,7 +93,7 @@ export default function UsuariosApproval() {
   };
 
   const handleToggleActive = async (id: string, ativo: boolean) => {
-    await usuariosApprovalService.setActive(id, ativo, { uid: user?.uid, email: user?.email });
+    await usuariosApprovalService.setActive(empresaId, id, ativo, { uid: user?.uid, email: user?.email });
   };
 
   const handleRoleChange = (id: string, role: string) => {

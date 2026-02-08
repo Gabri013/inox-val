@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "vite build",
+    "check": "npm run typecheck && npm run build",
+    "sheet:extract": "node scripts/extract_planilha_preco.ts",
+    "sheet:generate": "node scripts/generate_engine_from_model.ts",
+    "sheet:test-equivalence": "node scripts/test_equivalence.ts",
     "preview": "vite preview",
     "seed": "node scripts/populate-firestore.js",
     "seed:users": "node scripts/seed-sector-users.js",
@@ -80,6 +85,7 @@
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
+    "typescript": "5.9.2",
     "vite": "6.3.5"
   },
   "peerDependencies": {

@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Pencil, Trash2, Eye, PackageX } from 'lucide-react';
+import { Package, Pencil, Trash2, Eye } from 'lucide-react';
 import { ListPage } from '@/app/components/layout/ListPage';
 import { Badge } from '@/app/components/ui/badge';
 import {
@@ -30,6 +30,10 @@ export default function ProdutosList() {
   const [ativoFilter, setAtivoFilter] = useState<boolean | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const hasFilters = search.trim() !== '' || tipoFilter !== 'all' || ativoFilter !== undefined;
+  const emptyMessage = hasFilters
+    ? 'Nenhum produto encontrado para os filtros. Limpe filtros.'
+    : 'Nenhum produto cadastrado';
   
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
@@ -37,7 +41,7 @@ export default function ProdutosList() {
     produtoNome: string;
   }>({ open: false, produtoId: null, produtoNome: '' });
   
-  const { data, isLoading } = useProdutos({
+  const { data } = useProdutos({
     page: currentPage,
     pageSize,
     search,
@@ -63,7 +67,7 @@ export default function ProdutosList() {
   });
   
   const handleCreate = () => {
-    logCreate({ nome: 'Novo produto' });
+    logCreate('novo', 'Novo produto', { nome: 'Novo produto' });
     navigate('/produtos/novo');
   };
   
@@ -72,7 +76,7 @@ export default function ProdutosList() {
   };
   
   const handleView = (produto: Produto) => {
-    logView({ id: produto.id, nome: produto.nome });
+    logView(produto.id, produto.nome);
     navigate(`/produtos/${produto.id}`);
   };
   
@@ -86,7 +90,10 @@ export default function ProdutosList() {
   
   const handleDeleteConfirm = async () => {
     if (deleteConfirm.produtoId) {
-      logDelete({ id: deleteConfirm.produtoId, nome: deleteConfirm.produtoNome });
+      logDelete(deleteConfirm.produtoId, deleteConfirm.produtoNome, {
+        id: deleteConfirm.produtoId,
+        nome: deleteConfirm.produtoNome,
+      });
       await deleteMutation.mutateAsync(deleteConfirm.produtoId);
       setDeleteConfirm({ open: false, produtoId: null, produtoNome: '' });
     }
@@ -241,7 +248,7 @@ export default function ProdutosList() {
           { label: "Produtos" }
         ]}
         title="Produtos"
-        subtitle="Gerencie o catálogo de produtos e materiais"
+        description="Gerencie o catalogo de produtos e materiais"
         icon={Package}
         stats={statsData}
         searchPlaceholder="Buscar por código, nome ou descrição..."
@@ -249,7 +256,7 @@ export default function ProdutosList() {
         onSearchChange={setSearch}
         onNew={handleCreate}
         newButtonLabel="Novo Produto"
-        filters={
+        filterContent={
           <div className="flex gap-2">
             <Select value={tipoFilter} onValueChange={(v) => setTipoFilter(v as any)}>
               <SelectTrigger className="w-[180px]">
@@ -280,11 +287,11 @@ export default function ProdutosList() {
           </div>
         }
         data={produtosFiltrados}
-        columns={columns}
-        renderCell={renderCell}
-        actions={actions}
-        isLoading={isLoading}
-        emptyMessage="Nenhum produto encontrado"
+        keyExtractor={(produto) => produto.id}
+        columns={columns as any}
+        renderCell={renderCell as any}
+        actions={actions as any}
+        emptyMessage={emptyMessage}
         currentPage={currentPage}
         totalPages={Math.ceil((data?.total || 0) / pageSize)}
         onPageChange={setCurrentPage}

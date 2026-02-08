@@ -55,9 +55,9 @@ export default function Perfil() {
     setFormData({
       nome: profile?.nome || user.displayName || '',
       email: user.email || '',
-      telefone: profile?.telefone || '',
-      departamento: profile?.departamento || '',
-      cargo: profile?.cargo || '',
+      telefone: (profile as any)?.telefone || '',
+      departamento: (profile as any)?.departamento || '',
+      cargo: (profile as any)?.cargo || '',
     });
   }, [profile, user]);
 

@@ -36,7 +36,7 @@ interface UseOrdensOptions {
 
 export function useOrdens(options: UseOrdensOptions = {}) {
   const { autoLoad = true, status, clienteId } = options;
-  const isMock = import.meta.env.VITE_USE_MOCK === 'true';
+  const isMock = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
   
   const [ordens, setOrdens] = useState<OrdemProducao[]>([]);
   const [loading, setLoading] = useState(false);

@@ -204,8 +204,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         setUser(currentUser);
-        const userProfile = userSnap.data() as any;
-        setProfile(userProfile);
+        const userProfile = { id: currentUser.uid, ...(userSnap.data() as Partial<UserProfile>) };
+        setProfile(userProfile as UserProfile);
         const empresaId = userProfile?.empresaId || currentUser.uid;
         setEmpresaContext(empresaId);
         setLoading(false);
@@ -287,7 +287,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       setUser(result.user);
-      setProfile(userSnap.data());
+      setProfile({ id: result.user.uid, ...(userSnap.data() as Partial<UserProfile>) } as UserProfile);
       toast.success('Login realizado com sucesso!');
     } catch (error: unknown) {
       console.error('Erro ao fazer login:', error);

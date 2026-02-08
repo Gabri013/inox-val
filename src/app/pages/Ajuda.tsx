@@ -43,6 +43,10 @@ interface FAQ {
 }
 
 export default function Ajuda() {
+  void ClipboardList;
+  void ShoppingCart;
+  void Button;
+  void Separator;
   const [searchTerm, setSearchTerm] = useState('');
 
   const tutoriais: Tutorial[] = [

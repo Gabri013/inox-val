@@ -47,11 +47,6 @@ export interface PageHeaderProps {
    * Ações da página (botões, etc)
    */
   actions?: ReactNode;
-  
-  /**
-   * Se está em modo loading
-   */
-  isLoading?: boolean;
 }
 
 export function PageHeader({
@@ -61,7 +56,6 @@ export function PageHeader({
   icon,
   breadcrumbs,
   actions,
-  isLoading,
 }: PageHeaderProps) {
   // Usa subtitle como fallback para description
   const displayDescription = description || subtitle;

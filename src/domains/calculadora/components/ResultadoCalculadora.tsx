@@ -5,7 +5,7 @@
 
 import { ResultadoCalculadora } from '../types';
 import { MODELOS_BOM } from '../../../bom/models';
-import { Package, Layers, DollarSign, TrendingUp, FileText, CheckCircle, Maximize2 } from 'lucide-react';
+import { Package, Layers, DollarSign, TrendingUp, FileText, CheckCircle } from 'lucide-react';
 import { NestingVisualizer } from '../../nesting/components/NestingVisualizer';
 
 interface ResultadoCalculadoraProps {
@@ -271,10 +271,10 @@ export function ResultadoCalculadoraView({
         </div>
         
         {/* Visualização 2D do Nesting (melhor opção) */}
-        {nesting.melhorOpcao.itensAlocados && nesting.melhorOpcao.itensAlocados.length > 0 && (
+        {(nesting.melhorOpcao.itensAlocados as any)?.length > 0 && (
           <div className="mt-6">
             <NestingVisualizer
-              resultado={nesting.melhorOpcao}
+              resultado={nesting.melhorOpcao as any}
               larguraChapa={nesting.melhorOpcao.chapa.largura}
               alturaChapa={nesting.melhorOpcao.chapa.comprimento}
               nomeChapa={nesting.melhorOpcao.chapa.nome}

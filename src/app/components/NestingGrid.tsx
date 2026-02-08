@@ -18,6 +18,7 @@ export function NestingGrid({ grupo, chapaAtiva = 0, onSelecionarChapa }: Props)
   const [chapaExpandida, setChapaExpandida] = useState(chapaAtiva);
 
   const chapas = grupo.sheetsUsed;
+  const chapaAtual = chapas[chapaExpandida];
 
   const handleSelecionarChapa = (index: number) => {
     setChapaExpandida(index);
@@ -125,7 +126,7 @@ export function NestingGrid({ grupo, chapaAtiva = 0, onSelecionarChapa }: Props)
                 Chapa {chapaExpandida + 1} de {chapas.length}
               </div>
               <div className="text-sm text-slate-600">
-                {chapas[chapaExpandida].placements.length} peças · {chapas[chapaExpandida].utilization.toFixed(1)}% eficiência
+                {(chapaAtual?.placements.length ?? 0)} peças · {(chapaAtual?.utilizacao ?? 0).toFixed(1)}% eficiência
               </div>
             </div>
 
@@ -140,16 +141,16 @@ export function NestingGrid({ grupo, chapaAtiva = 0, onSelecionarChapa }: Props)
 
           {/* Visualização da Chapa */}
           <div className="bg-white border-2 border-slate-200 rounded-xl p-6">
-            <ChapaExpandida chapa={chapas[chapaExpandida]} grupo={grupo} />
+            {chapaAtual ? <ChapaExpandida chapa={chapaAtual} /> : null}
           </div>
 
           {/* Lista de Peças */}
           <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
             <h4 className="font-semibold text-slate-900 mb-3">
-              Peças nesta chapa ({chapas[chapaExpandida].placements.length})
+              Peças nesta chapa ({chapaAtual?.placements.length ?? 0})
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {chapas[chapaExpandida].placements.map((placement, idx) => (
+              {(chapaAtual?.placements ?? []).map((placement, idx) => (
                 <div key={idx} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-sm">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: placement.cor }} />
                   <span className="flex-1 text-slate-900 font-medium truncate">{placement.label}</span>
@@ -175,8 +176,11 @@ function MiniaturaNesting({ chapa }: { chapa: ChapaResultado }) {
   const margin = 4;
   const scale = 0.05; // Escala reduzida para miniatura
 
-  const viewW = chapa.sheet_w_mm * scale + margin * 2;
-  const viewH = chapa.sheet_h_mm * scale + margin * 2;
+  const sheetW = chapa.sheet_w_mm ?? chapa.w_mm;
+  const sheetH = chapa.sheet_h_mm ?? chapa.h_mm;
+
+  const viewW = sheetW * scale + margin * 2;
+  const viewH = sheetH * scale + margin * 2;
 
   return (
     <svg viewBox={`0 0 ${viewW} ${viewH}`} className="w-full h-full" style={{ background: "#f8fafc" }}>
@@ -184,8 +188,8 @@ function MiniaturaNesting({ chapa }: { chapa: ChapaResultado }) {
       <rect
         x={margin}
         y={margin}
-        width={chapa.sheet_w_mm * scale}
-        height={chapa.sheet_h_mm * scale}
+        width={sheetW * scale}
+        height={sheetH * scale}
         fill="white"
         stroke="#cbd5e1"
         strokeWidth="0.5"
@@ -211,13 +215,15 @@ function MiniaturaNesting({ chapa }: { chapa: ChapaResultado }) {
 
 // ========== CHAPA EXPANDIDA ==========
 
-function ChapaExpandida({ chapa, grupo }: { chapa: ChapaResultado; grupo: GrupoNesting }) {
+function ChapaExpandida({ chapa }: { chapa: ChapaResultado }) {
   const margin = 20;
   const maxW = 800;
-  const scale = Math.min(maxW / chapa.sheet_w_mm, 0.4);
+  const sheetW = chapa.sheet_w_mm ?? chapa.w_mm;
+  const sheetH = chapa.sheet_h_mm ?? chapa.h_mm;
+  const scale = Math.min(maxW / Math.max(1, sheetW), 0.4);
 
-  const viewW = chapa.sheet_w_mm * scale + margin * 2;
-  const viewH = chapa.sheet_h_mm * scale + margin * 2;
+  const viewW = sheetW * scale + margin * 2;
+  const viewH = sheetH * scale + margin * 2;
 
   return (
     <div className="space-y-4">
@@ -226,27 +232,27 @@ function ChapaExpandida({ chapa, grupo }: { chapa: ChapaResultado; grupo: GrupoN
         <div className="bg-slate-50 rounded-lg p-3">
           <div className="text-xs text-slate-500 mb-1">Dimensões</div>
           <div className="font-semibold text-slate-900 font-mono">
-            {chapa.sheet_w_mm}×{chapa.sheet_h_mm}mm
+            {sheetW}×{sheetH}mm
           </div>
         </div>
         <div className="bg-slate-50 rounded-lg p-3">
           <div className="text-xs text-slate-500 mb-1">Área Total</div>
           <div className="font-semibold text-slate-900">
-            {(chapa.sheet_w_mm * chapa.sheet_h_mm / 1_000_000).toFixed(2)}m²
+            {((sheetW * sheetH) / 1_000_000).toFixed(2)}m²
           </div>
         </div>
         <div
           className={`rounded-lg p-3 ${
-            chapa.utilization >= 80 ? "bg-green-50" : chapa.utilization >= 60 ? "bg-amber-50" : "bg-red-50"
+            chapa.utilizacao >= 80 ? "bg-green-50" : chapa.utilizacao >= 60 ? "bg-amber-50" : "bg-red-50"
           }`}
         >
           <div className="text-xs text-slate-500 mb-1">Eficiência</div>
           <div
             className={`font-bold text-lg ${
-              chapa.utilization >= 80 ? "text-green-700" : chapa.utilization >= 60 ? "text-amber-700" : "text-red-700"
+              chapa.utilizacao >= 80 ? "text-green-700" : chapa.utilizacao >= 60 ? "text-amber-700" : "text-red-700"
             }`}
           >
-            {chapa.utilization.toFixed(1)}%
+            {chapa.utilizacao.toFixed(1)}%
           </div>
         </div>
       </div>
@@ -258,8 +264,8 @@ function ChapaExpandida({ chapa, grupo }: { chapa: ChapaResultado; grupo: GrupoN
           <rect
             x={margin}
             y={margin}
-            width={chapa.sheet_w_mm * scale}
-            height={chapa.sheet_h_mm * scale}
+            width={sheetW * scale}
+            height={sheetH * scale}
             fill="white"
             stroke="#94a3b8"
             strokeWidth="2"

@@ -117,14 +117,14 @@ export function useConverterCalculadora() {
  */
 export function useExportarPDF() {
   return useMutation({
-    mutationFn: async (id: string) => {
-      const blob = await calculadoraService.exportarPDF(id);
+    mutationFn: async () => {
+      const blob = await calculadoraService.exportarPDF();
       
       // Criar URL temporária e baixar
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `calculadora-${id}.pdf`;
+      link.download = 'calculadora.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -4,16 +4,15 @@
  */
 
 import { useState } from 'react';
-import { Plus, Trash2, Calculator } from 'lucide-react';
+import { Trash2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Button } from '../ui/button';
 import type { Orcamento, ItemOrcamento } from '../../types/workflow';
-import { formatCurrency } from '@/shared/lib/format';
 import { CalculadoraModal } from './CalculadoraModal';
+import { formatCurrency } from '@/shared/lib/format';
 
 interface OrcamentoFormProps {
   onSubmit: (orcamento: Omit<Orcamento, 'id' | 'numero'>) => void;

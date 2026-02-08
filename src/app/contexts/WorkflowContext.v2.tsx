@@ -3,30 +3,28 @@
  * WORKFLOW CONTEXT V2 - FIREBASE
  * ============================================================================
  * 
- * NOVA VERSÃO que usa Firebase Services ao invés de estado local.
+ * NOVA VERSÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢O que usa Firebase Services ao invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©s de estado local.
  * 
- * MUDANÇAS:
- * - Dados vêm do Firebase (não mais estado local)
+ * MUDANÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡AS:
+ * - Dados vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªm do Firebase (nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o mais estado local)
  * - Usa hooks customizados (useOrcamentos, useOrdens)
- * - Mantém compatibilidade com código existente
+ * - MantÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©m compatibilidade com cÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³digo existente
  * - Adiciona loading states
  * 
- * MIGRAÇÃO:
+ * MIGRAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢O:
  * 1. Trocar import de WorkflowContext para WorkflowContext.v2
  * 2. Componentes que usam o context continuam funcionando
- * 3. Dados agora vêm do Firebase automaticamente
+ * 3. Dados agora vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªm do Firebase automaticamente
  * 
  * ============================================================================
  */
 
-import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import {
   Orcamento,
-  OrdemProducao,
   SolicitacaoCompra,
   MovimentacaoEstoque,
-  WorkflowContextType,
-  ItemMaterial
+  WorkflowContextType
 } from "../types/workflow";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
@@ -36,41 +34,42 @@ import { isModeloValido } from "@/bom/models";
 import { CHAPAS_PADRAO } from "@/domains/calculadora";
 import type { ResultadoCalculadora } from "@/domains/calculadora";
 import { estoqueMateriaisService } from "@/domains/estoque";
+import type { BOMItem } from "@/bom/types";
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 
 /**
- * VALIDAÇÕES RUNTIME (mantidas)
+ * VALIDAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ES RUNTIME (mantidas)
  */
 function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; erros: string[] } {
   const erros: string[] = [];
 
   if (!orcamento.itens || orcamento.itens.length === 0) {
-    erros.push("Orçamento precisa ter pelo menos 1 item");
+    erros.push("OrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento precisa ter pelo menos 1 item");
   }
 
   if (orcamento.itens && orcamento.itens.length > 200) {
-    erros.push("Orçamento não pode ter mais de 200 itens");
+    erros.push("OrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o pode ter mais de 200 itens");
   }
 
   orcamento.itens?.forEach((item, index) => {
     if (!item.modeloId) {
-      erros.push(`Item ${index + 1}: modeloId é obrigatório`);
+      erros.push(`Item ${index + 1}: modeloId ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© obrigatÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³rio`);
     } else if (!isModeloValido(item.modeloId)) {
-      erros.push(`Item ${index + 1}: modeloId "${item.modeloId}" não existe no registry`);
+      erros.push(`Item ${index + 1}: modeloId "${item.modeloId}" nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o existe no registry`);
     }
 
     if (!item.calculoSnapshot) {
-      erros.push(`Item ${index + 1}: calculoSnapshot é obrigatório`);
+      erros.push(`Item ${index + 1}: calculoSnapshot ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© obrigatÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³rio`);
     } else {
       const snapshot = item.calculoSnapshot as ResultadoCalculadora;
       
-      if (!snapshot.bom || !snapshot.bom.itens || snapshot.bom.itens.length === 0) {
-        erros.push(`Item ${index + 1}: BOM vazia ou inválida`);
+      if (!snapshot.bomResult || !snapshot.bomResult.bom || snapshot.bomResult.bom.length === 0) {
+        erros.push(`Item ${index + 1}: BOM vazia ou invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lida`);
       }
 
       if (!snapshot.nesting || !snapshot.nesting.melhorOpcao) {
-        erros.push(`Item ${index + 1}: Nesting vazio ou inválido`);
+        erros.push(`Item ${index + 1}: Nesting vazio ou invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lido`);
       } else {
         const chapaUsada = snapshot.nesting.melhorOpcao.chapa;
         const chapaValida = CHAPAS_PADRAO.some(
@@ -78,14 +77,14 @@ function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; err
         );
         if (!chapaValida) {
           erros.push(
-            `Item ${index + 1}: Chapa ${chapaUsada.comprimento}×${chapaUsada.largura} não permitida. ` +
-            `Apenas 2000×1250 e 3000×1250 são aceitas`
+            `Item ${index + 1}: Chapa ${chapaUsada.comprimento}ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â${chapaUsada.largura} nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o permitida. ` +
+            `Apenas 2000ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â1250 e 3000ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â1250 sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o aceitas`
           );
         }
       }
 
       if (!snapshot.custos || snapshot.custos.categorias.length === 0) {
-        erros.push(`Item ${index + 1}: Custos vazios ou inválidos`);
+        erros.push(`Item ${index + 1}: Custos vazios ou invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lidos`);
       }
     }
   });
@@ -101,16 +100,16 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   const orcamentosHook = useOrcamentos({ autoLoad: !!user });
   const ordensHook = useOrdens({ autoLoad: !!user });
   
-  // Estado local para solicitações e movimentações (TODO: migrar para Firebase)
+  // Estado local para solicitaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes e movimentaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes (TODO: migrar para Firebase)
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoCompra[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
 
-  // ============= ORÇAMENTOS =============
+  // ============= ORÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡AMENTOS =============
   
   const addOrcamento = useCallback<WorkflowContextType["addOrcamento"]>(async (data) => {
     const validacao = validarOrcamento(data);
     if (!validacao.valido) {
-      throw new Error(`Erros de validação: ${validacao.erros.join(", ")}`);
+      throw new Error(`Erros de validaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o: ${validacao.erros.join(", ")}`);
     }
 
     const result = await orcamentosHook.createOrcamento({
@@ -119,7 +118,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     });
 
     if (!result.success || !result.data) {
-      throw new Error(result.error || 'Erro ao criar orçamento');
+      throw new Error(result.error || 'Erro ao criar orÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento');
     }
 
     addLog({
@@ -127,7 +126,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "orcamentos",
       recordId: result.data.id,
       recordName: result.data.numero,
-      description: `Criou orçamento ${result.data.numero} para ${result.data.clienteNome}`,
+      description: `Criou orÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento ${result.data.numero} para ${result.data.clienteNome}`,
       newData: result.data
     });
     
@@ -145,7 +144,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         module: "orcamentos",
         recordId: id,
         recordName: orcamento.numero,
-        description: `Atualizou orçamento ${orcamento.numero}`,
+        description: `Atualizou orÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento ${orcamento.numero}`,
         oldData: orcamento,
         newData: data
       });
@@ -154,17 +153,17 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
 
   const converterOrcamentoEmOrdem = useCallback<WorkflowContextType["converterOrcamentoEmOrdem"]>(async (orcamentoId) => {
     const orcamento = orcamentosHook.orcamentos.find(o => o.id === orcamentoId);
-    if (!orcamento) throw new Error("Orçamento não encontrado");
+    if (!orcamento) throw new Error("OrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o encontrado");
 
-    // REGRA DE NEGÓCIO: OP só pode ser criada de orçamento APROVADO
+    // REGRA DE NEGÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“CIO: OP sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³ pode ser criada de orÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento APROVADO
     if (orcamento.status !== "Aprovado") {
-      throw new Error("Apenas orçamentos aprovados podem ser convertidos em ordem de produção");
+      throw new Error("Apenas orÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amentos aprovados podem ser convertidos em ordem de produÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o");
     }
 
     const result = await ordensHook.createOrdemDeOrcamento(orcamentoId);
 
     if (!result.success || !result.data) {
-      throw new Error(result.error || 'Erro ao criar ordem de produção');
+      throw new Error(result.error || 'Erro ao criar ordem de produÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o');
     }
 
     addLog({
@@ -172,18 +171,18 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "ordens",
       recordId: result.data.id,
       recordName: result.data.numero,
-      description: `Converteu orçamento ${orcamento.numero} em ordem de produção ${result.data.numero}`,
+      description: `Converteu orÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento ${orcamento.numero} em ordem de produÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o ${result.data.numero}`,
       newData: result.data
     });
 
     return result.data;
   }, [orcamentosHook.orcamentos, ordensHook, addLog]);
 
-  // ============= ORDENS DE PRODUÇÃO =============
+  // ============= ORDENS DE PRODUÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢O =============
 
-  const addOrdem = useCallback<WorkflowContextType["addOrdem"]>(async (data) => {
+  const addOrdem = useCallback(async (_data: any) => {
     throw new Error(
-      "addOrdem não é permitido. Use converterOrcamentoEmOrdem para criar ordens de produção."
+      "addOrdem nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© permitido. Use converterOrcamentoEmOrdem para criar ordens de produÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o."
     );
   }, []);
 
@@ -205,12 +204,12 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     }
   }, [ordensHook, addLog]);
 
-  // ============= SOLICITAÇÕES DE COMPRA (TODO: migrar para Firebase) =============
+  // ============= SOLICITAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ES DE COMPRA (TODO: migrar para Firebase) =============
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const generateNumero = (prefix: string, count: number) => `${prefix}-${String(count + 1).padStart(4, '0')}`;
 
-  const addSolicitacaoCompra = useCallback<WorkflowContextType["addSolicitacaoCompra"]>((data) => {
+  const addSolicitacaoCompra = useCallback((data: Omit<SolicitacaoCompra, "id" | "numero">) => {
     const newSolicitacao: SolicitacaoCompra = {
       id: generateId(),
       numero: generateNumero("SC", solicitacoes.length),
@@ -224,14 +223,18 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       module: "compras",
       recordId: newSolicitacao.id,
       recordName: newSolicitacao.numero,
-      description: `Criou solicitação de compra ${newSolicitacao.numero}`,
+      description: `Criou solicitaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o de compra ${newSolicitacao.numero}`,
       newData: newSolicitacao
     });
     
     return newSolicitacao;
   }, [solicitacoes.length, addLog]);
 
-  const updateSolicitacaoCompra = useCallback<WorkflowContextType["updateSolicitacaoCompra"]>((id, data) => {
+  const addSolicitacao = useCallback((data: Omit<SolicitacaoCompra, "id" | "numero">) => {
+    return addSolicitacaoCompra(data);
+  }, [addSolicitacaoCompra]);
+
+  const updateSolicitacaoCompra = useCallback((id: string, data: Partial<Omit<SolicitacaoCompra, "id" | "numero">>) => {
     setSolicitacoes(prev => prev.map(sol => 
       sol.id === id ? { ...sol, ...data } : sol
     ));
@@ -243,19 +246,22 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         module: "compras",
         recordId: id,
         recordName: solicitacao.numero,
-        description: `Atualizou solicitação ${solicitacao.numero}`,
+        description: `Atualizou solicitaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o ${solicitacao.numero}`,
         oldData: solicitacao,
         newData: data
       });
     }
   }, [solicitacoes, addLog]);
 
-  // ============= MOVIMENTAÇÕES (TODO: migrar para Firebase) =============
+  const updateSolicitacao = useCallback((id: string, data: Partial<Omit<SolicitacaoCompra, "id" | "numero">>) => {
+    return updateSolicitacaoCompra(id, data);
+  }, [updateSolicitacaoCompra]);
 
-  const addMovimentacao = useCallback<WorkflowContextType["addMovimentacao"]>((data) => {
+  // ============= MOVIMENTAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ES (TODO: migrar para Firebase) =============
+
+  const addMovimentacao = useCallback((data: Omit<MovimentacaoEstoque, "id">) => {
     const newMovimentacao: MovimentacaoEstoque = {
       id: generateId(),
-      numero: generateNumero("MOV", movimentacoes.length),
       ...data
     };
     
@@ -265,29 +271,135 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       action: "create",
       module: "estoque",
       recordId: newMovimentacao.id,
-      recordName: newMovimentacao.numero,
-      description: `Registrou movimentação de estoque ${newMovimentacao.numero}`,
+      recordName: newMovimentacao.id,
+      description: `Registrou movimentaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o de estoque ${newMovimentacao.id}`,
       newData: newMovimentacao
     });
     
     return newMovimentacao;
   }, [movimentacoes.length, addLog]);
 
-  // ============= VERIFICAÇÃO DE MATERIAIS =============
+  const verificarDisponibilidade = useCallback<WorkflowContextType["verificarDisponibilidade"]>((produtoId, quantidade) => {
+    const faltantes = estoqueMateriaisService.verificarDisponibilidade([
+      { materialId: produtoId, quantidade }
+    ]);
+    return faltantes.length === 0;
+  }, []);
+
+  // ============= VERIFICAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢O DE MATERIAIS =============
+
+  const extrairMateriaisDaOrcamento = (orcamento: Orcamento) => {
+    const materiaisAgrupados = new Map<string, { quantidade: number; unidade: string; nome: string }>();
+
+    orcamento.itens.forEach(itemOrcamento => {
+      const snapshot = itemOrcamento.calculoSnapshot as ResultadoCalculadora | undefined;
+      if (!snapshot?.bomResult?.bom || snapshot.bomResult.bom.length === 0) return;
+
+      snapshot.bomResult.bom.forEach((bomItem: BOMItem) => {
+        const materialId = bomItem.material || "DESCONHECIDO";
+        const quantidade = (bomItem.pesoTotal || bomItem.qtd || 0) * itemOrcamento.quantidade;
+        const unidade = bomItem.unidade || "un";
+        const nome = bomItem.desc || materialId;
+
+        if (materiaisAgrupados.has(materialId)) {
+          const atual = materiaisAgrupados.get(materialId)!;
+          atual.quantidade += quantidade;
+        } else {
+          materiaisAgrupados.set(materialId, { quantidade, unidade, nome });
+        }
+      });
+    });
+
+    return Array.from(materiaisAgrupados.entries()).map(([materialId, dados]) => ({
+      materialId,
+      ...dados,
+    }));
+  };
 
   const verificarMateriaisParaOrdem = useCallback(async (ordemId: string) => {
     const ordem = ordensHook.ordens.find(o => o.id === ordemId);
-    if (!ordem) throw new Error("Ordem não encontrada");
+    if (!ordem) throw new Error("Ordem nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o encontrada");
 
     const orcamento = orcamentosHook.orcamentos.find(o => o.id === ordem.orcamentoId);
-    if (!orcamento) throw new Error("Orçamento vinculado não encontrado");
+    if (!orcamento) throw new Error("OrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento vinculado nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o encontrado");
 
-    const materiaisFaltantes = await estoqueMateriaisService.verificarMateriais(
-      orcamento.itens.map(item => item.calculoSnapshot)
+    const materiaisNecessarios = extrairMateriaisDaOrcamento(orcamento);
+    return estoqueMateriaisService.verificarDisponibilidade(
+      materiaisNecessarios.map(m => ({ materialId: m.materialId, quantidade: m.quantidade }))
+    );
+  }, [orcamentosHook.orcamentos, ordensHook.ordens]);
+
+  const verificarNecessidadeCompra = useCallback<WorkflowContextType["verificarNecessidadeCompra"]>(async (ordemId) => {
+    const ordem = ordensHook.ordens.find(o => o.id === ordemId);
+    if (!ordem) return [];
+
+    const orcamento = orcamentosHook.orcamentos.find(o => o.id === ordem.orcamentoId);
+    if (!orcamento) return [];
+
+    const materiaisNecessarios = extrairMateriaisDaOrcamento(orcamento);
+    const faltantes = estoqueMateriaisService.verificarDisponibilidade(
+      materiaisNecessarios.map(m => ({ materialId: m.materialId, quantidade: m.quantidade }))
     );
 
-    return materiaisFaltantes;
+    return faltantes.map(f => ({
+      id: generateId(),
+      produtoId: f.materialId,
+      produtoNome: f.materialNome,
+      quantidade: f.falta,
+      unidade: f.unidade,
+      precoUnitario: 0,
+      subtotal: 0,
+    }));
   }, [orcamentosHook.orcamentos, ordensHook.ordens]);
+
+  const reservarMateriais = useCallback<WorkflowContextType["reservarMateriais"]>((ordemId) => {
+    const ordem = ordensHook.ordens.find(o => o.id === ordemId);
+    if (!ordem) return false;
+
+    const orcamento = orcamentosHook.orcamentos.find(o => o.id === ordem.orcamentoId);
+    if (!orcamento) return false;
+
+    const materiaisNecessarios = extrairMateriaisDaOrcamento(orcamento);
+    const faltantes = estoqueMateriaisService.verificarDisponibilidade(
+      materiaisNecessarios.map(m => ({ materialId: m.materialId, quantidade: m.quantidade }))
+    );
+    if (faltantes.length > 0) return false;
+
+    const usuario = user?.displayName || user?.email || "Sistema";
+    estoqueMateriaisService.reservarMateriais(
+      ordemId,
+      materiaisNecessarios.map(m => ({ materialId: m.materialId, quantidade: m.quantidade })),
+      usuario
+    );
+    return true;
+  }, [ordensHook.ordens, orcamentosHook.orcamentos, user]);
+
+  const consumirMateriais = useCallback<WorkflowContextType["consumirMateriais"]>((ordemId) => {
+    const ordem = ordensHook.ordens.find(o => o.id === ordemId);
+    if (!ordem) return false;
+
+    const orcamento = orcamentosHook.orcamentos.find(o => o.id === ordem.orcamentoId);
+    if (!orcamento) return false;
+
+    const materiaisNecessarios = extrairMateriaisDaOrcamento(orcamento);
+    const usuario = user?.displayName || user?.email || "Sistema";
+    estoqueMateriaisService.consumirMateriais(
+      ordemId,
+      materiaisNecessarios.map(m => ({ materialId: m.materialId, quantidade: m.quantidade })),
+      usuario
+    );
+    return true;
+  }, [ordensHook.ordens, orcamentosHook.orcamentos, user]);
+
+  const iniciarProducao = useCallback<WorkflowContextType["iniciarProducao"]>(async (ordemId, operadorNome) => {
+    const nome = operadorNome || user?.displayName || user?.email || "Operador";
+    const result = await ordensHook.iniciarProducao(ordemId, nome);
+    return { success: result.success, error: result.error };
+  }, [ordensHook, user]);
+
+  const concluirProducao = useCallback<WorkflowContextType["concluirProducao"]>(async (ordemId) => {
+    await ordensHook.concluirProducao(ordemId);
+  }, [ordensHook]);
 
   const value: WorkflowContextType = {
     orcamentos: orcamentosHook.orcamentos,
@@ -299,6 +411,14 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     converterOrcamentoEmOrdem,
     addOrdem,
     updateOrdem,
+    iniciarProducao,
+    concluirProducao,
+    verificarDisponibilidade,
+    reservarMateriais,
+    consumirMateriais,
+    addSolicitacao,
+    updateSolicitacao,
+    verificarNecessidadeCompra,
     addSolicitacaoCompra,
     updateSolicitacaoCompra,
     addMovimentacao,

@@ -12,10 +12,10 @@ Este documento foca em riscos de segurança/integridade quando `empresaId` falha
 ## Mitigações (permitidas)
 
 - Fail-safe quando `empresaId` não existe (UI controlada, sem consultas).
+- Tratamento consistente de `permission-denied` com estado de erro controlado (sem crash) nas telas críticas.
 - Centralizar helpers de query em `src/services/firestore/base.ts`.
 - Auditoria (`writeAuditLog`) em ações críticas já existentes.
 
 ## O que NÃO é permitido
 
 - Modificar `firestore.rules`.
-

@@ -14,8 +14,6 @@ import {
   calcularCustoTubo,
   calcularCustoCuba,
   validarConfig,
-  MAT_CHAPA_08,
-  MAT_CHAPA_20,
   MAT_TUBO_25,
   MAT_TUBO_38,
 } from '../utils';

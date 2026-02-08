@@ -1,6 +1,6 @@
 /**
- * Página de Catálogo de Insumos
- * Usa ListPage para consistência visual com outras páginas
+ * PÃ¡gina de CatÃ¡logo de Insumos
+ * Usa ListPage para consistÃªncia visual com outras pÃ¡ginas
  */
 
 import { useState } from 'react';
@@ -17,10 +17,10 @@ import {
 import { useInsumos, type Insumo, type TipoInsumo } from '@/domains/catalogo';
 
 const tipoInsumoLabels: Record<TipoInsumo, string> = {
-  'materia-prima': 'Matéria Prima',
-  'pes-niveladores': 'Pés Niveladores',
-  'parafusos': 'Parafusos e Fixações',
-  'acessorios': 'Acessórios',
+  'materia-prima': 'MatÃ©ria Prima',
+  'pes-niveladores': 'PÃ©s Niveladores',
+  'parafusos': 'Parafusos e FixaÃ§Ãµes',
+  'acessorios': 'AcessÃ³rios',
   'componentes': 'Componentes',
 };
 
@@ -28,7 +28,7 @@ export default function CatalogoInsumos() {
   const [filtroTipo, setFiltroTipo] = useState<TipoInsumo | 'todos'>('todos');
   const [busca, setBusca] = useState('');
 
-  const { data: insumos, isLoading } = useInsumos();
+  const { data: insumos } = useInsumos();
 
   const insumosFiltrados = insumos?.filter(insumo => {
     const matchTipo = filtroTipo === 'todos' || insumo.tipo === filtroTipo;
@@ -45,7 +45,7 @@ export default function CatalogoInsumos() {
     }).format(value);
   };
 
-  // Estatísticas
+  // EstatÃ­sticas
   const totalInsumos = insumos?.length || 0;
   const porTipo = insumos?.reduce((acc, insumo) => {
     acc[insumo.tipo] = (acc[insumo.tipo] || 0) + 1;
@@ -56,10 +56,10 @@ export default function CatalogoInsumos() {
     {
       title: "Total de Insumos",
       value: totalInsumos,
-      description: "Cadastrados no catálogo"
+      description: "Cadastrados no catÃ¡logo"
     },
     {
-      title: "Matéria Prima",
+      title: "MatÃ©ria Prima",
       value: porTipo?.['materia-prima'] || 0,
       description: "Chapas e tubos",
       className: "border-blue-200 dark:border-blue-800"
@@ -67,11 +67,11 @@ export default function CatalogoInsumos() {
     {
       title: "Componentes",
       value: (porTipo?.['componentes'] || 0) + (porTipo?.['acessorios'] || 0),
-      description: "Pés, parafusos, etc",
+      description: "PÃ©s, parafusos, etc",
       className: "border-purple-200 dark:border-purple-800"
     },
     {
-      title: "Tipos Únicos",
+      title: "Tipos Ãšnicos",
       value: Object.keys(porTipo || {}).length,
       description: "Categorias diferentes"
     }
@@ -81,7 +81,7 @@ export default function CatalogoInsumos() {
   const columns = [
     {
       key: 'codigo',
-      label: 'Código',
+      label: 'CÃ³digo',
       sortable: true,
     },
     {
@@ -97,7 +97,7 @@ export default function CatalogoInsumos() {
     },
     {
       key: 'descricao',
-      label: 'Descrição',
+      label: 'DescriÃ§Ã£o',
       sortable: false,
     },
     {
@@ -119,7 +119,7 @@ export default function CatalogoInsumos() {
     },
   ];
 
-  // Renderizar célula customizada
+  // Renderizar cÃ©lula customizada
   const renderCell = (insumo: Insumo, columnKey: string) => {
     switch (columnKey) {
       case 'codigo':
@@ -152,7 +152,7 @@ export default function CatalogoInsumos() {
         return <span className="font-mono text-sm">{insumo.unidade}</span>;
       
       default:
-        return insumo[columnKey as keyof Insumo];
+        return String(insumo[columnKey as keyof Insumo] ?? "");
     }
   };
 
@@ -160,16 +160,16 @@ export default function CatalogoInsumos() {
     <ListPage
       breadcrumbs={[
         { label: "Dashboard", href: "/" },
-        { label: "Catálogo de Insumos" }
+        { label: "CatÃ¡logo de Insumos" }
       ]}
-      title="Catálogo de Insumos"
-      subtitle="Visualize todos os insumos com códigos e especificações"
+      title="CatÃ¡logo de Insumos"
+      description="Visualize todos os insumos com codigos e especificaÃ§Ãµes"
       icon={Package}
       stats={statsData}
-      searchPlaceholder="Buscar por nome ou código..."
+      searchPlaceholder="Buscar por nome ou cÃ³digo..."
       searchValue={busca}
       onSearchChange={setBusca}
-      filters={
+      filterContent={
         <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as any)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Tipo" />
@@ -183,9 +183,9 @@ export default function CatalogoInsumos() {
         </Select>
       }
       data={insumosFiltrados || []}
-      columns={columns}
+      columns={columns as any}
       renderCell={renderCell}
-      isLoading={isLoading}
+      keyExtractor={(insumo: Insumo) => insumo.id}
       emptyMessage="Nenhum insumo encontrado com os filtros aplicados"
       showPagination={false}
     />

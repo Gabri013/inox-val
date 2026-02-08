@@ -1,0 +1,29 @@
+﻿*** Begin Patch
+*** Update File: docs/RELATORIO_FINAL.md
+@@
+ ## Resumo
+ 
+ - Padronizado redirecionamento de acesso negado para rota dedicada.
+ - Ajustes em permissões e auditoria de aprovações de usuários.
+ - Correções de multi-tenant em permissões por role.
++- Estruturado o módulo de precificacao (scripts, engine básica e rota).
+@@
+ ## O que foi alterado
+@@
+ - `src/app/providers/AppProviders.tsx`
++- `data/planilha_preco.xls`
++- `scripts/convert_xls_to_xlsx.ps1`
++- `scripts/convert_xls_to_xlsx.sh`
++- `scripts/extract_planilha_preco.ts`
++- `scripts/generate_engine_from_model.ts`
++- `scripts/test_equivalence.ts`
++- `src/domains/precificacao/index.ts`
++- `src/domains/precificacao/engine/index.ts`
++- `src/domains/precificacao/pages/Precificacao.tsx`
++- `src/domains/precificacao/README.md`
+@@
+ ## Pendencias / riscos
+@@
+ - Auditoria em aprovações depende de `empresaId` passado pela tela de aprovações.
++- Engine de formulas ainda é placeholder e precisa de avaliador completo.
+*** End Patch

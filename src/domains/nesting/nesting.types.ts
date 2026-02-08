@@ -2,7 +2,7 @@
  * Tipos do domínio Nesting - Cálculo de Bancada
  */
 
-import type { ID, EntityBase } from '@/shared/types/ids';
+import type { ID } from '@/shared/types/ids';
 
 /**
  * Tipos de material para nesting
@@ -116,7 +116,10 @@ export interface ResultadoAproveitamento {
 /**
  * Cálculo de nesting completo
  */
-export interface CalculoNesting extends EntityBase {
+export interface CalculoNesting {
+  id: ID;
+  createdAt?: string | number | Date;
+  updatedAt?: string | number | Date;
   nome: string;
   descricao?: string;
   clienteId?: ID;

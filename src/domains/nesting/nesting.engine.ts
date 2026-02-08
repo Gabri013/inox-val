@@ -71,6 +71,7 @@ function calcularAproveitamentoChapa(
   
   // Área da chapa mãe em mm²
   const areaChapaMae = materialBase.largura * materialBase.comprimento;
+  void areaChapaMae;
   
   // Calcula área útil descontando perdas de borda
   const larguraUtil = materialBase.largura - (parametros.perdaBorda * 2);

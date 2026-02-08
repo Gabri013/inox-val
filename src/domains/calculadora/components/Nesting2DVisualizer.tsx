@@ -21,8 +21,31 @@ import { Maximize2, TrendingUp, Layers, ZoomIn, ZoomOut, Move, RotateCcw, Chevro
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import type { ResultadoNesting } from '@/domains/calculadora';
+import type { ResultadoNesting as ResultadoNestingBase } from '@/domains/calculadora';
+
+type ResultadoNesting = ResultadoNestingBase & {
+  chapas?: Array<{
+    numero: number;
+    chapa: { largura: number; altura: number };
+    pecas: Array<{
+      id?: string;
+      x: number;
+      y: number;
+      largura: number;
+      altura: number;
+      rotacionada?: boolean;
+      label?: string;
+    }>;
+    aproveitamentoPct: number;
+    sobra: number;
+  }>;
+  totalChapasUsadas?: number;
+  aproveitamentoMedio?: number;
+  areaUtilizadaTotal?: number;
+  areaTotalChapas?: number;
+  sobraTotal?: number;
+  melhorOpcao?: string;
+};
 
 interface Nesting2DVisualizerProps {
   resultado: ResultadoNesting;
@@ -36,7 +59,8 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
   const [isPanning, setIsPanning] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
 
-  const chapa = resultado.chapas[chapaAtual];
+  const chapas = resultado.chapas || [];
+  const chapa = chapas[chapaAtual];
 
   // Controles de zoom e pan
   const handleWheel = (e: React.WheelEvent) => {
@@ -80,7 +104,7 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
   };
 
   const handleNextChapa = () => {
-    setChapaAtual((prev) => Math.min(resultado.chapas.length - 1, prev + 1));
+    setChapaAtual((prev) => Math.min(chapas.length - 1, prev + 1));
   };
 
   // Cores por tipo de peça
@@ -214,7 +238,7 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
     handleReset();
   }, [chapaAtual]);
 
-  if (!resultado.chapas || resultado.chapas.length === 0) {
+  if (!chapas || chapas.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -246,10 +270,10 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
               </span>
             </div>
             <p className="text-2xl font-bold text-blue-900">
-              {resultado.totalChapasUsadas}
+              {resultado.totalChapasUsadas ?? chapas.length}
             </p>
             <p className="text-xs text-blue-700 mt-1">
-              {resultado.melhorOpcao}
+              {resultado.melhorOpcao ?? "Melhor opcao"}
             </p>
           </div>
 
@@ -261,7 +285,7 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
               </span>
             </div>
             <p className="text-2xl font-bold text-green-900">
-              {resultado.aproveitamentoMedio.toFixed(1)}%
+              {(resultado.aproveitamentoMedio ?? 0).toFixed(1)}%
             </p>
             <p className="text-xs text-green-700 mt-1">
               Média geral
@@ -276,10 +300,10 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
               </span>
             </div>
             <p className="text-2xl font-bold text-purple-900">
-              {resultado.areaUtilizadaTotal.toFixed(2)} m²
+              {(resultado.areaUtilizadaTotal ?? 0).toFixed(2)} m²
             </p>
             <p className="text-xs text-purple-700 mt-1">
-              De {resultado.areaTotalChapas.toFixed(2)} m²
+              De {(resultado.areaTotalChapas ?? 0).toFixed(2)} m²
             </p>
           </div>
 
@@ -291,10 +315,10 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
               </span>
             </div>
             <p className="text-2xl font-bold text-orange-900">
-              {resultado.sobraTotal.toFixed(2)} m²
+              {(resultado.sobraTotal ?? 0).toFixed(2)} m²
             </p>
             <p className="text-xs text-orange-700 mt-1">
-              {(100 - resultado.aproveitamentoMedio).toFixed(1)}%
+              {(100 - (resultado.aproveitamentoMedio ?? 0)).toFixed(1)}%
             </p>
           </div>
         </div>
@@ -312,12 +336,12 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
             </Button>
             
             <Badge variant="secondary" className="text-lg px-4 py-2">
-              Chapa {chapa.numero} de {resultado.totalChapasUsadas}
+              Chapa {chapa.numero} de {(resultado.totalChapasUsadas ?? chapas.length)}
             </Badge>
             
             <Button
               onClick={handleNextChapa}
-              disabled={chapaAtual === resultado.chapas.length - 1}
+              disabled={chapaAtual === chapas.length - 1}
               variant="outline"
               size="sm"
             >
@@ -407,7 +431,7 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
           <div className="space-y-1 max-h-60 overflow-y-auto">
             {chapa.pecas.map((peca, idx) => (
               <div
-                key={peca.id}
+                key={(peca as any).id || `${chapa.numero}-${idx}`}
                 className="text-xs flex justify-between items-center py-2 px-3 hover:bg-accent rounded"
               >
                 <div className="flex items-center gap-3">

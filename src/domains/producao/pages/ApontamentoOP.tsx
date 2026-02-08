@@ -10,6 +10,7 @@ import { Play, Pause, Square, User } from 'lucide-react';
 
 import type { ProducaoItem, SetorProducao } from '../producao.types';
 import { useAtualizarStatus, useItensSetor, useMoverItem } from '../producao.hooks';
+import { toFirestoreErrorView } from '@/shared/lib/firestoreErrors';
 
 const SETORES: SetorProducao[] = ['Corte', 'Dobra', 'Solda', 'Acabamento', 'Montagem', 'Qualidade', 'Expedicao'];
 
@@ -24,9 +25,21 @@ export default function ApontamentoOP() {
   const [setor, setSetor] = useState<SetorProducao>('Corte');
   const [itemSelecionado, setItemSelecionado] = useState<ProducaoItem | null>(null);
 
-  const { data: itens = [], isLoading } = useItensSetor(setor);
+  const { data: itens = [], isLoading, isError, error } = useItensSetor(setor);
   const moverItem = useMoverItem();
   const atualizarStatus = useAtualizarStatus();
+
+  if (isError) {
+    const view = toFirestoreErrorView(error);
+    return (
+      <div className="p-6">
+        <Card className="p-4">
+          <div className="font-medium">{view.title}</div>
+          <div className="text-sm text-muted-foreground">{view.description}</div>
+        </Card>
+      </div>
+    );
+  }
 
   const operador = useMemo(() => OPERADORES.find((o) => o.id === operadorId)!, [operadorId]);
 
@@ -56,8 +69,10 @@ export default function ApontamentoOP() {
 
   const handleFinalizar = (item: ProducaoItem) => {
     setItemSelecionado(item);
-    const idx = SETORES.indexOf(item.setorAtual);
+    const setorAtual = item.setorAtual as SetorProducao;
+    const idx = SETORES.indexOf(setorAtual);
     const proximo = idx >= 0 && idx < SETORES.length - 1 ? SETORES[idx + 1] : null;
+    const proximoSetor = (proximo ?? setorAtual) as SetorProducao;
     if (!proximo) {
       atualizarStatus.mutate({
         orderId: item.orderId,
@@ -72,11 +87,11 @@ export default function ApontamentoOP() {
     moverItem.mutate({
       orderId: item.orderId,
       itemId: item.id,
-      novoSetor: proximo,
-      setorAnterior: item.setorAtual,
+      novoSetor: proximoSetor,
+      setorAnterior: setorAtual,
       operadorId: operador.id,
       operadorNome: operador.nome,
-      observacoes: `Saída do setor ${item.setorAtual}`,
+      observacoes: `Saida do setor ${setorAtual}`,
     });
     atualizarStatus.mutate({
       orderId: item.orderId,
@@ -84,7 +99,7 @@ export default function ApontamentoOP() {
       status: 'Aguardando',
       operadorId: operador.id,
       operadorNome: operador.nome,
-      observacoes: `Aguardando no setor ${proximo}`,
+      observacoes: `Aguardando no setor ${proximoSetor}`,
     });
   };
 

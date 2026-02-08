@@ -15,12 +15,11 @@
  * ============================================================================
  */
 
-import { newId, type ID } from '@/shared/types/ids';
+import { newId } from '@/shared/types/ids';
 import { toISOString } from '@/shared/lib/format';
 import { 
   MATERIAIS_AUTORIZADOS, 
   buscarMaterial,
-  type MaterialAutorizado 
 } from '@/bom/materials.registry';
 import type {
   MovimentoEstoqueMaterial,
@@ -386,6 +385,8 @@ export function listarMateriaisCriticos(): SaldoEstoqueMaterial[] {
 }
 
 export const estoqueMateriaisService = {
+  getEstoque: () => ({} as Record<string, number>),
+  setEstoque: (_estoque: Record<string, number>) => {},
   registrarMovimento,
   consultarSaldo,
   listarSaldos,

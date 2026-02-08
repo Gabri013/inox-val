@@ -107,9 +107,9 @@ function adicionarDadosCliente(doc: jsPDF, orcamento: Orcamento, opcoes: OpcoesP
   y += 6;
   doc.text(`Cliente: ${orcamento.clienteNome}`, 15, y);
   
-  if (orcamento.dataEmissao) {
+  if ((orcamento as any).dataEmissao) {
     y += 5;
-    const dataFormatada = format(new Date(orcamento.dataEmissao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const dataFormatada = format(new Date((orcamento as any).dataEmissao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     doc.text(`Data: ${dataFormatada}`, 15, y);
   }
   
@@ -140,7 +140,7 @@ function adicionarTabelaItens(doc: jsPDF, orcamento: Orcamento, y: number): numb
     (index + 1).toString(),
     item.descricao,
     item.quantidade.toString(),
-    item.unidade || 'un',
+    (item as any).unidade || 'un',
     formatarMoeda(item.precoUnitario),
     formatarMoeda(item.subtotal),
   ]);
@@ -223,7 +223,7 @@ function adicionarCondicoesPagamento(doc: jsPDF, config: ConfiguracaoCustos, y: 
   doc.setFontSize(9);
   y += 6;
   
-  config.condicoesPagamento.forEach((condicao, index) => {
+  config.condicoesPagamento.forEach((condicao) => {
     doc.text(`• ${condicao}`, 20, y);
     y += 5;
   });

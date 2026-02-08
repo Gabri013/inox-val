@@ -41,6 +41,7 @@ import {
  * 3. Precificação - Cálculo de custos e preço final
  */
 export class CalculadoraEngine {
+  private static _unusedBomItem?: BOMItem;
   
   /**
    * ETAPA 1: GERAÇÃO DE BOM
@@ -60,6 +61,7 @@ export class CalculadoraEngine {
    * Calcula aproveitamento de chapas com layout 2D real (posições x/y)
    */
   static calcularNesting(bomResult: import('../../bom/types').BOMResult): ResultadoNesting {
+    void this._unusedBomItem;
     // Extrair peças de chapa da BOM
     const pecasChapa = bomResult.bom.filter(item => 
       item.material?.includes('CHAPA') || 
@@ -188,6 +190,7 @@ export class CalculadoraEngine {
     bomResult: import('../../bom/types').BOMResult,
     nesting: ResultadoNesting
   ): ResultadoPrecificacao {
+    void nesting;
     const { precificacao } = entrada;
     
     // Usar os custos já calculados na BOM
@@ -270,11 +273,16 @@ export class CalculadoraEngine {
     
     // Etapa 3: Calcular Precificação
     const precificacao = this.calcularPrecificacao(entrada, bomResult, nesting);
-    
+
     return {
       entrada,
       bomResult,
+      bom: bomResult,
       nesting,
+      custos: {
+        categorias: [precificacao.custosMaterial, precificacao.custosMaoObra],
+        custoTotal: precificacao.custoTotal,
+      },
       precificacao,
       dataCalculo: new Date().toISOString(),
       versao: '2.0.0',

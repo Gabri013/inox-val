@@ -19,10 +19,7 @@
  */
 
 import type { 
-  PecaNesting, 
-  ChapaLayout, 
-  PecaPosicionada,
-  DimensaoChapa,
+  PecaNesting,
 } from './types';
 
 // ============================================================================
@@ -56,7 +53,15 @@ export class Nesting2D {
   private chapaLargura: number;
   private chapaAltura: number;
   private espacosLivres: EspacoLivre[] = [];
-  private pecasAlocadas: PecaPosicionada[] = [];
+  private pecasAlocadas: Array<{
+    id: string;
+    x: number;
+    y: number;
+    largura: number;
+    altura: number;
+    rotacionada: boolean;
+    label: string;
+  }> = [];
   private proximoIdEspaco = 0;
 
   constructor(largura: number, altura: number) {
@@ -98,7 +103,7 @@ export class Nesting2D {
     const alturaFinal = rotacionada ? peca.largura : peca.altura;
 
     // Criar peça alocada
-    const pecaAlocada: PecaPosicionada = {
+    const pecaAlocada = {
       id: peca.id,
       x: melhorEspaco.x,
       y: melhorEspaco.y,
@@ -209,7 +214,15 @@ export class Nesting2D {
   /**
    * Retorna as peças alocadas nesta chapa
    */
-  getPecasAlocadas(): PecaPosicionada[] {
+  getPecasAlocadas(): Array<{
+    id: string;
+    x: number;
+    y: number;
+    largura: number;
+    altura: number;
+    rotacionada: boolean;
+    label: string;
+  }> {
     return this.pecasAlocadas;
   }
 
@@ -218,10 +231,10 @@ export class Nesting2D {
    */
   getEstatisticas() {
     const areaTotal = this.chapaLargura * this.chapaAltura;
-    const areaUtilizada = this.pecasAlocadas.reduce(
-      (sum, p) => sum + (p.largura * p.altura),
-      0
-    );
+  const areaUtilizada = this.pecasAlocadas.reduce(
+    (sum: number, p) => sum + (p.largura * p.altura),
+    0
+  );
     
     return {
       areaTotal: areaTotal / 1_000_000, // mm² -> m²
@@ -237,7 +250,23 @@ export class Nesting2D {
 // ============================================================================
 
 export interface ResultadoNesting2D {
-  chapas: ChapaLayout[];
+  chapas: Array<{
+    numero: number;
+    chapa: { largura: number; altura: number };
+    pecas: Array<{
+      id: string;
+      x: number;
+      y: number;
+      largura: number;
+      altura: number;
+      rotacionada: boolean;
+      label: string;
+    }>;
+    aproveitamentoPct: number;
+    areaUtilizada: number;
+    areaTotal: number;
+    sobra: number;
+  }>;
   melhorOpcao: '2000×1250' | '3000×1250';
   totalChapasUsadas: number;
   aproveitamentoMedio: number;
@@ -253,7 +282,7 @@ export function calcularNesting2D(pecas: PecaNesting[]): ResultadoNesting2D {
   // Preparar peças para alocação (expandir quantidade)
   const pecasParaAlocar: PecaParaAlocar[] = [];
   
-  pecas.forEach((peca, idx) => {
+  pecas.forEach((peca) => {
     for (let i = 0; i < peca.quantidade; i++) {
       pecasParaAlocar.push({
         id: `${peca.id}-${i + 1}`,
@@ -305,7 +334,23 @@ function alocarEmChapas(
   largura: number,
   altura: number
 ): Omit<ResultadoNesting2D, 'melhorOpcao'> {
-  const chapas: ChapaLayout[] = [];
+  const chapas: Array<{
+    numero: number;
+    chapa: { largura: number; altura: number };
+    pecas: Array<{
+      id: string;
+      x: number;
+      y: number;
+      largura: number;
+      altura: number;
+      rotacionada: boolean;
+      label: string;
+    }>;
+    aproveitamentoPct: number;
+    areaUtilizada: number;
+    areaTotal: number;
+    sobra: number;
+  }> = [];
   const pecasRestantes = [...pecas];
 
   let numeroChapa = 1;

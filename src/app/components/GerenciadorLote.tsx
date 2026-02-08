@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2, Package, Layers, Calculator, X } from "lucide-react";
+import { Plus, Trash2, Layers, Calculator, X } from "lucide-react";
 import type { ItemLote } from "../types/projeto";
 import type { Familia, Estrutura, EspelhoLateral } from "../domain/mesas/types";
 import { criarItemLote, calcularEstatisticasLote, type ConfiguracaoMesaLote } from "../lib/lote";

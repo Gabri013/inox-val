@@ -16,7 +16,7 @@
  * ============================================================================
  */
 
-import type { ItemAlocadoNesting, PosicaoPeca } from './nesting.types';
+import type { ItemAlocadoNesting } from './nesting.types';
 
 /**
  * Peça a ser alocada (entrada do algoritmo)

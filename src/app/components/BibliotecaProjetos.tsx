@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Folder, Search, Calendar, Copy, Trash2, Download, X, Plus } from "lucide-react";
+import { Folder, Search, Calendar, Copy, Trash2, Download, X } from "lucide-react";
 import type { Projeto } from "../types/projeto";
 import { formatarMoeda } from "../lib/orcamento";
 

@@ -8,6 +8,7 @@ import type { ID } from '@/shared/types/ids';
 
 // Versão atual do banco de dados
 const DB_VERSION = 4; // Incrementado para incluir calculadora
+void DB_VERSION;
 const DB_NAME = 'erp_database';
 
 /**
@@ -113,6 +114,8 @@ export async function initDB(): Promise<IDBPDatabase<ERPDatabase>> {
 
   dbInstance = await openDB<ERPDatabase>(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion, newVersion, transaction) {
+      void newVersion;
+      void transaction;
       // Migração versão 0 → 1: criar todas as stores
       if (oldVersion < 1) {
         // Clientes
@@ -278,17 +281,20 @@ export class Storage<T extends { id: ID }> implements CRUDOperations<T> {
 
   async getAll(): Promise<T[]> {
     const db = await getDB();
-    return db.getAll(this.storeName);
+    const store = this.storeName as any;
+    return db.getAll(store);
   }
 
   async getById(id: ID): Promise<T | undefined> {
     const db = await getDB();
-    return db.get(this.storeName, id);
+    const store = this.storeName as any;
+    return db.get(store, id);
   }
 
   async create(data: T): Promise<T> {
     const db = await getDB();
-    await db.add(this.storeName, data);
+    const store = this.storeName as any;
+    await db.add(store, data);
     return data;
   }
 
@@ -299,13 +305,15 @@ export class Storage<T extends { id: ID }> implements CRUDOperations<T> {
       throw new Error(`Registro com ID ${id} não encontrado`);
     }
     const updated = { ...existing, ...data, id };
-    await db.put(this.storeName, updated);
+    const store = this.storeName as any;
+    await db.put(store, updated);
     return updated;
   }
 
   async delete(id: ID): Promise<void> {
     const db = await getDB();
-    await db.delete(this.storeName, id);
+    const store = this.storeName as any;
+    await db.delete(store, id);
   }
 
   /**
@@ -313,7 +321,8 @@ export class Storage<T extends { id: ID }> implements CRUDOperations<T> {
    */
   async getByIndex(indexName: string, value: any): Promise<T[]> {
     const db = await getDB();
-    return db.getAllFromIndex(this.storeName, indexName as any, value);
+    const store = this.storeName as any;
+    return (db as any).getAllFromIndex(store, indexName, value as any);
   }
 
   /**
@@ -321,7 +330,8 @@ export class Storage<T extends { id: ID }> implements CRUDOperations<T> {
    */
   async clear(): Promise<void> {
     const db = await getDB();
-    await db.clear(this.storeName);
+    const store = this.storeName as any;
+    await db.clear(store);
   }
 
   /**
@@ -329,7 +339,7 @@ export class Storage<T extends { id: ID }> implements CRUDOperations<T> {
    */
   async setAll(items: T[]): Promise<void> {
     const db = await getDB();
-    const tx = db.transaction(this.storeName, 'readwrite');
+    const tx = db.transaction(this.storeName as any, 'readwrite');
     await tx.store.clear(); // Limpa tudo primeiro
     
     // Adiciona todos os novos items

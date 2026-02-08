@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { AuditLog, AuditLogFilter, AuditContextType } from "../types/audit";
+import { AuditLog, AuditContextType } from "../types/audit";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AuditContext = createContext<AuditContextType | undefined>(undefined);
@@ -25,31 +25,48 @@ export function AuditProvider({ children }: { children: ReactNode }) {
     };
 
     const newLog: AuditLog = {
+      ...logData,
       id: generateId(),
-      timestamp: new Date(),
+      timestamp: logData.timestamp || new Date(),
       userId: currentUser.userId,
       userName: currentUser.userName,
-      userRole: currentUser.userRole,
-      ...logData
+      userRole: currentUser.userRole
     };
 
     setLogs((prevLogs) => [newLog, ...prevLogs]);
 
     // Em produção, aqui enviaria para o backend
     console.log("[AUDIT LOG]", newLog);
+    return newLog;
   }, [auth?.user]);
 
   // Obter logs com filtro
   const getLogs = useCallback<AuditContextType["getLogs"]>((filter) => {
     if (!filter) return logs;
 
+    const toDate = (value?: Date | string) => {
+      if (!value) return undefined;
+      if (value instanceof Date) return value;
+      if (typeof value === "string") return new Date(value);
+      return undefined;
+    };
+
+    const startDate = toDate(filter.startDate);
+    const endDate = toDate(filter.endDate);
+
     return logs.filter((log) => {
       // Filtro por data
-      if (filter.startDate && log.timestamp < filter.startDate) return false;
-      if (filter.endDate && log.timestamp > filter.endDate) return false;
+      const logDate = toDate(log.timestamp);
+      if (startDate && logDate && logDate < startDate) return false;
+      if (endDate && logDate && logDate > endDate) return false;
 
       // Filtro por usuário
       if (filter.userId && log.userId !== filter.userId) return false;
+      if (filter.userName && log.userName !== filter.userName) return false;
+
+      // Filtro por registro
+      if (filter.recordId && log.recordId !== filter.recordId) return false;
+      if (filter.recordName && log.recordName !== filter.recordName) return false;
 
       // Filtro por ação
       if (filter.action && log.action !== filter.action) return false;

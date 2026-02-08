@@ -4,6 +4,6 @@ import type { OrdemProducaoCompleta } from '@/domains/producao';
 
 export class ProducaoService extends BaseFirestoreService<OrdemProducaoCompleta> {
   constructor() {
-    super(COLLECTIONS.ordensProducao);
+    super(COLLECTIONS.ordens_producao);
   }
 }

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, Search, MoreVertical, Plus, X } from 'lucide-react';
+import { MessageCircle, Send, Search, MoreVertical, Plus } from 'lucide-react';
 import { PageHeader } from '@/shared/components';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
@@ -36,7 +36,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { statusColors, statusLabels } from '../chat.types';
 import type { ConversaDetalhada } from '../chat.types';
-import { formatDate, formatTime } from '@/shared/lib/format';
+import { formatTime } from '@/shared/lib/format';
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -93,11 +93,14 @@ export default function ChatPage() {
       { participanteId },
       {
         onSuccess: (conversa) => {
+          if (!conversa) {
+            return;
+          }
           setShowNovaConversa(false);
           // Buscar conversa detalhada
           const conversaDetalhada = conversas.find((c) => c.id === conversa.id);
           if (conversaDetalhada) {
-            setSelectedConversa(conversaDetalhada);
+            setSelectedConversa(conversaDetalhada as ConversaDetalhada);
           }
         },
       }
@@ -162,7 +165,7 @@ export default function ChatPage() {
                 <ScrollArea className="h-[300px]">
                   <div className="space-y-2">
                     {usuarios
-                      .filter((u) => u.id !== user?.id)
+                      .filter((u) => u.id !== user?.uid)
                       .map((usuario) => (
                         <button
                           key={usuario.id}
@@ -231,13 +234,14 @@ export default function ChatPage() {
             ) : (
               <div className="space-y-1 p-2">
                 {conversas.map((conversa) => {
-                  const participante = getParticipante(conversa);
+                  const conversaDetalhada = conversa as ConversaDetalhada;
+                  const participante = getParticipante(conversaDetalhada);
                   const isSelected = selectedConversa?.id === conversa.id;
 
                   return (
                     <button
                       key={conversa.id}
-                      onClick={() => setSelectedConversa(conversa)}
+                      onClick={() => setSelectedConversa(conversaDetalhada)}
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
                         isSelected
                           ? 'bg-primary/10 border border-primary/20'
@@ -344,7 +348,7 @@ export default function ChatPage() {
                 ) : (
                   <div className="space-y-4">
                     {mensagens.map((mensagem) => {
-                      const isMine = mensagem.remetenteId === user?.id;
+                      const isMine = mensagem.remetenteId === user?.uid;
                       return (
                         <div
                           key={mensagem.id}

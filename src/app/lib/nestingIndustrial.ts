@@ -67,6 +67,7 @@ function pecaCabeNaChapa(peca: Retangulo, chapaW: number, chapaH: number): boole
  * Verifica se uma posição é válida (sem sobreposição)
  */
 function posicaoValida(peca: Retangulo, pecasColocadas: PecaNesting[], chapaW: number, chapaH: number): boolean {
+  void pecasColocadas;
   // Verifica limites da chapa
   if (!pecaCabeNaChapa(peca, chapaW, chapaH)) {
     return false;
@@ -90,6 +91,8 @@ function posicaoValida(peca: Retangulo, pecasColocadas: PecaNesting[], chapaW: n
 
   return true;
 }
+
+void posicaoValida;
 
 // ==========================================================
 // ALGORITMO 1: FFDH AVANÇADO (First Fit Decreasing Height)

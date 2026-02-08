@@ -25,18 +25,15 @@
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { 
-  getAuth,
-  initializeAuth,
+    initializeAuth,
   browserLocalPersistence,
   type Auth,
   connectAuthEmulator 
 } from 'firebase/auth';
-import { 
-  getFirestore as getFirestoreInstance, 
+import {
   type Firestore,
   connectFirestoreEmulator,
-  enableIndexedDbPersistence,
-  initializeFirestore,
+    initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager
 } from 'firebase/firestore';

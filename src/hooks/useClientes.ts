@@ -30,7 +30,7 @@ interface UseClientesOptions {
 
 export function useClientes(options: UseClientesOptions = {}) {
   const { autoLoad = true, status } = options;
-  const isMock = import.meta.env.VITE_USE_MOCK === 'true';
+  const isMock = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
   
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(false);
@@ -160,9 +160,13 @@ export function useClientes(options: UseClientesOptions = {}) {
     try {
       setLoading(true);
 
-      const result = isMock
-        ? ((await httpClient.delete<void>(`/api/clientes/${id}`)) && { success: true } as ServiceResult<void>)
+      const result: ServiceResult<void> = isMock
+        ? ({ success: true } as ServiceResult<void>)
         : await clientesService.delete(id);
+
+      if (isMock) {
+        await httpClient.delete<void>(`/api/clientes/${id}`);
+      }
 
       if (result.success) {
         setClientes((prev) => prev.filter((c) => c.id !== id));

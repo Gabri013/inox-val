@@ -3,7 +3,6 @@
  */
 
 import { getHttpClient } from '@/services/http/client';
-import type { ID } from '@/shared/types/ids';
 import { 
   ConfiguracoesUsuario, 
   UpdateConfiguracoesInput,

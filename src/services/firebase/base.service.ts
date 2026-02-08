@@ -325,7 +325,7 @@ export abstract class BaseFirestoreService<T extends FirebaseDocument> {
   /**
    * Validação customizada (implementar nas subclasses)
    */
-  protected async validate(data: Partial<T>, id?: string): Promise<ServiceResult<void>> {
+  protected async validate(_data: Partial<T>, _id?: string): Promise<ServiceResult<void>> {
     // Implementação padrão - sem validação
     // Subclasses devem sobrescrever este método
     return { success: true };

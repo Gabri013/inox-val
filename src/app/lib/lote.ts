@@ -6,9 +6,9 @@
 import { gerarBOM } from "../domain/mesas";
 import { converterBOMParaNesting } from "../domain/mesas/conversorBOMParaNesting";
 import { calcularNestingProfissional } from "./nestingProfissional";
-import type { ItemLote, Lote } from "../types/projeto";
+import type { ItemLote } from "../types/projeto";
 import type { Familia, Estrutura, EspelhoLateral } from "../domain/mesas/types";
-import type { PecaNesting } from "./nestingProfissional";
+import type { PecaPlana as PecaNesting } from "./nestingProfissional";
 
 export interface ConfiguracaoMesaLote {
   nome: string;

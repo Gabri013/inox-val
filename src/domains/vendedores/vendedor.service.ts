@@ -22,8 +22,8 @@ const COLLECTION = 'configuracoes_vendedores';
 const db = getFirestore();
 
 const mapDoc = (id: string, data: any): ConfiguracaoVendedor => ({
-  id,
   ...(data as ConfiguracaoVendedor),
+  id,
 });
 
 export const vendedorService = {
@@ -56,14 +56,14 @@ export const vendedorService = {
     const empresaId = await getEmpresaId();
     const profile = await getCurrentUserProfile();
 
-    const payload: Omit<ConfiguracaoVendedor, 'id'> & { empresaId: string } = {
+    const payload = {
       ...data,
       usuarioId: userId,
       nomeVendedor: data.nomeVendedor || profile?.nome || profile?.email || 'Vendedor',
       criadoEm: Date.now(),
       atualizadoEm: Date.now(),
       empresaId,
-    };
+    } as Omit<ConfiguracaoVendedor, 'id'> & { empresaId: string };
     const ref = doc(db, COLLECTION, userId);
     await setDoc(
       ref,

@@ -16,7 +16,7 @@ import { clientesService } from './clientes.service';
 import { orcamentosService } from './orcamentos.service';
 import { ordensService } from './ordens.service';
 import type { Cliente } from '@/domains/clientes';
-import type { Orcamento, OrdemProducao } from '@/app/types/workflow';
+import type { Orcamento } from '@/app/types/workflow';
 import { toast } from 'sonner';
 
 // ============================================================================
@@ -463,6 +463,8 @@ function useClientes() {
     return result;
   }
 
+  void criar;
+
   async function atualizar(id: string, updates: Partial<Cliente>) {
     const result = await clientesService.update(id, updates);
 
@@ -495,7 +497,6 @@ function useClientes() {
     clientes,
     loading,
     error,
-    criar,
     atualizar,
     deletar,
   };
@@ -503,7 +504,7 @@ function useClientes() {
 
 // Uso do hook:
 export function ExemploUsoHookClientes() {
-  const { clientes, loading, criar, atualizar, deletar } = useClientes();
+  const { clientes, loading, atualizar, deletar } = useClientes();
 
   if (loading) return <div>Carregando...</div>;
 

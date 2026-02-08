@@ -23,7 +23,7 @@ export async function initAnunciosMock() {
   await mockClient.setAll(DB_STORES.LEITURAS, anunciosLeiturasSeed);
 
   // GET /anuncios - Listar anúncios com filtros
-  mockClient.onGet('/anuncios', async (url) => {
+  mockClient.onGet('/anuncios', async (url: any) => {
     const anuncios = await mockClient.getAll<Anuncio>(DB_STORES.ANUNCIOS);
     const params = new URL(url, 'http://localhost').searchParams;
     
@@ -122,8 +122,8 @@ export async function initAnunciosMock() {
   });
 
   // GET /anuncios/:id - Obter anúncio específico
-  mockClient.onGet(/\/anuncios\/([^/]+)$/, async (url, matches) => {
-    const id = matches?.[1];
+  mockClient.onGet('/anuncios/*', async (url) => {
+    const id = url.split('/').pop();
     if (!id || id === 'ativos') return;
     
     const anuncio = await mockClient.getById<Anuncio>(DB_STORES.ANUNCIOS, id);
@@ -133,7 +133,7 @@ export async function initAnunciosMock() {
   });
 
   // POST /anuncios - Criar novo anúncio
-  mockClient.onPost('/anuncios', async (url, body) => {
+  mockClient.onPost('/anuncios', async (_url: any, body) => {
     const data = body as CreateAnuncioDTO;
     
     // Assumir usuário logado
@@ -157,8 +157,8 @@ export async function initAnunciosMock() {
   });
 
   // PUT /anuncios/:id - Atualizar anúncio
-  mockClient.onPut(/\/anuncios\/([^/]+)$/, async (url, body, matches) => {
-    const id = matches?.[1];
+  mockClient.onPut('/anuncios/*', async (url: any, body) => {
+    const id = url.split('/').pop();
     if (!id) throw new Error('ID não fornecido');
     
     const data = body as UpdateAnuncioDTO;
@@ -177,26 +177,26 @@ export async function initAnunciosMock() {
   });
 
   // DELETE /anuncios/:id - Deletar anúncio
-  mockClient.onDelete(/\/anuncios\/([^/]+)$/, async (url, matches) => {
-    const id = matches?.[1];
+  mockClient.onDelete('/anuncios/*', async (url: any) => {
+    const id = url.split('/').pop();
     if (!id) throw new Error('ID não fornecido');
     
-    await mockClient.delete(DB_STORES.ANUNCIOS, id);
+    await mockClient.deleteById(DB_STORES.ANUNCIOS, id);
     
     // Deletar também as leituras
     const leituras = await mockClient.getAll<AnuncioLeitura>(DB_STORES.LEITURAS);
     const leiturasAnuncio = leituras.filter((l) => l.anuncioId === id);
     
     for (const leitura of leiturasAnuncio) {
-      await mockClient.delete(DB_STORES.LEITURAS, leitura.id);
+      await mockClient.deleteById(DB_STORES.LEITURAS, leitura.id);
     }
   });
 
   // POST /anuncios/:id/marcar-lido - Marcar como lido
   mockClient.onPost(
-    /\/anuncios\/([^/]+)\/marcar-lido$/,
-    async (url, body, matches) => {
-      const anuncioId = matches?.[1];
+    '/anuncios/*/marcar-lido',
+    async (url: any) => {
+      const anuncioId = url.split('/').slice(-2)[0];
       if (!anuncioId) throw new Error('ID não fornecido');
       
       const currentUserId = 'usr_001';
@@ -222,9 +222,9 @@ export async function initAnunciosMock() {
 
   // GET /anuncios/:id/leituras - Obter leituras (admin)
   mockClient.onGet(
-    /\/anuncios\/([^/]+)\/leituras$/,
-    async (url, matches) => {
-      const anuncioId = matches?.[1];
+    '/anuncios/*/leituras',
+    async (url: any) => {
+      const anuncioId = url.split('/').slice(-2)[0];
       if (!anuncioId) throw new Error('ID não fornecido');
       
       const leituras = await mockClient.getAll<AnuncioLeitura>(DB_STORES.LEITURAS);

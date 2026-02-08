@@ -9,8 +9,10 @@ import type { TabelaPrecos, CustoDetalhado, Orcamento } from "../types/projeto";
 
 // ========== CÁLCULO DE CUSTO DE MATERIAL ==========
 
+type BomOk = Extract<Resultado, { ok: true }>;
+
 function calcularCustoMaterial(
-  bom: Resultado,
+  bom: BomOk,
   nesting: ResultadoNesting | undefined,
   tabela: TabelaPrecos
 ): { chapas: number; tubos: number; outros: number; total: number } {
@@ -81,7 +83,7 @@ function calcularCustoMaterial(
 // ========== CÁLCULO DE MÃO DE OBRA ==========
 
 function calcularCustoMaoDeObra(
-  bom: Resultado,
+  bom: BomOk,
   nesting: ResultadoNesting | undefined,
   tabela: TabelaPrecos
 ): {
@@ -123,8 +125,9 @@ function calcularCustoMaoDeObra(
 // ========== GERAÇÃO DO ORÇAMENTO ==========
 
 export function gerarOrcamento(bom: Resultado, nesting: ResultadoNesting | undefined, tabela: TabelaPrecos): Orcamento {
-  const custoMaterial = calcularCustoMaterial(bom, nesting, tabela);
-  const custoMaoDeObra = calcularCustoMaoDeObra(bom, nesting, tabela);
+  const bomOk = (bom.ok ? bom : ({ ok: true, bom: [], meta: { numPes: 4, chapaUsada: "" }, templateId: "", blanks: { tampo: { blankC: 0, blankL: 0 } } }) ) as BomOk;
+  const custoMaterial = calcularCustoMaterial(bomOk, nesting, tabela);
+  const custoMaoDeObra = calcularCustoMaoDeObra(bomOk, nesting, tabela);
 
   const subtotal = custoMaterial.total + custoMaoDeObra.total;
   const valorMargem = subtotal * (tabela.margemPadrao / 100);

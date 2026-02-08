@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ListPage, EyeIcon } from "../components/layout/ListPage";
 import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useCompras } from "@/hooks/useCompras";
 import { 
@@ -211,10 +210,10 @@ export default function Compras() {
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
       filterContent={filterContent}
-      columns={columns}
+      columns={columns as any}
       data={filteredSolicitacoes}
       keyExtractor={(sol) => sol.id}
-      actions={actions}
+      actions={actions as any}
       emptyMessage="Nenhuma solicitação encontrada"
     />
   );

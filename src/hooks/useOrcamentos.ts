@@ -34,7 +34,7 @@ interface UseOrcamentosOptions {
 
 export function useOrcamentos(options: UseOrcamentosOptions = {}) {
   const { autoLoad = true, status, clienteId } = options;
-  const isMock = import.meta.env.VITE_USE_MOCK === 'true';
+  const isMock = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
   
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
   const [loading, setLoading] = useState(false);

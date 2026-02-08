@@ -9,19 +9,18 @@ import {
 	ClipboardList,
 	ShoppingCart,
 	Factory,
+	Calculator,
 	MessageCircle,
 	Megaphone,
 	UserCog,
 	Settings,
 	Shield,
 	HelpCircle,
-	X,
-	Menu,
-	User,
-	LogOut,
 	ChevronLeft,
 	ChevronRight,
-} from "lucide-react";
+	User,
+	LogOut,
+	} from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { Button } from "../../components/ui/button";
 
@@ -30,14 +29,15 @@ const navigation = [
 	{ name: "Clientes", href: "/clientes", icon: Users },
 	{ name: "Produtos", href: "/produtos", icon: Package },
 	{ name: "Estoque", href: "/estoque", icon: Archive },
-	{ name: "Orçamentos", href: "/orcamentos", icon: FileText },
+	{ name: "OrÃ§amentos", href: "/orcamentos", icon: FileText },
 	{ name: "Ordens", href: "/ordens", icon: ClipboardList },
 	{ name: "Compras", href: "/compras", icon: ShoppingCart },
-	{ name: "Controle de Produção", href: "/controle-producao", icon: Factory },
+	{ name: "Controle de ProduÃ§Ã£o", href: "/controle-producao", icon: Factory },
 	{ name: "Chat", href: "/chat", icon: MessageCircle },
-	{ name: "Anúncios", href: "/anuncios", icon: Megaphone },
-	{ name: "Usuários", href: "/usuarios", icon: UserCog },
-	{ name: "Configuração de Custos", href: "/configuracoes?tab=custos", icon: Settings },
+	{ name: "AnÃºncios", href: "/anuncios", icon: Megaphone },
+	{ name: "UsuÃ¡rios", href: "/usuarios", icon: UserCog },
+	{ name: "ConfiguraÃ§Ã£o de Custos", href: "/configuracoes?tab=custos", icon: Settings },
+	{ name: "Precificacao", href: "/precificacao", icon: Calculator },
 	{ name: "Auditoria", href: "/auditoria", icon: Shield },
 ];
 
@@ -46,7 +46,7 @@ export default function Root() {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	// Mock user data - em produção virá do AuthContext
+	// Mock user data - em produÃ§Ã£o virÃ¡ do AuthContext
 	const user = {
 		name: "Admin User",
 		email: "admin@inoxval.com",
@@ -83,7 +83,7 @@ export default function Root() {
 							</div>
 							<div>
 								<h1 className="text-base font-semibold text-white">ERP Inox</h1>
-								<p className="text-xs text-neutral-400">Sistema de Gestão</p>
+								<p className="text-xs text-neutral-400">Sistema de GestÃ£o</p>
 							</div>
 						</div>
 					) : (
@@ -105,14 +105,14 @@ export default function Root() {
 							<Link
 								key={item.name}
 								to={item.href}
-								className={cn(
-									"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-									isActive
-										? "bg-primary-500 text-white shadow-md"
-										: "text-neutral-300 hover:bg-neutral-800 hover:text-white",
-									item.highlight && !isActive && "border border-primary-500/30"
-								)}
-							>
+									className={cn(
+										"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+										isActive
+											? "bg-primary-500 text-white shadow-md"
+											: "text-neutral-300 hover:bg-neutral-800 hover:text-white",
+										!isActive && "border border-transparent"
+									)}
+								>
 								<item.icon className="size-5 shrink-0" />
 								{sidebarOpen && <span className="truncate text-sm font-medium">{item.name}</span>}
 							</Link>

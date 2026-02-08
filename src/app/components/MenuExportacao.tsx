@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Download, FileText, FileSpreadsheet, Image, X, CheckCircle2 } from "lucide-react";
+import { Download, FileText, FileSpreadsheet, X, CheckCircle2 } from "lucide-react";
 import type { Resultado } from "../domain/mesas/types";
 import type { ResultadoNesting } from "../lib/nestingProfissional";
 import type { Orcamento } from "../types/projeto";

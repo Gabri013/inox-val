@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { requiredString, requiredNumber, currencySchema } from '@/shared/lib/validators';
+import { requiredString, currencySchema } from '@/shared/lib/validators';
 
 export const createProdutoSchema = z.object({
   codigo: requiredString('Código é obrigatório'),

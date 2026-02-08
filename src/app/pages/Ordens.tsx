@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ListPage, EyeIcon } from "../components/layout/ListPage";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Progress } from "../components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useOrdens } from "@/hooks/useOrdens";
 import { useCompras } from "@/hooks/useCompras";
@@ -35,6 +34,10 @@ export default function Ordens() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusOrdem | "all">("all");
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemProducao | null>(null);
+  const hasFilters = searchTerm.trim() !== "" || statusFilter !== "all";
+  const emptyMessage = hasFilters
+    ? "Nenhuma ordem encontrada para os filtros. Limpe filtros."
+    : "Nenhuma ordem cadastrada";
   const [showCompraDialog, setShowCompraDialog] = useState(false);
   const [materiaisFaltantes, setMateriaisFaltantes] = useState<any[]>([]);
 
@@ -305,11 +308,11 @@ export default function Ordens() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         filterContent={filterContent}
-        columns={columns}
+        columns={columns as any}
         data={filteredOrdens}
         keyExtractor={(ord) => ord.id}
-        actions={actions}
-        emptyMessage="Nenhuma ordem encontrada"
+        actions={actions as any}
+        emptyMessage={emptyMessage}
       />
 
       {/* Dialog de Materiais Faltantes */}

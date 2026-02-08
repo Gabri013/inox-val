@@ -98,7 +98,7 @@ export async function getEmpresaId(): Promise<string> {
   const empresaId = profile?.empresaId || cached.empresaId;
 
   if (!empresaId) {
-    throw new Error("Empresa não definida no perfil do usuário.");
+    throw new Error("Empresa nao definida no perfil do usuario.");
   }
 
   return empresaId;
@@ -107,7 +107,7 @@ export async function getEmpresaId(): Promise<string> {
 export async function getCurrentUserId(): Promise<string> {
   const auth = getFirebaseAuth();
   const user = auth.currentUser;
-  if (!user) throw new Error("Usuário não autenticado.");
+  if (!user) throw new Error("Usurio no autenticado.");
   return user.uid;
 }
 
@@ -173,7 +173,7 @@ export abstract class FirestoreService<T extends Record<string, any>> {
       const empresaId = await getEmpresaId();
       const ref = doc(db, this.collectionName, id);
       const snap = await getDoc(ref);
-      if (!snap.exists()) return { success: false, error: "Documento não encontrado" };
+      if (!snap.exists()) return { success: false, error: "Documento nao encontrado" };
       const data = { id: snap.id, ...snap.data() } as unknown as T;
       const docEmpresaId = (data as any).empresaId;
       if (docEmpresaId !== empresaId) {

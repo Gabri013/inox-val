@@ -28,7 +28,7 @@ export async function initChatMock() {
   await mockClient.setAll(DB_STORES.MENSAGENS, mensagensSeed);
 
   // GET /chat/usuarios - Listar usuários do chat
-  mockClient.onGet('/chat/usuarios', async (url) => {
+  mockClient.onGet('/chat/usuarios', async (url: any) => {
     const users = await mockClient.getAll<ChatUser>(DB_STORES.CHAT_USERS);
     const params = new URL(url, 'http://localhost').searchParams;
     
@@ -62,7 +62,7 @@ export async function initChatMock() {
   });
 
   // GET /chat/usuarios/:id - Obter usuário específico
-  mockClient.onGet(/\/chat\/usuarios\/([^/]+)$/, async (url, matches) => {
+  mockClient.onGet(/\/chat\/usuarios\/([^/]+)$/, async (_url: any, matches) => {
     const id = matches?.[1];
     if (!id) throw new Error('ID não fornecido');
     
@@ -73,7 +73,7 @@ export async function initChatMock() {
   });
 
   // PUT /chat/status - Atualizar status do usuário atual
-  mockClient.onPut('/chat/status', async (url, body) => {
+  mockClient.onPut('/chat/status', async (_url: any, body) => {
     const data = body as UpdateStatusDTO;
     
     // Assumir que é o usuário logado (usr_001 - Admin)
@@ -142,7 +142,7 @@ export async function initChatMock() {
   });
 
   // GET /chat/conversas/:id - Obter conversa específica
-  mockClient.onGet(/\/chat\/conversas\/([^/]+)$/, async (url, matches) => {
+  mockClient.onGet(/\/chat\/conversas\/([^/]+)$/, async (_url: any, matches) => {
     const id = matches?.[1];
     if (!id) throw new Error('ID não fornecido');
     
@@ -164,7 +164,7 @@ export async function initChatMock() {
   });
 
   // POST /chat/conversas - Criar nova conversa
-  mockClient.onPost('/chat/conversas', async (url, body) => {
+  mockClient.onPost('/chat/conversas', async (_url: any, body) => {
     const data = body as CreateConversaDTO;
     const currentUserId = 'usr_001';
     
@@ -194,23 +194,23 @@ export async function initChatMock() {
   });
 
   // DELETE /chat/conversas/:id - Deletar conversa
-  mockClient.onDelete(/\/chat\/conversas\/([^/]+)$/, async (url, matches) => {
+  mockClient.onDelete(/\/chat\/conversas\/([^/]+)$/, async (_url: any, matches) => {
     const id = matches?.[1];
     if (!id) throw new Error('ID não fornecido');
     
-    await mockClient.delete(DB_STORES.CONVERSAS, id);
+    await mockClient.deleteById(DB_STORES.CONVERSAS, id);
     
     // Deletar também as mensagens
     const mensagens = await mockClient.getAll<ChatMessage>(DB_STORES.MENSAGENS);
     const mensagensConversa = mensagens.filter((m) => m.conversaId === id);
     
     for (const msg of mensagensConversa) {
-      await mockClient.delete(DB_STORES.MENSAGENS, msg.id);
+      await mockClient.deleteById(DB_STORES.MENSAGENS, msg.id);
     }
   });
 
   // GET /chat/mensagens - Listar mensagens de uma conversa
-  mockClient.onGet('/chat/mensagens', async (url) => {
+  mockClient.onGet('/chat/mensagens', async (url: any) => {
     const params = new URL(url, 'http://localhost').searchParams;
     const conversaId = params.get('conversaId');
     
@@ -240,7 +240,7 @@ export async function initChatMock() {
   });
 
   // POST /chat/mensagens - Enviar mensagem
-  mockClient.onPost('/chat/mensagens', async (url, body) => {
+  mockClient.onPost('/chat/mensagens', async (_url: any, body) => {
     const data = body as SendMessageDTO;
     const currentUserId = 'usr_001';
     
@@ -274,7 +274,7 @@ export async function initChatMock() {
   });
 
   // PUT /chat/mensagens/:id/lida - Marcar mensagem como lida
-  mockClient.onPut(/\/chat\/mensagens\/([^/]+)\/lida$/, async (url, matches) => {
+  mockClient.onPut(/\/chat\/mensagens\/([^/]+)\/lida$/, async (_url: any, matches) => {
     const id = matches?.[1];
     if (!id) throw new Error('ID não fornecido');
     
@@ -290,7 +290,7 @@ export async function initChatMock() {
   // PUT /chat/conversas/:id/marcar-lidas - Marcar todas como lidas
   mockClient.onPut(
     /\/chat\/conversas\/([^/]+)\/marcar-lidas$/,
-    async (url, matches) => {
+    async (_url: any, matches) => {
       const conversaId = matches?.[1];
       if (!conversaId) throw new Error('ID não fornecido');
       

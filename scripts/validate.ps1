@@ -1,11 +1,20 @@
+param(
+  [switch]$VerboseLog
+)
+
 $ErrorActionPreference = 'Stop'
 
-Write-Host "[validate] npm ci"
-npm ci
+Write-Host "== INOX-VAL validate ==" -ForegroundColor Cyan
+Write-Host "Node: $(node -v)" -ForegroundColor DarkGray
+Write-Host "NPM:  $(npm -v)" -ForegroundColor DarkGray
 
-Write-Host "[validate] npm run typecheck"
-npm run typecheck
+Write-Host "\n== npm run check ==" -ForegroundColor Cyan
 
-Write-Host "[validate] npm run build"
-npm run build
+if ($VerboseLog) {
+  npm run check --loglevel verbose
+} else {
+  npm run check
+}
+
+Write-Host "\nOK" -ForegroundColor Green
 

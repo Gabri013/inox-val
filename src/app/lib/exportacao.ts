@@ -10,7 +10,9 @@ import { formatarMoeda, formatarTempo } from "./orcamento";
 
 // ========== EXPORTAR CSV (BOM) ==========
 
-export function exportarBOMparaCSV(bom: Resultado["bom"]): void {
+type BomOk = Extract<Resultado, { ok: true }>;
+
+export function exportarBOMparaCSV(bom: BomOk["bom"]): void {
   if (!bom || bom.length === 0) {
     alert("Nenhuma BOM para exportar!");
     return;
@@ -18,7 +20,7 @@ export function exportarBOMparaCSV(bom: Resultado["bom"]): void {
 
   const headers = ["Item", "Descrição", "Quantidade", "Material", "Espessura (mm)", "Dimensões", "Observações"];
 
-  const rows = bom.map((item, index) => {
+  const rows = bom.map((item: BomOk["bom"][number], index: number) => {
     let dimensoes = "";
 
     if (item.w && item.h) {
@@ -40,14 +42,17 @@ export function exportarBOMparaCSV(bom: Resultado["bom"]): void {
     ];
   });
 
-  const csvContent = [headers.join(","), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(","))].join("\n");
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row: (string | number)[]) => row.map((cell: string | number) => `"${cell}"`).join(","))
+  ].join("\n");
 
   downloadFile(csvContent, "BOM_Mesa_Inox.csv", "text/csv");
 }
 
 // ========== EXPORTAR EXCEL (via HTML Table) ==========
 
-export function exportarBOMparaExcel(bom: Resultado["bom"]): void {
+export function exportarBOMparaExcel(bom: BomOk["bom"]): void {
   if (!bom || bom.length === 0) {
     alert("Nenhuma BOM para exportar!");
     return;
@@ -80,7 +85,7 @@ export function exportarBOMparaExcel(bom: Resultado["bom"]): void {
         <tbody>
   `;
 
-  bom.forEach((item, index) => {
+  bom.forEach((item: BomOk["bom"][number], index: number) => {
     let dimensoes = "";
 
     if (item.w && item.h) {

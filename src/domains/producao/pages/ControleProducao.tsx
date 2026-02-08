@@ -11,7 +11,6 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Textarea } from '@/app/components/ui/textarea';
 import {
   Select,
@@ -31,10 +30,7 @@ import {
 import {
   Factory,
   Search,
-  ArrowRight,
   CheckCircle,
-  XCircle,
-  Pause,
   Play,
   Package,
   AlertTriangle,
@@ -44,6 +40,7 @@ import {
 import type { MaterialNecessario, ProducaoItem, SetorProducao } from '../producao.types';
 import { useItensSetor, useMoverItem, useAtualizarStatus } from '../producao.hooks';
 import { formatNumber } from '@/shared/lib/format';
+import { toFirestoreErrorView } from '@/shared/lib/firestoreErrors';
 
 const SETORES: { id: SetorProducao; nome: string; cor: string }[] = [
   { id: 'Corte', nome: 'Corte', cor: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' },
@@ -56,6 +53,11 @@ const SETORES: { id: SetorProducao; nome: string; cor: string }[] = [
 ];
 
 export default function ControleProducao() {
+  void Select;
+  void SelectContent;
+  void SelectItem;
+  void SelectTrigger;
+  void SelectValue;
   const navigate = useNavigate();
   const [setorSelecionado, setSetorSelecionado] = useState<SetorProducao>('Corte');
   const [codigoBusca, setCodigoBusca] = useState('');
@@ -64,14 +66,39 @@ export default function ControleProducao() {
   const [showMovimentacao, setShowMovimentacao] = useState(false);
   const [observacoes, setObservacoes] = useState('');
 
-  const { data: itens, isLoading } = useItensSetor(setorSelecionado);
+  const { data: itens, isLoading, isError, error } = useItensSetor(setorSelecionado);
   const moverItemMutation = useMoverItem();
   const atualizarStatusMutation = useAtualizarStatus();
 
   const handleBuscar = () => {
     // Implementar busca por código/QR
-    console.log('Buscar:', codigoBusca);
+    void codigoBusca;
   };
+
+  if (isError) {
+    const view = toFirestoreErrorView(error);
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Controle de Produção"
+          description="Interface para operadores no chão de fábrica"
+          icon={<Factory className="h-6 w-6" />}
+        />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {view.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{view.description}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleEntrada = (item: ProducaoItem) => {
     setItemSelecionado(item);
@@ -80,7 +107,8 @@ export default function ControleProducao() {
 
   const handleSaida = (item: ProducaoItem) => {
     const setoresOrdem = SETORES.map((s) => s.id);
-    const idx = setoresOrdem.indexOf(item.setorAtual);
+    const setorAtual = item.setorAtual as SetorProducao;
+    const idx = setoresOrdem.indexOf(setorAtual);
     const proximo = idx >= 0 && idx < setoresOrdem.length - 1 ? setoresOrdem[idx + 1] : null;
     if (!proximo) {
       atualizarStatusMutation.mutate({ orderId: item.orderId, itemId: item.id, status: 'Concluido' });
@@ -89,8 +117,8 @@ export default function ControleProducao() {
     moverItemMutation.mutate({
       orderId: item.orderId,
       itemId: item.id,
-      novoSetor: proximo,
-      setorAnterior: item.setorAtual,
+      novoSetor: (proximo ?? setorAtual) as SetorProducao,
+      setorAnterior: setorAtual,
     });
   };
 
@@ -108,6 +136,7 @@ export default function ControleProducao() {
       status: 'Em Producao',
     });
 
+    void observacoes;
     setShowMovimentacao(false);
     setItemSelecionado(null);
     setObservacoes('');

@@ -30,6 +30,10 @@ export default function ClientesList() {
   const [statusFilter, setStatusFilter] = useState<ClienteStatus | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const hasFilters = search.trim() != "" || statusFilter != "all";
+  const emptyMessage = hasFilters
+    ? "Nenhum cliente encontrado para os filtros. Limpe filtros."
+    : "Nenhum cliente cadastrado";
   
   // Estado do dialog de confirmação
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -39,7 +43,7 @@ export default function ClientesList() {
   }>({ open: false, clienteId: null, clienteNome: '' });
   
   // Queries
-  const { data, isLoading } = useClientes({
+  const { data } = useClientes({
     page: currentPage,
     pageSize,
     search,
@@ -64,7 +68,7 @@ export default function ClientesList() {
   
   // Handlers
   const handleCreate = () => {
-    logCreate({ nome: 'Novo cliente' });
+    logCreate('novo', 'Novo cliente', { nome: 'Novo cliente' });
     navigate('/clientes/novo');
   };
   
@@ -73,7 +77,7 @@ export default function ClientesList() {
   };
   
   const handleView = (cliente: Cliente) => {
-    logView({ id: cliente.id, nome: cliente.nome });
+    logView(cliente.id, cliente.nome);
     navigate(`/clientes/${cliente.id}`);
   };
   
@@ -87,7 +91,10 @@ export default function ClientesList() {
   
   const handleDeleteConfirm = async () => {
     if (deleteConfirm.clienteId) {
-      logDelete({ id: deleteConfirm.clienteId, nome: deleteConfirm.clienteNome });
+      logDelete(deleteConfirm.clienteId, deleteConfirm.clienteNome, {
+        id: deleteConfirm.clienteId,
+        nome: deleteConfirm.clienteNome,
+      });
       await deleteMutation.mutateAsync(deleteConfirm.clienteId);
       setDeleteConfirm({ open: false, clienteId: null, clienteNome: '' });
     }
@@ -228,7 +235,7 @@ export default function ClientesList() {
           { label: "Clientes" }
         ]}
         title="Clientes"
-        subtitle="Gerencie seus clientes e acompanhe o relacionamento comercial"
+        description="Gerencie seus clientes e acompanhe o relacionamento comercial"
         icon={Users}
         stats={statsData}
         searchPlaceholder="Buscar por nome, CNPJ ou e-mail..."
@@ -236,7 +243,7 @@ export default function ClientesList() {
         onSearchChange={setSearch}
         onNew={handleCreate}
         newButtonLabel="Novo Cliente"
-        filters={
+        filterContent={
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Status" />
@@ -250,11 +257,11 @@ export default function ClientesList() {
           </Select>
         }
         data={clientesFiltrados}
-        columns={columns}
-        renderCell={renderCell}
-        actions={actions}
-        isLoading={isLoading}
-        emptyMessage="Nenhum cliente encontrado"
+        columns={columns as any}
+        renderCell={renderCell as any}
+        actions={actions as any}
+        keyExtractor={(cliente) => cliente.id}
+        emptyMessage={emptyMessage}
         currentPage={currentPage}
         totalPages={Math.ceil((data?.total || 0) / pageSize)}
         onPageChange={setCurrentPage}

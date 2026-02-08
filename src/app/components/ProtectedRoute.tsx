@@ -2,12 +2,12 @@
  * ============================================================================
  * PROTECTED ROUTE
  * ============================================================================
- * 
- * Componente que protege rotas que requerem autenticação.
- * 
- * Se o usuário não estiver autenticado, redireciona para /login.
- * Enquanto verifica autenticação, mostra loading.
- * 
+ *
+ * Componente que protege rotas que requerem autenticacao.
+ *
+ * Se o usuario nao estiver autenticado, redireciona para /login.
+ * Enquanto verifica autenticacao, mostra loading.
+ *
  * ============================================================================
  */
 
@@ -27,7 +27,7 @@ export function ProtectedRoute({ children, requiredModule }: ProtectedRouteProps
   const { canAccess } = usePermissions();
   const location = useLocation();
 
-  // Só bloqueia se loading=false e user=null
+  // So bloqueia se loading=false e user=null
   if (!loading && !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
@@ -44,17 +44,7 @@ export function ProtectedRoute({ children, requiredModule }: ProtectedRouteProps
   }
 
   if (requiredModule && !(canAccess(requiredModule as Module) || hasPermission(requiredModule))) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <div className="text-6xl">🔒</div>
-          <h2 className="text-2xl font-bold">Acesso Negado</h2>
-          <p className="text-muted-foreground">
-            Você não tem permissão para acessar este módulo.
-          </p>
-        </div>
-      </div>
-    );
+    return <Navigate to="/sem-acesso" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

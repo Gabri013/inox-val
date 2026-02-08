@@ -14,8 +14,6 @@ import {
   calcularCustoTubo,
   calcularCustoCuba,
   validarConfig,
-  MAT_CHAPA_08,
-  MAT_CHAPA_20,
   MAT_TUBO_25, // ✅ Contraventamento = Ø25mm (1")
   MAT_TUBO_38, // ✅ Pés e travessas = Ø38mm
 } from '../utils';
@@ -85,6 +83,7 @@ export function gerarBOM_MPVE(config: MesaConfig): BOMResult {
   const larguraCuba = config.larguraCuba || 400;
   const comprimentoCuba = config.comprimentoCuba || 500;
   const profundidadeCuba = config.profundidadeCuba || 250;
+  void profundidadeCuba;
   const custoCuba = calcularCustoCuba(larguraCuba, comprimentoCuba);
   bom.push({
     desc: 'CUBA -500X400X250 CH',

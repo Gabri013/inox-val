@@ -7,7 +7,6 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAnunciosAtivos, useMarcarAnuncioLido } from '@/domains/anuncios';
 import { AlertCircle, Info, AlertTriangle, Settings } from 'lucide-react';
-import { Button } from './ui/button';
 
 const tipoIcons = {
   info: Info,
@@ -15,13 +14,6 @@ const tipoIcons = {
   urgente: AlertCircle,
   manutencao: Settings,
 };
-
-const tipoVariants = {
-  info: 'default',
-  alerta: 'warning',
-  urgente: 'destructive',
-  manutencao: 'default',
-} as const;
 
 export function AnunciosNotifier() {
   const { data: anuncios = [] } = useAnunciosAtivos();

@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+﻿import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { collection, doc, getDoc, onSnapshot, query, setDoc, serverTimestamp, where } from 'firebase/firestore';
 import { getFirestore, isFirebaseConfigured } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { PermissionsMap, UserRole } from './usuarios.types';
 import { defaultPermissionsByRole } from './usuarios.types';
+import { getEmpresaId } from '@/services/firestore/base';
 
 interface PermissionsContextValue {
   rolePermissions: Record<UserRole, PermissionsMap>;
@@ -19,7 +20,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   );
   const [loading, setLoading] = useState(true);
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const mockEnabled = import.meta.env.VITE_USE_MOCK === 'true';
+  const mockEnabled = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
 
   useEffect(() => {
     if (mockEnabled || !isFirebaseConfigured()) {
@@ -39,28 +40,66 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       return;
     }
 
-    setLoading(true);
-    const db = getFirestore();
-    const ref = collection(db, 'permissoes_roles');
+    let unsub: (() => void) | null = null;
+    let canceled = false;
 
-    const unsub = onSnapshot(
-      ref,
-      (snap) => {
-        const base = { ...defaultPermissionsByRole } as Record<UserRole, PermissionsMap>;
-        snap.docs.forEach((docSnap) => {
-          const role = docSnap.id as UserRole;
-          const data = docSnap.data() as { permissions?: PermissionsMap };
-          if (data?.permissions) {
-            base[role] = data.permissions;
-          }
-        });
-        setRolePermissions(base);
+    const load = async () => {
+      try {
+        const empresaId = await getEmpresaId();
+        if (canceled) return;
+
+        setLoading(true);
+        const db = getFirestore();
+        const ref = query(collection(db, 'permissoes_roles'), where('empresaId', '==', empresaId));
+
+        unsub = onSnapshot(
+          ref,
+          async (snap) => {
+            const base = { ...defaultPermissionsByRole } as Record<UserRole, PermissionsMap>;
+
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as { role?: UserRole; permissions?: PermissionsMap };
+              const role = data?.role || (docSnap.id as UserRole);
+              if (data?.permissions && role) {
+                base[role] = data.permissions;
+              }
+            });
+
+            if (snap.empty) {
+              const legacy = await Promise.all(
+                Object.keys(base).map(async (role) => {
+                  const legacySnap = await getDoc(doc(db, 'permissoes_roles', role));
+                  if (!legacySnap.exists()) return null;
+                  const legacyData = legacySnap.data() as { permissions?: PermissionsMap };
+                  return legacyData?.permissions
+                    ? { role: role as UserRole, permissions: legacyData.permissions }
+                    : null;
+                })
+              );
+
+              legacy.forEach((entry) => {
+                if (entry) {
+                  base[entry.role] = entry.permissions;
+                }
+              });
+            }
+
+            setRolePermissions(base);
+            setLoading(false);
+          },
+          () => setLoading(false)
+        );
+      } catch {
+        setRolePermissions(defaultPermissionsByRole);
         setLoading(false);
-      },
-      () => setLoading(false)
-    );
+      }
+    };
 
-    return () => unsub();
+    void load();
+    return () => {
+      canceled = true;
+      if (unsub) unsub();
+    };
   }, [authLoading, isAuthenticated]);
 
   const saveRolePermissions = async (role: UserRole, permissions: PermissionsMap) => {
@@ -69,11 +108,13 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       return;
     }
 
+    const empresaId = await getEmpresaId();
     const db = getFirestore();
     await setDoc(
-      doc(db, 'permissoes_roles', role),
+      doc(db, 'permissoes_roles', `${empresaId}_${role}`),
       {
         role,
+        empresaId,
         permissions,
         updatedAt: serverTimestamp(),
       },

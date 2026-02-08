@@ -65,6 +65,7 @@ export interface FirestoreCollections {
   mensagens: 'mensagens';
   chat_usuarios: 'chat_usuarios';
   anuncios: 'anuncios';
+  pricing_runs: 'pricing_runs';
 
   // Legado
   solicitacoes_compra: 'solicitacoes_compra';
@@ -95,6 +96,7 @@ export const COLLECTIONS: FirestoreCollections = {
   mensagens: 'mensagens',
   chat_usuarios: 'chat_usuarios',
   anuncios: 'anuncios',
+  pricing_runs: 'pricing_runs',
   solicitacoes_compra: 'solicitacoes_compra',
   materiais: 'materiais',
   estoque_materiais: 'estoque_materiais',

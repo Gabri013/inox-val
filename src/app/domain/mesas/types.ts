@@ -3,7 +3,7 @@
 // Contrato único - fonte da verdade
 // ==========================================================
 
-export type Familia = "CENTRO" | "ENCOSTO" | "VINCADA";
+export type Familia = "CENTRO" | "ENCOSTO" | "VINCADA" | "CONTRAVENTADA";
 export type Estrutura = "CONTRAVENTADA" | "PRATELEIRA";
 export type Lado = "ESQUERDO" | "DIREITO";
 export type EspelhoLateral = "NENHUM" | Lado;

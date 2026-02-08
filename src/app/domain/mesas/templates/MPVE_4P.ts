@@ -14,7 +14,7 @@ const FOLGA_PE = 72;
 
 export const MPVE_4P: Template = {
   id: "MPVE_4P",
-  familia: "CONTRAVENTADA",
+  familia: "VINCADA",
 
   blankTampo: (ctx) => ({
     blankC: ctx.C - OFFSET_DESENHO + 2 * ENC_DOBRA_LATERAL,

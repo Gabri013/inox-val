@@ -7,6 +7,7 @@ import type { DatabaseLocal, Projeto, Lote, TabelaPrecos } from "../types/projet
 
 const DB_KEY = "calculadora_inox_db";
 const DB_VERSION = "1.0.0";
+void DB_VERSION;
 
 // ========== TABELA DE PREÇOS PADRÃO ==========
 

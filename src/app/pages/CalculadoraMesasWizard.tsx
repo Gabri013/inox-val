@@ -1,11 +1,11 @@
 /**
  * CALCULADORA INDUSTRIAL INOX - SISTEMA MULTI-ITENS COMPLETO
- * ✨ Modo Simples + Modo Lote Inline
- * - Wizard completo (Família, Dimensões, Espelhos, Cuba, Estrutura)
+ * âœ¨ Modo Simples + Modo Lote Inline
+ * - Wizard completo (FamÃ­lia, DimensÃµes, Espelhos, Cuba, Estrutura)
  * - Sistema multi-itens com tabela interativa
  * - Stats em tempo real
  * - Toasts para feedback
- * - Correção NestingGrid
+ * - CorreÃ§Ã£o NestingGrid
  */
 
 import { useEffect, useState } from "react";
@@ -13,18 +13,18 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast, Toaster } from "sonner";
 import { gerarBOM } from "../domain/mesas";
 import { converterBOMParaNesting } from "../domain/mesas/conversorBOMParaNesting";
-import { calcularNestingProfissional, type ChapasPadrao } from "../lib/nestingProfissional";
+import { calcularNestingProfissional } from "../lib/nestingProfissional";
 import { NestingGrid } from "../components/NestingGrid";
-import { PainelOrcamento } from "../components/PainelOrcamento";
+// import { PainelOrcamento } from "../components/PainelOrcamento";
 import { BibliotecaProjetos } from "../components/BibliotecaProjetos";
 import { ModalSalvarProjeto } from "../components/ModalSalvarProjeto";
 import { ModalConfigurarPrecos } from "../components/ModalConfigurarPrecos";
-import { MenuExportacao } from "../components/MenuExportacao";
+// import { MenuExportacao } from "../components/MenuExportacao";
 import type { Familia, Estrutura, EspelhoLateral, Resultado } from "../domain/mesas/types";
 import type { ResultadoNesting } from "../lib/nestingProfissional";
-import type { Projeto, Orcamento, ItemLote } from "../types/projeto";
+import type { Projeto, Orcamento } from "../types/projeto";
 import { gerarOrcamento } from "../lib/orcamento";
-import { calcularNestingLote, consolidarBOMLote } from "../lib/lote";
+// import { calcularNestingLote, consolidarBOMLote } from "../lib/lote";
 import {
   salvarProjeto,
   listarProjetos,
@@ -60,6 +60,12 @@ import {
 } from "lucide-react";
 
 function CalculadoraMesasWizard() {
+  void DollarSign;
+  void Plus;
+  void RefreshCw;
+  void Copy;
+  void Trash2;
+  void ShoppingCart;
   // Estados do Wizard
   const [familia, setFamilia] = useState<Familia | null>(null);
   const [C, setC] = useState(1500);
@@ -78,18 +84,18 @@ function CalculadoraMesasWizard() {
     pecasPlanas?: any[]; // Guardar para recalcular
   } | null>(null);
 
-  const [chapaAtual, setChapaAtual] = useState(0);
+  // const [chapaAtual, setChapaAtual] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Estado das abas
   const [abaAtiva, setAbaAtiva] = useState<"resumo" | "bom" | "nesting">("resumo");
 
   // ===== MODO LOTE =====
-  const [lote, setLote] = useState<ItemLote[]>([]);
-  const [modoLote, setModoLote] = useState(false);
-  const [nestingLote, setNestingLote] = useState<ResultadoNesting | null>(null);
+  // const [lote, setLote] = useState<ItemLote[]>([]);
+  // const [modoLote, setModoLote] = useState(false);
+  // const [nestingLote, setNestingLote] = useState<ResultadoNesting | null>(null);
 
-  // ===== ORÇAMENTO E BIBLIOTECA =====
+  // ===== ORÃ‡AMENTO E BIBLIOTECA =====
   const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
   const [modalSalvar, setModalSalvar] = useState(false);
   const [modalBiblioteca, setModalBiblioteca] = useState(false);
@@ -104,7 +110,7 @@ function CalculadoraMesasWizard() {
 
   const calcular = () => {
     if (!familia) {
-      toast.error("Escolha uma família de mesa!");
+      toast.error("Escolha uma famÃ­lia de mesa!");
       return;
     }
 
@@ -115,7 +121,7 @@ function CalculadoraMesasWizard() {
       L,
       H,
       espelhoLateral: familia === "CENTRO" ? undefined : espelhoLateral,
-      cuba: familia === "VINCADA" ? { comp: cubaComp, larg: cubaLarg, prof: cubaProf } : undefined,
+      cuba: familia === "VINCADA" ? ({ comp: cubaComp, larg: cubaLarg, prof: cubaProf } as any) : undefined,
     };
 
     const bomResult = gerarBOM(input);
@@ -130,17 +136,17 @@ function CalculadoraMesasWizard() {
     const pecas = converterBOMParaNesting(bomResult.bom);
     const nesting = calcularNestingProfissional(pecas);
 
-    // Gera orçamento
+    // Gera orÃ§amento
     const orcamentoGerado = gerarOrcamento(bomResult, nesting, tabelaPrecos);
 
     setResultado({ bom: bomResult, nesting, pecasPlanas: pecas });
     setOrcamento(orcamentoGerado);
-    setChapaAtual(0);
+    // setChapaAtual(0);
     setSidebarOpen(true);
     setAbaAtiva("resumo");
   };
 
-  // ===== FUNÇÕES DE BIBLIOTECA =====
+  // ===== FUNÃ‡Ã•ES DE BIBLIOTECA =====
 
   const handleSalvarProjeto = (dados: { nome: string; descricao?: string; tags?: string[] }) => {
     if (!resultado?.bom.ok || !familia) return;
@@ -158,7 +164,7 @@ function CalculadoraMesasWizard() {
         L,
         H,
         espelhoLateral: familia === "CENTRO" ? undefined : espelhoLateral,
-        cuba: familia === "VINCADA" ? { comp: cubaComp, larg: cubaLarg, prof: cubaProf } : undefined,
+        cuba: familia === "VINCADA" ? ({ comp: cubaComp, larg: cubaLarg, prof: cubaProf } as any) : undefined,
         estrutura,
       },
       bom: resultado.bom,
@@ -173,7 +179,7 @@ function CalculadoraMesasWizard() {
   };
 
   const handleCarregarProjeto = (projeto: Projeto) => {
-    // Restaurar configuração
+    // Restaurar configuraÃ§Ã£o
     setFamilia(projeto.configuracao.familia);
     setC(projeto.configuracao.C);
     setL(projeto.configuracao.L);
@@ -184,7 +190,7 @@ function CalculadoraMesasWizard() {
     if (projeto.configuracao.cuba) {
       setCubaComp(projeto.configuracao.cuba.comp);
       setCubaLarg(projeto.configuracao.cuba.larg);
-      setCubaProf(projeto.configuracao.cuba.prof);
+      setCubaProf((projeto.configuracao.cuba as any).prof ?? cubaProf);
     }
 
     // Restaurar resultado
@@ -216,19 +222,19 @@ function CalculadoraMesasWizard() {
     atualizarTabelaPrecos(novaTabela);
     setTabelaPrecos(novaTabela);
 
-    // Recalcular orçamento se houver resultado
+    // Recalcular orÃ§amento se houver resultado
     if (resultado?.bom.ok) {
       const novoOrcamento = gerarOrcamento(resultado.bom, resultado.nesting, novaTabela);
       setOrcamento(novoOrcamento);
     }
 
-    toast.success("Tabela de preços atualizada!");
+    toast.success("Tabela de preÃ§os atualizada!");
   };
 
-  // Define etapas baseado na família
+  // Define etapas baseado na famÃ­lia
   const etapas = [
     { id: 1, label: "Tipo de Mesa", completed: !!familia },
-    { id: 2, label: "Dimensões", completed: !!familia },
+    { id: 2, label: "DimensÃµes", completed: !!familia },
     ...(familia === "ENCOSTO" ? [{ id: 3, label: "Espelhos", completed: !!familia }] : []),
     ...(familia === "VINCADA"
       ? [
@@ -257,7 +263,7 @@ function CalculadoraMesasWizard() {
               </div>
             </div>
 
-            {/* Botões de Ação - Desktop */}
+            {/* BotÃµes de AÃ§Ã£o - Desktop */}
             <div className="hidden lg:flex items-center gap-3">
               <button
                 onClick={() => setModalBiblioteca(true)}
@@ -279,7 +285,7 @@ function CalculadoraMesasWizard() {
                   <button
                     onClick={() => setModalPrecos(true)}
                     className="p-2 bg-white border-2 border-slate-300 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all"
-                    title="Configurar preços"
+                    title="Configurar preÃ§os"
                   >
                     <Settings className="w-5 h-5 text-slate-600" />
                   </button>
@@ -342,7 +348,7 @@ function CalculadoraMesasWizard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* COLUNA PRINCIPAL - WIZARD */}
           <div className="lg:col-span-2 space-y-6">
-            {/* PASSO 1: FAMÍLIA */}
+            {/* PASSO 1: FAMÃLIA */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
               <div className="mb-6">
                 <h2 className="text-xl font-semibold text-slate-900 mb-1">1. Tipo de Mesa</h2>
@@ -377,7 +383,7 @@ function CalculadoraMesasWizard() {
               </div>
             </section>
 
-            {/* PASSO 2: DIMENSÕES */}
+            {/* PASSO 2: DIMENSÃ•ES */}
             <AnimatePresence>
               {familia && (
                 <motion.section
@@ -387,7 +393,7 @@ function CalculadoraMesasWizard() {
                   className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
                 >
                   <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-slate-900 mb-1">2. Dimensões (mm)</h2>
+                    <h2 className="text-xl font-semibold text-slate-900 mb-1">2. DimensÃµes (mm)</h2>
                     <p className="text-sm text-slate-600">Defina as medidas da bancada</p>
                   </div>
 
@@ -433,8 +439,8 @@ function CalculadoraMesasWizard() {
                     <div className="mt-6 flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                       <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                       <div className="text-sm">
-                        <div className="font-semibold text-amber-900">Mesa com 6 pés</div>
-                        <div className="text-amber-700">Comprimento maior que 1900mm requer estrutura reforçada.</div>
+                        <div className="font-semibold text-amber-900">Mesa com 6 pÃ©s</div>
+                        <div className="text-amber-700">Comprimento maior que 1900mm requer estrutura reforÃ§ada.</div>
                       </div>
                     </div>
                   )}
@@ -452,8 +458,8 @@ function CalculadoraMesasWizard() {
                   className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
                 >
                   <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-slate-900 mb-1">3. Configuração de Espelhos</h2>
-                    <p className="text-sm text-slate-600">Espelho traseiro incluído · Lateral opcional</p>
+                    <h2 className="text-xl font-semibold text-slate-900 mb-1">3. ConfiguraÃ§Ã£o de Espelhos</h2>
+                    <p className="text-sm text-slate-600">Espelho traseiro incluÃ­do Â· Lateral opcional</p>
                   </div>
 
                   <div>
@@ -515,7 +521,7 @@ function CalculadoraMesasWizard() {
                       <div className="flex gap-3 p-3 bg-sky-50 border border-sky-200 rounded-lg text-sm">
                         <Info className="w-5 h-5 text-sky-600 flex-shrink-0" />
                         <span className="text-slate-700">
-                          Queda d'água no lado <strong>{espelhoLateral === "ESQUERDO" ? "DIREITO" : "ESQUERDO"}</strong>
+                          Queda d'Ã¡gua no lado <strong>{espelhoLateral === "ESQUERDO" ? "DIREITO" : "ESQUERDO"}</strong>
                         </span>
                       </div>
                     </div>
@@ -524,8 +530,8 @@ function CalculadoraMesasWizard() {
                   {/* Cuba */}
                   <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div className="mb-6">
-                      <h2 className="text-xl font-semibold text-slate-900 mb-1">4. Dimensões da Cuba</h2>
-                      <p className="text-sm text-slate-600">Especifique o tamanho da cuba (folga de 10mm incluída)</p>
+                      <h2 className="text-xl font-semibold text-slate-900 mb-1">4. DimensÃµes da Cuba</h2>
+                      <p className="text-sm text-slate-600">Especifique o tamanho da cuba (folga de 10mm incluÃ­da)</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
@@ -577,12 +583,12 @@ function CalculadoraMesasWizard() {
                     <h2 className="text-xl font-semibold text-slate-900 mb-1">
                       {familia === "VINCADA" ? "5" : familia === "ENCOSTO" ? "4" : "3"}. Tipo de Estrutura
                     </h2>
-                    <p className="text-sm text-slate-600">Selecione o reforço estrutural</p>
+                    <p className="text-sm text-slate-600">Selecione o reforÃ§o estrutural</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { id: "CONTRAVENTADA", label: "Contraventada", desc: "Tubos redondos Ø25mm" },
+                      { id: "CONTRAVENTADA", label: "Contraventada", desc: "Tubos redondos Ã˜25mm" },
                       { id: "PRATELEIRA", label: "Com Prateleira", desc: "Prateleira inferior" },
                     ].map((opcao) => (
                       <button
@@ -606,7 +612,7 @@ function CalculadoraMesasWizard() {
               )}
             </AnimatePresence>
 
-            {/* BOTÃO CALCULAR */}
+            {/* BOTÃƒO CALCULAR */}
             <AnimatePresence>
               {familia && (
                 <motion.button
@@ -641,12 +647,12 @@ function CalculadoraMesasWizard() {
                 <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <AlertCircle className="w-5 h-5 text-red-600" />
-                    <h3 className="font-semibold text-red-900">Erros de Validação</h3>
+                    <h3 className="font-semibold text-red-900">Erros de ValidaÃ§Ã£o</h3>
                   </div>
                   <ul className="space-y-2">
                     {resultado.bom.erros.map((erro, i) => (
                       <li key={i} className="text-sm text-red-700 flex gap-2">
-                        <span>•</span>
+                        <span>â€¢</span>
                         <span>{erro}</span>
                       </li>
                     ))}
@@ -689,11 +695,11 @@ function CalculadoraMesasWizard() {
                   {/* Resumo */}
                   {abaAtiva === "resumo" && (
                     <div className="space-y-4">
-                      {/* Configuração da Mesa */}
+                      {/* ConfiguraÃ§Ã£o da Mesa */}
                       <div className="bg-gradient-to-br from-sky-600 to-sky-700 rounded-xl shadow-sm p-5 text-white">
                         <div className="flex items-center gap-2 mb-3">
                           <Box className="w-5 h-5" />
-                          <h3 className="font-semibold">Configuração</h3>
+                          <h3 className="font-semibold">ConfiguraÃ§Ã£o</h3>
                         </div>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between items-center">
@@ -705,9 +711,9 @@ function CalculadoraMesasWizard() {
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sky-100">Dimensões:</span>
+                            <span className="text-sky-100">DimensÃµes:</span>
                             <span className="font-semibold font-mono">
-                              {C}×{L}×{H}mm
+                              {C}Ã—{L}Ã—{H}mm
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
@@ -717,13 +723,13 @@ function CalculadoraMesasWizard() {
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sky-100">Pés:</span>
+                            <span className="text-sky-100">PÃ©s:</span>
                             <span className="font-semibold">{resultado.bom.meta.numPes} unidades</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Métricas BOM */}
+                      {/* MÃ©tricas BOM */}
                       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                         <div className="flex items-center gap-2 mb-4">
                           <Layers className="w-5 h-5 text-slate-600" />
@@ -764,10 +770,10 @@ function CalculadoraMesasWizard() {
                           </div>
 
                           <div className="space-y-3">
-                            {/* Eficiência com barra visual */}
+                            {/* EficiÃªncia com barra visual */}
                             <div>
                               <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm font-medium text-slate-700">Eficiência Média</span>
+                                <span className="text-sm font-medium text-slate-700">EficiÃªncia MÃ©dia</span>
                                 <span className="text-xl font-bold text-green-600">
                                   {resultado.nesting.resumo.eficienciaMedia.toFixed(1)}%
                                 </span>
@@ -797,9 +803,9 @@ function CalculadoraMesasWizard() {
 
                             <div className="pt-2 border-t border-slate-100">
                               <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-600">Área Total</span>
+                                <span className="text-slate-600">Ãrea Total</span>
                                 <span className="font-semibold text-slate-900 font-mono">
-                                  {resultado.nesting.resumo.areaTotal_m2.toFixed(2)}m²
+                                  {resultado.nesting.resumo.areaTotal_m2.toFixed(2)}mÂ²
                                 </span>
                               </div>
                             </div>
@@ -813,12 +819,12 @@ function CalculadoraMesasWizard() {
                                     <div className="flex items-center gap-2">
                                       <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
                                       <span className="font-medium text-slate-700">
-                                        {grupo.material} · {grupo.esp_mm}mm
+                                        {grupo.material} Â· {grupo.esp_mm}mm
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                       <span className="text-slate-500">
-                                        {grupo.totals.sheetCount}× {grupo.chosenSheet.label}
+                                        {grupo.totals.sheetCount}Ã— {grupo.chosenSheet.label}
                                       </span>
                                       <span className="font-semibold text-green-600">
                                         {grupo.totals.utilization.toFixed(0)}%
@@ -832,7 +838,7 @@ function CalculadoraMesasWizard() {
                         </div>
                       )}
 
-                      {/* Estimativas de Produção */}
+                      {/* Estimativas de ProduÃ§Ã£o */}
                       <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-5">
                         <div className="flex items-center gap-2 mb-4">
                           <TrendingUp className="w-5 h-5 text-purple-600" />
@@ -851,13 +857,13 @@ function CalculadoraMesasWizard() {
                             <span className="font-semibold text-purple-900">{`~${Math.ceil(resultado.bom.bom.length * 5)}min`}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-purple-700">Operações</span>
-                            <span className="font-semibold text-purple-900">Corte · Dobra · Solda · Polimento</span>
+                            <span className="text-purple-700">OperaÃ§Ãµes</span>
+                            <span className="font-semibold text-purple-900">Corte Â· Dobra Â· Solda Â· Polimento</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Ações Rápidas */}
+                      {/* AÃ§Ãµes RÃ¡pidas */}
                       <div className="grid grid-cols-2 gap-3">
                         <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-slate-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all text-sm font-medium text-slate-700 hover:text-sky-700">
                           <Download className="w-4 h-4" />
@@ -895,16 +901,16 @@ function CalculadoraMesasWizard() {
 
                       <div className="max-h-96 overflow-y-auto">
                         {resultado.bom.bom.map((item, i) => {
-                          // Formatar dimensões baseado no tipo de item
+                          // Formatar dimensÃµes baseado no tipo de item
                           let dimensoes = "";
 
                           if (item.diametro && item.comprimento) {
-                            // Tubo: Ø25×1000mm
-                            dimensoes = `Ø${item.diametro.toFixed(0)}×${item.comprimento.toFixed(0)}mm`;
+                            // Tubo: Ã˜25Ã—1000mm
+                            dimensoes = `Ã˜${item.diametro.toFixed(0)}Ã—${item.comprimento.toFixed(0)}mm`;
                           } else if (item.w && item.h) {
-                            // Chapa: 1500×700mm (BLANK)
+                            // Chapa: 1500Ã—700mm (BLANK)
                             const isBlank = item.desc.toUpperCase().includes("TAMPO") || item.desc.toUpperCase().includes("PRATELEIRA");
-                            dimensoes = `${item.w.toFixed(0)}×${item.h.toFixed(0)}mm${isBlank ? " BLANK" : ""}`;
+                            dimensoes = `${item.w.toFixed(0)}Ã—${item.h.toFixed(0)}mm${isBlank ? " BLANK" : ""}`;
                           } else if (item.comprimento) {
                             // Perfil: 1000mm
                             dimensoes = `${item.comprimento.toFixed(0)}mm`;
@@ -944,7 +950,7 @@ function CalculadoraMesasWizard() {
 
       {/* Modais */}
       {modalSalvar && (
-        <ModalSalvarProjeto nomeInicial={`Mesa ${familia} ${C}×${L}`} onSalvar={handleSalvarProjeto} onFechar={() => setModalSalvar(false)} />
+        <ModalSalvarProjeto nomeInicial={`Mesa ${familia} ${C}Ã—${L}`} onSalvar={handleSalvarProjeto} onFechar={() => setModalSalvar(false)} />
       )}
 
       {modalBiblioteca && (

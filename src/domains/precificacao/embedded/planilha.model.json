@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-02-08T00:00:00Z",
+  "sheets": [
+    {
+      "name": "TEST",
+      "cells": {
+        "A1": { "value": 0 },
+        "B1": { "formula": "=IF(FALSE, 1/0, 7)" },
+        "C1": { "formula": "=AND(FALSE, 1/0)" },
+        "D1": { "formula": "=OR(TRUE, 1/0)" }
+      }
+    }
+  ]
+}

@@ -15,7 +15,7 @@ import { usePermissions } from '@/app/hooks/usePermissions';
 import type { Anuncio, AnunciosFilters } from '../anuncios.types';
 import type { DataTableColumn } from '@/shared/components/DataTable';
 import { tipoLabels, tipoColors, statusLabels, statusColors } from '../anuncios.types';
-import { formatDate, formatTime } from '@/shared/lib/format';
+import { formatDate } from '@/shared/lib/format';
 
 export default function AnunciosList() {
   const navigate = useNavigate();
@@ -145,10 +145,7 @@ export default function AnunciosList() {
       />
 
       {showFilters && (
-        <FiltersPanel
-          onClear={() => setFilters({})}
-          onClose={() => setShowFilters(false)}
-        >
+        <FiltersPanel onClear={() => setFilters({})}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tipo</label>

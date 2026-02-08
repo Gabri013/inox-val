@@ -42,7 +42,7 @@ function saveConfiguracoesToStorage(config: ConfiguracoesUsuario): void {
  */
 function createDefaultConfiguracoes(): ConfiguracoesUsuario {
   const config: ConfiguracoesUsuario = {
-    id: newId('config'),
+    id: newId(),
     usuarioId: 'user-admin', // ID do usuário mockado
     ...DEFAULT_CONFIGURACOES,
     updatedAt: new Date(),
@@ -61,6 +61,7 @@ export function handleConfiguracoesRequest(
   data?: any
 ): any {
   // GET /api/configuracoes-usuario/me
+
   if (method === 'GET' && url === '/api/configuracoes-usuario/me') {
     let config = getConfiguracoesFromStorage();
     

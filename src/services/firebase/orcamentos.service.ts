@@ -16,7 +16,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getEmpresaContext, getFirestore } from "@/lib/firebase";
 import { BaseFirestoreService, type ServiceResult } from './base.service';
 import { COLLECTIONS } from '@/types/firebase';
-import type { Orcamento, ItemOrcamento, StatusOrcamento } from '@/app/types/workflow';
+import type { Orcamento, StatusOrcamento } from '@/app/types/workflow';
 import { isModeloValido } from '@/bom/models';
 
 const MAX_ITENS_ORCAMENTO = 200;

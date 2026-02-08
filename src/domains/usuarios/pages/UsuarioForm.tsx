@@ -86,10 +86,11 @@ export default function UsuarioForm() {
 
   return (
     <EntityFormShell
-      title={isEditMode ? 'Editar Usuário' : 'Novo Usuário'}
-      subtitle={isEditMode ? 'Atualize as informações do usuário' : 'Preencha os dados do novo usuário'}
+      title={isEditMode ? 'Editar usuario' : 'Novo usuario'}
       icon={UserPlus}
       isLoading={isLoadingUsuario && isEditMode}
+      onSubmit={handleSubmit(onSubmit)}
+      onCancel={() => navigate('/usuarios')}
       actions={
         <div className="flex gap-2">
           <Button
@@ -126,7 +127,6 @@ export default function UsuarioForm() {
                 id="nome"
                 placeholder="Ex: João da Silva"
                 {...register('nome')}
-                error={errors.nome?.message}
               />
             </div>
 
@@ -139,7 +139,6 @@ export default function UsuarioForm() {
                 type="email"
                 placeholder="joao@empresa.com"
                 {...register('email')}
-                error={errors.email?.message}
               />
             </div>
           </div>
@@ -154,7 +153,6 @@ export default function UsuarioForm() {
                 type="password"
                 placeholder="Mínimo 6 caracteres"
                 {...register('senha')}
-                error={errors.senha?.message}
               />
             </div>
           )}
@@ -166,7 +164,6 @@ export default function UsuarioForm() {
                 id="telefone"
                 placeholder="(11) 98765-4321"
                 {...register('telefone')}
-                error={errors.telefone?.message}
               />
               <p className="text-xs text-muted-foreground">
                 Formato: (XX) XXXXX-XXXX
@@ -179,7 +176,6 @@ export default function UsuarioForm() {
                 id="dataAdmissao"
                 type="date"
                 {...register('dataAdmissao')}
-                error={errors.dataAdmissao?.message}
               />
             </div>
           </div>
@@ -248,7 +244,6 @@ export default function UsuarioForm() {
                 id="departamento"
                 placeholder="Ex: Engenharia"
                 {...register('departamento')}
-                error={errors.departamento?.message}
               />
             </div>
           </div>

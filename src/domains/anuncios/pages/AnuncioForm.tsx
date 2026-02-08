@@ -92,10 +92,11 @@ export default function AnuncioForm() {
       title={isEditing ? 'Editar Anúncio' : 'Novo Anúncio'}
       subtitle={isEditing ? 'Atualize as informações do anúncio' : 'Crie um novo comunicado'}
       icon={Megaphone}
-      backTo="/anuncios"
       isLoading={isLoading && isEditing}
+      onSubmit={handleSubmit(onSubmit)}
+      onCancel={() => navigate('/anuncios')}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Título */}
           <div className="md:col-span-2 space-y-2">
@@ -242,7 +243,7 @@ export default function AnuncioForm() {
             Cancelar
           </Button>
         </div>
-      </form>
+      </div>
     </EntityFormShell>
   );
 }

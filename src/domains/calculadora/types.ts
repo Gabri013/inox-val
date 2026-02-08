@@ -101,6 +101,28 @@ export interface ResultadoNesting {
   melhorOpcao: ResultadoNestingChapa;
   pecas: PecaNesting[];
   totalAreaPecas: number; // m²
+  // Compatibilidade com visualizadores legados
+  chapas?: Array<{
+    numero: number;
+    chapa: { largura: number; altura: number };
+    pecas: Array<{
+      id?: string;
+      x: number;
+      y: number;
+      largura: number;
+      altura: number;
+      rotacionada?: boolean;
+      label?: string;
+    }>;
+    aproveitamentoPct: number;
+    sobra: number;
+  }>;
+  totalChapasUsadas?: number;
+  aproveitamentoMedio?: number;
+  areaUtilizadaTotal?: number;
+  areaTotalChapas?: number;
+  sobraTotal?: number;
+  melhorOpcaoLabel?: string;
 }
 
 // ========================================
@@ -150,7 +172,14 @@ export interface ResultadoPrecificacao {
 export interface ResultadoCalculadora {
   entrada: EntradaCalculadora;
   bomResult: BOMResult; // Resultado direto do gerarBOMIndustrial
+  // Compatibilidade com chamadas antigas
+  bom?: BOMResult;
   nesting: ResultadoNesting;
+  // Compatibilidade com chamadas antigas
+  custos?: {
+    categorias: CustoCategoria[];
+    custoTotal: number;
+  };
   precificacao: ResultadoPrecificacao;
   dataCalculo: string;
   versao: string;

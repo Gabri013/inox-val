@@ -1,11 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Progress } from "../components/ui/progress";
-import { useWorkflow } from "../contexts/WorkflowContext";
 import { 
   DollarSign, 
   ShoppingCart, 
-  Package, 
   TrendingUp,
   Factory,
   AlertTriangle,

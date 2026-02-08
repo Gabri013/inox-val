@@ -51,12 +51,16 @@ export function requiredString(message: string = 'Campo obrigatório') {
  * Helper para criar schema de número obrigatório
  */
 export function requiredNumber(message: string = 'Campo obrigatório') {
-  return z.number({ required_error: message });
+  return z.number().refine((value) => value !== undefined && value !== null, {
+    message,
+  });
 }
 
 /**
  * Helper para criar schema de data obrigatória
  */
 export function requiredDate(message: string = 'Data obrigatória') {
-  return z.date({ required_error: message });
+  return z.date().refine((value) => value !== undefined && value !== null, {
+    message,
+  });
 }

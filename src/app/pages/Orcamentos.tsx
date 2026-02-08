@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, ArrowRight, CheckCircle, XCircle, Clock, Download, Eye as EyeIcon, FileDown } from "lucide-react";
+import { FileText, ArrowRight, CheckCircle, XCircle, Clock, Eye as EyeIcon, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import { OrcamentoForm } from "../components/workflow/OrcamentoForm";
 import { pdfService } from "@/domains/custos";
 
 export default function Orcamentos() {
-  const { orcamentos, createOrcamento } = useOrcamentos({ autoLoad: true });
+  const { orcamentos, createOrcamento, error, loadOrcamentos } = useOrcamentos({ autoLoad: true });
   const { createOrdemDeOrcamento } = useOrdens({ autoLoad: false });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusOrcamento | "all">("all");
@@ -208,11 +208,11 @@ export default function Orcamentos() {
                 description: "A ordem de produção foi criada com sucesso"
               });
             } else {
-              toast.error(result.error || "Erro ao converter orçamento");
+              toast.error(result.error || "Não foi possível converter o orçamento. Tente novamente.");
             }
           });
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Erro ao converter orçamento");
+          toast.error(error instanceof Error ? error.message : "Não foi possível converter o orçamento. Tente novamente.");
         }
       },
       // REGRA: Botão aparece APENAS se status === "Aprovado"
@@ -226,7 +226,7 @@ export default function Orcamentos() {
   };
 
   const handleSubmitOrcamento = (data: Omit<Orcamento, "id" | "numero">) => {
-    createOrcamento(data)
+    createOrcamento(data as any)
       .then((result) => {
         if (result.success && result.data) {
           toast.success(`Orçamento ${result.data.numero} criado com sucesso!`, {
@@ -234,23 +234,62 @@ export default function Orcamentos() {
           });
           setShowFormulario(false);
         } else {
-          toast.error(result.error || "Erro ao criar orçamento");
+          toast.error(result.error || "Não foi possível criar o orçamento. Tente novamente.");
         }
       })
-      .catch(() => toast.error("Erro ao criar orçamento"));
+      .catch(() => toast.error("Não foi possível criar o orçamento. Tente novamente."));
   };
 
   const handleExport = () => {
+    if (filteredOrcamentos.length === 0) {
+      toast.error("Nenhum orçamento para exportar");
+      return;
+    }
     toast.success(`${filteredOrcamentos.length} orçamentos exportados`);
   };
+
+  const hasFilters = searchTerm.trim() !== "" || statusFilter !== "all";
+  const emptyState = error
+    ? {
+        icon: <FileText className="size-16 text-destructive/60 opacity-40" />,
+        title: "Falha ao carregar orcamentos",
+        description: "Verifique sua conexão e tente novamente.",
+        action: {
+          label: "Tentar novamente",
+          onClick: () => void loadOrcamentos()
+        }
+      }
+    : hasFilters
+    ? {
+        icon: <FileText className="size-16 text-muted-foreground opacity-20" />,
+        title: "Nenhum resultado para os filtros",
+        description: "Ajuste a busca ou limpe os filtros para ver todos.",
+        action: {
+          label: "Limpar filtros",
+          onClick: () => {
+            setSearchTerm("");
+            setStatusFilter("all");
+          }
+        }
+      }
+    : {
+        icon: <FileText className="size-16 text-muted-foreground opacity-20" />,
+        title: "Nenhum orçamento cadastrado",
+        description: "Crie seu primeiro orçamento baseado em modelos parametrizados",
+        action: {
+          label: "Novo orçamento",
+          onClick: handleNew
+        }
+      };
 
   return (
     <>
       <ListPage
         data={filteredOrcamentos}
-        columns={columns}
-        actions={actions}
-        filters={[
+        columns={columns as any}
+        actions={actions as any}
+        keyExtractor={(orc: Orcamento) => orc.id}
+        filterContent={
           <Select key="status" value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusOrcamento | "all")}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filtrar por status" />
@@ -264,7 +303,7 @@ export default function Orcamentos() {
               <SelectItem value="Convertido">Convertido</SelectItem>
             </SelectContent>
           </Select>
-        ]}
+        }
         title="Orçamentos"
         description="Gerencie propostas comerciais e converta em ordens de produção"
         icon={<FileText className="size-8 text-primary" />}
@@ -275,15 +314,7 @@ export default function Orcamentos() {
         searchPlaceholder="Buscar por número ou cliente..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
-        emptyState={{
-          icon: <FileText className="size-16 text-muted-foreground opacity-20" />,
-          title: "Nenhum orçamento cadastrado",
-          description: "Crie seu primeiro orçamento baseado em modelos parametrizados",
-          action: {
-            label: "Novo Orçamento",
-            onClick: handleNew
-          }
-        }}
+        emptyMessage={emptyState.title}
       />
 
       {/* Modal de Formulário */}

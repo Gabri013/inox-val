@@ -1,5 +1,5 @@
 import { ReactNode, useState, isValidElement } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
@@ -24,9 +24,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Edit,
-  Eye,
-  Trash2,
   ArrowUpDown
 } from "lucide-react";
 import { cn } from "../ui/utils";
@@ -91,6 +88,7 @@ export interface ListPageProps<T> {
   data: T[];
   keyExtractor: (item: T) => string | number;
   actions?: TableAction<T>[];
+  renderCell?: (item: T, columnKey: string) => ReactNode;
   emptyMessage?: string;
   
   // Pagination
@@ -122,6 +120,7 @@ export function ListPage<T>({
   data,
   keyExtractor,
   actions,
+  renderCell,
   emptyMessage = "Nenhum registro encontrado",
   currentPage = 1,
   totalPages = 1,
@@ -332,11 +331,15 @@ export function ListPage<T>({
                 ) : (
                   data.map((item) => (
                     <TableRow key={keyExtractor(item)}>
-                      {columns.map((column) => (
-                        <TableCell key={column.key} className={column.className}>
-                          {column.render ? column.render(item) : (item as any)[column.key]}
-                        </TableCell>
-                      ))}
+                {columns.map((column) => (
+                  <TableCell key={column.key} className={column.className}>
+                    {renderCell
+                      ? renderCell(item, column.key)
+                      : column.render
+                        ? column.render(item)
+                        : (item as any)[column.key]}
+                  </TableCell>
+                ))}
                       {actions && actions.length > 0 && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">

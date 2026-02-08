@@ -39,6 +39,7 @@ export type Module =
   | 'compras'
   | 'producao'
   | 'calculadora'
+  | 'precificacao'
   | 'auditoria'
   | 'usuarios'
   | 'configuracoes'
@@ -78,6 +79,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: true, edit: true, delete: true },
     producao: { view: true, create: true, edit: true, delete: true },
     calculadora: { view: true, create: true, edit: true, delete: true },
+    precificacao: { view: true, create: true, edit: true, delete: true },
     auditoria: { view: true, create: false, edit: false, delete: true },
     usuarios: { view: true, create: true, edit: true, delete: true },
     configuracoes: { view: true, create: false, edit: true, delete: false },
@@ -96,6 +98,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: true, edit: true, delete: true },
     producao: { view: true, create: true, edit: true, delete: true },
     calculadora: { view: true, create: true, edit: true, delete: true },
+    precificacao: { view: true, create: true, edit: true, delete: true },
     auditoria: { view: true, create: false, edit: false, delete: true },
     usuarios: { view: true, create: true, edit: true, delete: true },
     configuracoes: { view: true, create: true, edit: true, delete: true },
@@ -114,6 +117,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: true, edit: true, delete: false },
     producao: { view: true, create: false, edit: false, delete: false },
     calculadora: { view: false, create: false, edit: false, delete: false },
+    precificacao: { view: false, create: false, edit: false, delete: false },
     auditoria: { view: true, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
     configuracoes: { view: false, create: false, edit: false, delete: false },
@@ -132,6 +136,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: false, edit: true, delete: false },
     producao: { view: true, create: false, edit: true, delete: false },
     calculadora: { view: true, create: false, edit: false, delete: false },
+    precificacao: { view: true, create: false, edit: false, delete: false },
     auditoria: { view: true, create: false, edit: false, delete: false },
     usuarios: { view: true, create: false, edit: false, delete: false },
     configuracoes: { view: true, create: false, edit: false, delete: false },
@@ -150,6 +155,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: true, edit: false, delete: false },
     producao: { view: true, create: false, edit: true, delete: false },
     calculadora: { view: true, create: true, edit: true, delete: true },
+    precificacao: { view: true, create: true, edit: true, delete: true },
     auditoria: { view: false, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
     configuracoes: { view: true, create: false, edit: true, delete: false },
@@ -168,6 +174,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: true, edit: false, delete: false },
     producao: { view: true, create: true, edit: true, delete: false },
     calculadora: { view: false, create: false, edit: false, delete: false },
+    precificacao: { view: false, create: false, edit: false, delete: false },
     auditoria: { view: false, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
     configuracoes: { view: true, create: false, edit: false, delete: false },
@@ -186,6 +193,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: true, create: true, edit: true, delete: false },
     producao: { view: false, create: false, edit: false, delete: false },
     calculadora: { view: false, create: false, edit: false, delete: false },
+    precificacao: { view: false, create: false, edit: false, delete: false },
     auditoria: { view: true, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
     configuracoes: { view: false, create: false, edit: false, delete: false },
@@ -204,6 +212,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: false, create: false, edit: false, delete: false },
     producao: { view: true, create: false, edit: false, delete: false },
     calculadora: { view: true, create: true, edit: true, delete: false },
+    precificacao: { view: true, create: true, edit: true, delete: false },
     auditoria: { view: false, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
     configuracoes: { view: false, create: false, edit: false, delete: false },
@@ -221,6 +230,7 @@ export const defaultPermissionsByRole: Record<UserRole, PermissionsMap> = {
     compras: { view: false, create: false, edit: false, delete: false },
     producao: { view: true, create: false, edit: false, delete: false },
     calculadora: { view: true, create: true, edit: true, delete: false },
+    precificacao: { view: true, create: true, edit: true, delete: false },
     auditoria: { view: false, create: false, edit: false, delete: false },
     usuarios: { view: false, create: false, edit: false, delete: false },
     configuracoes: { view: false, create: false, edit: false, delete: false },
@@ -375,6 +385,7 @@ export const moduleLabels: Record<Module, string> = {
   compras: 'Compras',
   producao: 'Produção',
   calculadora: 'Calculadora',
+  precificacao: 'Precificacao',
   auditoria: 'Auditoria',
   usuarios: 'Usuários',
   configuracoes: 'Configurações',

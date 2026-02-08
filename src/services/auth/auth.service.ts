@@ -3,7 +3,6 @@
  * Por enquanto usa dados mockados, mas já está preparado para backend
  */
 
-import { getHttpClient } from '../http/client';
 import type { User } from '@/app/types/auth';
 
 export interface LoginCredentials {
@@ -100,7 +99,7 @@ class AuthService {
   /**
    * Verifica se o token é válido
    */
-  async verifyToken(token: string): Promise<User | null> {
+  async verifyToken(_token: string): Promise<User | null> {
     // Quando backend estiver pronto, será:
     // return getHttpClient().get<User>('/api/auth/verify', {
     //   headers: { Authorization: `Bearer ${token}` }

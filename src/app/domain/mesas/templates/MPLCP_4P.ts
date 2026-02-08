@@ -9,7 +9,8 @@ import { validarTamanhoCentro } from "../validators";
 const OFFSET_DESENHO = 1.8;
 const DOBRA_LADO_CENTRO = 70.65;
 const FOLGA_PE = 72;
-const PRAT_2LADOS = 96.28; // padrão de dobra da prateleira
+const PRAT_2LADOS = 96.28;
+void PRAT_2LADOS; // padrão de dobra da prateleira
 
 export const MPLCP_4P: Template = {
   id: "MPLCP_4P",
@@ -136,3 +137,5 @@ export const MPLCP_4P: Template = {
     },
   ],
 };
+
+

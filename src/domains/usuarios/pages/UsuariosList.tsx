@@ -159,10 +159,7 @@ export default function UsuariosList() {
       />
 
       {showFilters && (
-        <FiltersPanel
-          onClear={() => setFilters({})}
-          onClose={() => setShowFilters(false)}
-        >
+        <FiltersPanel onClear={() => setFilters({})}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>

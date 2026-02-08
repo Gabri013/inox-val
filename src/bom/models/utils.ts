@@ -2,7 +2,7 @@
  * Utilitários compartilhados para cálculo de BOM
  */
 
-import { BOMItem, MATERIAIS, TUBOS, PRECOS_COMPONENTES, MesaConfig } from '../types';
+import { MATERIAIS, TUBOS, PRECOS_COMPONENTES, MesaConfig } from '../types';
 
 /**
  * Arredonda para 2 casas decimais

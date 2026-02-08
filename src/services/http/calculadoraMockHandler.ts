@@ -65,6 +65,7 @@ async function initDB(): Promise<IDBDatabase> {
 // Seed inicial de dados
 async function seedData() {
   const db = await initDB();
+  void materiasPrimas;
 
   // Seed Insumos
   const insumosStore = db.transaction(STORES.INSUMOS, 'readwrite').objectStore(STORES.INSUMOS);

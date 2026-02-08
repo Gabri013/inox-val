@@ -15,7 +15,7 @@ const QUERY_KEY = 'configuracao-vendedor';
  */
 export function useMinhaConfiguracao() {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: [QUERY_KEY, 'minha'],
     queryFn: () => vendedorService.getMinhaConfiguracao(),
@@ -29,20 +29,21 @@ export function useMinhaConfiguracao() {
  */
 export function useCreateConfiguracao() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return useMutation({
     mutationFn: async (data?: Partial<CreateConfiguracaoVendedorDTO>) => {
       if (!user) throw new Error('Usuário não autenticado');
+      if (!profile) throw new Error('Perfil do usuario nao carregado');
       
       // Se não passar dados, cria configuração padrão
       if (!data) {
-        return vendedorService.criarConfiguracaoPadrao(user.id, user.nome);
+        return vendedorService.criarConfiguracaoPadrao(profile.id, profile.nome || user.email || 'Vendedor');
       }
       
       return vendedorService.create({
-        usuarioId: user.id,
-        nomeVendedor: user.nome,
+        usuarioId: profile.id,
+        nomeVendedor: profile.nome || user.email || 'Vendedor',
         ...data,
       } as CreateConfiguracaoVendedorDTO);
     },
@@ -113,7 +114,7 @@ export function useEnsureConfiguracao() {
 
   const ensureConfig = async () => {
     if (!config && user) {
-      return await createConfig();
+      return await createConfig({});
     }
     return config;
   };

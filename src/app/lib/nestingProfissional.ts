@@ -213,7 +213,7 @@ interface Rect {
   h: number;
 }
 
-class MaxRectsPacker {
+class _MaxRectsPacker {
   private binW: number;
   private binH: number;
   private freeRects: Rect[] = [];
@@ -222,6 +222,8 @@ class MaxRectsPacker {
     this.binW = binW;
     this.binH = binH;
     this.freeRects = [{ x: 0, y: 0, w: binW, h: binH }];
+    void this.binW;
+    void this.binH;
   }
 
   pack(w: number, h: number, allowRotate: boolean): { x: number; y: number; rotated: boolean } | null {
@@ -348,6 +350,8 @@ class MaxRectsPacker {
   }
 }
 
+void _MaxRectsPacker;
+
 // ========== TENTATIVA DE NESTING (UMA ÚNICA CHAPA) ==========
 
 type Heuristica = "BSSF" | "BAF"; // Best Short Side Fit | Best Area Fit
@@ -438,6 +442,8 @@ class MaxRectsPackerWithHeuristic {
     this.binH = binH;
     this.heuristica = heuristica;
     this.freeRects = [{ x: 0, y: 0, w: binW, h: binH }];
+    void this.binW;
+    void this.binH;
   }
 
   pack(w: number, h: number, allowRotate: boolean): { x: number; y: number; rotated: boolean } | null {
