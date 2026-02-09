@@ -13,6 +13,9 @@
     "sheet:test-equivalence": "node scripts/test_equivalence.ts",
     "preview": "vite preview",
     "seed": "node scripts/populate-firestore.js",
+    "db:reset": "node scripts/db-reset.js",
+    "db:recreate": "node scripts/db-recreate.js",
+    "smoke:firestore": "node scripts/smoke-firestore.js",
     "seed:users": "node scripts/seed-sector-users.js",
     "test:firebase": "node scripts/test-firebase.js"
   },

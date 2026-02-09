@@ -38,7 +38,17 @@ import {
   FieldValue
 } from 'firebase-admin/firestore';
 
-console.log('🔥 Iniciando população do Firestore...\n');
+const QUIET = process.env.SEED_QUIET === 'true';
+const log = (...args) => {
+  if (!QUIET) console.log(...args);
+};
+const info = (...args) => {
+  if (!QUIET) console.info(...args);
+};
+const warn = (...args) => console.warn(...args);
+const logError = (...args) => console.error(...args);
+
+log('🔥 Iniciando população do Firestore...\n');
 
 // Inicializar Firebase Admin
 const serviceAccount = JSON.parse(
@@ -50,8 +60,8 @@ const db = getFirestore(app);
 const PROJECT_ID = serviceAccount.project_id;
 const serverTimestamp = () => FieldValue.serverTimestamp();
 
-// Empresa de exemplo (produção usaria o empresaId real)
-const EMPRESA_ID = 'empresa-demo-001';
+// Empresa de exemplo (use SEED_EMPRESA_ID para alinhar com o app)
+const EMPRESA_ID = process.env.SEED_EMPRESA_ID || 'empresa-demo-001';
 
 // ============================================================================
 // DADOS DE EXEMPLO
@@ -283,33 +293,33 @@ const dadosExemplo = {
 // ============================================================================
 
 async function popularClientes() {
-  console.log('📋 Criando clientes...');
+  info('📋 Criando clientes...');
   let count = 0;
   const created = [];
   
   for (const cliente of dadosExemplo.clientes) {
     try {
       const docRef = await db.collection('clientes').add(cliente);
-      console.log(`  ✅ Cliente criado: ${cliente.nome} (${docRef.id})`);
+      log(`  ✅ Cliente criado: ${cliente.nome} (${docRef.id})`);
       count++;
       created.push({ id: docRef.id, nome: cliente.nome });
-    } catch (error) {
-      console.error(`  ❌ Erro ao criar ${cliente.nome}:`, error.message);
+    } catch (err) {
+      logError(`  ❌ Erro ao criar ${cliente.nome}:`, err?.message);
     }
   }
   
-  console.log(`✅ ${count}/${dadosExemplo.clientes.length} clientes criados\n`);
+  info(`✅ ${count}/${dadosExemplo.clientes.length} clientes criados\n`);
   return created;
 }
 
 async function popularMateriais() {
-  console.log('📦 Criando materiais...');
+  info('📦 Criando materiais...');
   let count = 0;
   
   for (const material of dadosExemplo.materiais) {
     try {
       const docRef = await db.collection('materiais').add(material);
-      console.log(`  ✅ Material criado: ${material.nome} (${docRef.id})`);
+      log(`  ✅ Material criado: ${material.nome} (${docRef.id})`);
       count++;
       
       // Criar estoque para este material
@@ -328,17 +338,17 @@ async function popularMateriais() {
         updatedAt: serverTimestamp(),
       });
       
-    } catch (error) {
-      console.error(`  ❌ Erro ao criar ${material.nome}:`, error.message);
+    } catch (err) {
+      logError(`  ❌ Erro ao criar ${material.nome}:`, err?.message);
     }
   }
   
-  console.log(`✅ ${count}/${dadosExemplo.materiais.length} materiais + estoques criados\n`);
+  info(`✅ ${count}/${dadosExemplo.materiais.length} materiais + estoques criados\n`);
   return count;
 }
 
 async function popularProdutos() {
-  console.log('🧱 Criando produtos...');
+  info('🧱 Criando produtos...');
   let count = 0;
   const created = [];
 
@@ -348,20 +358,20 @@ async function popularProdutos() {
         ...produto,
         empresaId: EMPRESA_ID,
       });
-      console.log(`  ✅ Produto criado: ${produto.nome} (${docRef.id})`);
+      log(`  ✅ Produto criado: ${produto.nome} (${docRef.id})`);
       count++;
       created.push({ id: docRef.id, ...produto });
-    } catch (error) {
-      console.error(`  ❌ Erro ao criar ${produto.nome}:`, error.message);
+    } catch (err) {
+      logError(`  ❌ Erro ao criar ${produto.nome}:`, err?.message);
     }
   }
 
-  console.log(`✅ ${count}/${dadosExemplo.produtos.length} produtos criados\n`);
+  info(`✅ ${count}/${dadosExemplo.produtos.length} produtos criados\n`);
   return created;
 }
 
 async function popularEstoqueItens(produtosCriados) {
-  console.log('📦 Criando estoque_itens...');
+  info('📦 Criando estoque_itens...');
   let count = 0;
 
   for (const produto of produtosCriados) {
@@ -380,19 +390,19 @@ async function popularEstoqueItens(produtosCriados) {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      console.log(`  ✅ Estoque criado: ${produto.nome} (${docRef.id})`);
+      log(`  ✅ Estoque criado: ${produto.nome} (${docRef.id})`);
       count++;
-    } catch (error) {
-      console.error(`  ❌ Erro ao criar estoque para ${produto.nome}:`, error.message);
+    } catch (err) {
+      logError(`  ❌ Erro ao criar estoque para ${produto.nome}:`, err?.message);
     }
   }
 
-  console.log(`✅ ${count} itens de estoque criados\n`);
+  info(`✅ ${count} itens de estoque criados\n`);
   return count;
 }
 
 async function criarMovimentoEstoque(produto) {
-  console.log('📦 Criando estoque_movimentos...');
+  info('📦 Criando estoque_movimentos...');
   try {
     const docRef = await db.collection('estoque_movimentos').add({
       empresaId: EMPRESA_ID,
@@ -413,17 +423,17 @@ async function criarMovimentoEstoque(produto) {
       updatedBy: 'seed-script',
       isDeleted: false,
     });
-    console.log(`  ✅ Movimento criado (${docRef.id})`);
-    console.log(`✅ 1 movimento criado\n`);
+    log(`  ✅ Movimento criado (${docRef.id})`);
+    info(`✅ 1 movimento criado\n`);
     return docRef.id;
-  } catch (error) {
-    console.error('  ❌ Erro ao criar movimento de estoque:', error.message);
+  } catch (err) {
+    logError('  ❌ Erro ao criar movimento de estoque:', err?.message);
     return null;
   }
 }
 
 async function criarCompraExemplo(produto) {
-  console.log('🧾 Criando compra (nova coleção)...');
+  info('🧾 Criando compra (nova coleção)...');
 
   const compra = {
     empresaId: EMPRESA_ID,
@@ -451,17 +461,17 @@ async function criarCompraExemplo(produto) {
 
   try {
     const docRef = await db.collection('compras').add(compra);
-    console.log(`  ✅ Compra criada: ${compra.numero} (${docRef.id})`);
-    console.log('✅ 1 compra criada\n');
+    log(`  ✅ Compra criada: ${compra.numero} (${docRef.id})`);
+    info('✅ 1 compra criada\n');
     return docRef.id;
-  } catch (error) {
-    console.error('  ❌ Erro ao criar compra:', error.message);
+  } catch (err) {
+    logError('  ❌ Erro ao criar compra:', err?.message);
     return null;
   }
 }
 
 async function criarConfiguracoes() {
-  console.log('⚙️ Criando configurações...');
+  info('⚙️ Criando configurações...');
   let count = 0;
 
   for (const config of dadosExemplo.configuracoes) {
@@ -470,19 +480,19 @@ async function criarConfiguracoes() {
         ...config,
         empresaId: EMPRESA_ID,
       });
-      console.log(`  ✅ Config criada: ${config.tipo} v${config.versao} (${docRef.id})`);
+      log(`  ✅ Config criada: ${config.tipo} v${config.versao} (${docRef.id})`);
       count++;
-    } catch (error) {
-      console.error(`  ❌ Erro ao criar config ${config.tipo}:`, error.message);
+    } catch (err) {
+      logError(`  ❌ Erro ao criar config ${config.tipo}:`, err?.message);
     }
   }
 
-  console.log(`✅ ${count}/${dadosExemplo.configuracoes.length} configurações criadas\n`);
+  info(`✅ ${count}/${dadosExemplo.configuracoes.length} configurações criadas\n`);
   return count;
 }
 
 async function criarUsuariosExemplo() {
-  console.log('👥 Criando usuário seed...');
+  info('👥 Criando usuário seed...');
   const user = dadosExemplo.usuarios[0];
   try {
     const payload = {
@@ -493,17 +503,17 @@ async function criarUsuariosExemplo() {
     const userId = 'seed-admin';
     await db.collection('usuarios').doc(userId).set(payload);
     await db.collection('users').doc(userId).set(payload);
-    console.log(`  ✅ Usuário criado: ${user.email} (id: ${userId})`);
-    console.log('✅ 1 usuário criado\n');
+    log(`  ✅ Usuário criado: ${user.email} (id: ${userId})`);
+    info('✅ 1 usuário criado\n');
     return userId;
-  } catch (error) {
-    console.error('  ❌ Erro ao criar usuário:', error.message);
+  } catch (err) {
+    logError('  ❌ Erro ao criar usuário:', err?.message);
     return null;
   }
 }
 
 async function criarCalculoEvento(userId) {
-  console.log('🧮 Criando cálculo (calculos)...');
+  info('🧮 Criando cálculo (calculos)...');
   try {
     const docRef = await db.collection('calculos').add({
       empresaId: EMPRESA_ID,
@@ -517,35 +527,35 @@ async function criarCalculoEvento(userId) {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    console.log(`  ✅ Cálculo criado (${docRef.id})`);
-    console.log('✅ 1 cálculo criado\n');
+    log(`  ✅ Cálculo criado (${docRef.id})`);
+    info('✅ 1 cálculo criado\n');
     return docRef.id;
-  } catch (error) {
-    console.error('  ❌ Erro ao criar cálculo:', error.message);
+  } catch (err) {
+    logError('  ❌ Erro ao criar cálculo:', err?.message);
     return null;
   }
 }
 
 async function popularEmpresas() {
-  console.log('🏢 Criando empresa...');
+  info('🏢 Criando empresa...');
   let count = 0;
   
   for (const empresa of dadosExemplo.empresas) {
     try {
       await db.collection('empresas').doc(empresa.id).set(empresa);
-      console.log(`  ✅ Empresa criada: ${empresa.nomeFantasia}`);
+      log(`  ✅ Empresa criada: ${empresa.nomeFantasia}`);
       count++;
-    } catch (error) {
-      console.error(`  ❌ Erro ao criar empresa:`, error.message);
+    } catch (err) {
+      logError(`  ❌ Erro ao criar empresa:`, err?.message);
     }
   }
   
-  console.log(`✅ ${count}/${dadosExemplo.empresas.length} empresas criadas\n`);
+  info(`✅ ${count}/${dadosExemplo.empresas.length} empresas criadas\n`);
   return count;
 }
 
 async function criarOrcamentoExemplo(clienteId, clienteNome) {
-  console.log('💰 Criando orçamento de exemplo...');
+  info('💰 Criando orçamento de exemplo...');
   
   const orcamento = {
     empresaId: EMPRESA_ID,
@@ -599,17 +609,17 @@ async function criarOrcamentoExemplo(clienteId, clienteNome) {
   
   try {
     const docRef = await db.collection('orcamentos').add(orcamento);
-    console.log(`  ✅ Orçamento criado: ${orcamento.numero} (${docRef.id})`);
-    console.log(`✅ 1 orçamento criado\n`);
+    log(`  ✅ Orçamento criado: ${orcamento.numero} (${docRef.id})`);
+    info(`✅ 1 orçamento criado\n`);
     return docRef.id;
-  } catch (error) {
-    console.error(`  ❌ Erro ao criar orçamento:`, error.message);
+  } catch (err) {
+    logError(`  ❌ Erro ao criar orçamento:`, err?.message);
     return null;
   }
 }
 
 async function criarOrdemProducao(orcamentoId, orcamentoNumero, clienteId, clienteNome) {
-  console.log('🏭 Criando ordem de produção...');
+  info('🏭 Criando ordem de produção...');
   
   const ordem = {
     empresaId: EMPRESA_ID,
@@ -651,17 +661,17 @@ async function criarOrdemProducao(orcamentoId, orcamentoNumero, clienteId, clien
   
   try {
     const docRef = await db.collection('ordens_producao').add(ordem);
-    console.log(`  ✅ Ordem de produção criada: ${ordem.numero} (${docRef.id})`);
-    console.log(`✅ 1 ordem de produção criada\n`);
+    log(`  ✅ Ordem de produção criada: ${ordem.numero} (${docRef.id})`);
+    info(`✅ 1 ordem de produção criada\n`);
     return docRef.id;
-  } catch (error) {
-    console.error(`  ❌ Erro ao criar ordem:`, error.message);
+  } catch (err) {
+    logError(`  ❌ Erro ao criar ordem:`, err?.message);
     return null;
   }
 }
 
 async function criarSolicitacaoCompra() {
-  console.log('🛒 Criando solicitação de compra...');
+  info('🛒 Criando solicitação de compra...');
   
   const solicitacao = {
     empresaId: EMPRESA_ID,
@@ -686,17 +696,17 @@ async function criarSolicitacaoCompra() {
   
   try {
     const docRef = await db.collection('solicitacoes_compra').add(solicitacao);
-    console.log(`  ✅ Solicitação criada: ${solicitacao.numero} (${docRef.id})`);
-    console.log(`✅ 1 solicitação de compra criada\n`);
+    log(`  ✅ Solicitação criada: ${solicitacao.numero} (${docRef.id})`);
+    info(`✅ 1 solicitação de compra criada\n`);
     return docRef.id;
-  } catch (error) {
-    console.error(`  ❌ Erro ao criar solicitação:`, error.message);
+  } catch (err) {
+    logError(`  ❌ Erro ao criar solicitação:`, err?.message);
     return null;
   }
 }
 
 async function criarApontamento(ordemId) {
-  console.log('📊 Criando apontamento de produção...');
+  info('📊 Criando apontamento de produção...');
   
   const apontamento = {
     empresaId: EMPRESA_ID,
@@ -713,11 +723,11 @@ async function criarApontamento(ordemId) {
   
   try {
     const docRef = await db.collection('apontamentos').add(apontamento);
-    console.log(`  ✅ Apontamento criado (${docRef.id})`);
-    console.log(`✅ 1 apontamento criado\n`);
+    log(`  ✅ Apontamento criado (${docRef.id})`);
+    info(`✅ 1 apontamento criado\n`);
     return docRef.id;
-  } catch (error) {
-    console.error(`  ❌ Erro ao criar apontamento:`, error.message);
+  } catch (err) {
+    logError(`  ❌ Erro ao criar apontamento:`, err?.message);
     return null;
   }
 }
@@ -728,9 +738,9 @@ async function criarApontamento(ordemId) {
 
 async function popularBancoDeDados() {
   try {
-    console.log('════════════════════════════════════════════════════════════');
-    console.log('🔥 POPULAÇÃO DO FIRESTORE - ERP INDUSTRIAL');
-    console.log('════════════════════════════════════════════════════════════\n');
+    log('════════════════════════════════════════════════════════════');
+    log('🔥 POPULAÇÃO DO FIRESTORE - ERP INDUSTRIAL');
+    log('════════════════════════════════════════════════════════════\n');
 
     let totalCriado = 0;
 
@@ -803,34 +813,16 @@ async function popularBancoDeDados() {
     const calculoId = await criarCalculoEvento(userId);
     if (calculoId) totalCriado++;
 
-    console.log('════════════════════════════════════════════════════════════');
-    console.log('🎉 POPULAÇÃO CONCLUÍDA!');
-    console.log('════════════════════════════════════════════════════════════\n');
-    console.log(`✅ Total de documentos criados: ${totalCriado}`);
-    console.log(`\n📊 Coleções criadas no Firestore:`);
-    console.log(`   - empresas (1 documento)`);
-    console.log(`   - usuarios (1 documento)`);
-    console.log(`   - users (1 documento)`);
-    console.log(`   - clientes (${dadosExemplo.clientes.length} documentos)`);
-    console.log(`   - materiais (${dadosExemplo.materiais.length} documentos)`);
-    console.log(`   - estoque_materiais (${dadosExemplo.materiais.length} documentos)`);
-    console.log(`   - produtos (${dadosExemplo.produtos.length} documentos)`);
-    console.log(`   - estoque_itens (${dadosExemplo.produtos.length} documentos)`);
-    console.log(`   - estoque_movimentos (1 documento)`);
-    console.log(`   - compras (1 documento)`);
-    console.log(`   - configuracoes (${dadosExemplo.configuracoes.length} documentos)`);
-    console.log(`   - orcamentos (1 documento)`);
-    console.log(`   - ordens_producao (1 documento)`);
-    console.log(`   - apontamentos (1 documento)`);
-    console.log(`   - solicitacoes_compra (1 documento)`);
-    console.log(`   - calculos (1 documento)`);
-    console.log(`\n🔍 Acesse o Firebase Console para visualizar:`);
-    console.log(`   https://console.firebase.google.com/project/${PROJECT_ID}/firestore`);
-    console.log('\n✅ Banco de dados criado com sucesso!');
+    info(`✅ Total de documentos criados: ${totalCriado}`);
+    if (!QUIET) {
+      console.log(`\n🔍 Acesse o Firebase Console para visualizar:`);
+      console.log(`   https://console.firebase.google.com/project/${PROJECT_ID}/firestore`);
+    }
+    info('\n✅ Banco de dados criado com sucesso!');
     
-  } catch (error) {
-    console.error('\n❌ ERRO ao popular banco de dados:', error);
-    throw error;
+  } catch (err) {
+    logError('\n❌ ERRO ao popular banco de dados:', err);
+    throw err;
   }
 }
 

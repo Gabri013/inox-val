@@ -19,6 +19,8 @@ import Ajuda from "./pages/Ajuda";
 import Perfil from "./pages/Perfil";
 import Configuracoes from "./pages/Configuracoes";
 import CalculadoraMesasWizard from "./pages/CalculadoraMesasWizard";
+import Calculadoras from "./pages/Calculadoras";
+import CalculadoraRapida from "./pages/CalculadoraRapida";
 import SemAcesso from "./pages/SemAcesso";
 import PrecificacaoPage from "@/domains/precificacao/pages/Precificacao";
 
@@ -137,7 +139,15 @@ export const router = createBrowserRouter([
       },
       { 
         path: "calculadora", 
+        element: <ProtectedRoute requiredModule="calculadora"><Calculadoras /></ProtectedRoute>
+      },
+      {
+        path: "calculadora/industrial",
         element: <ProtectedRoute requiredModule="calculadora"><CalculadoraMesasWizard /></ProtectedRoute>
+      },
+      {
+        path: "calculadora/rapida",
+        element: <ProtectedRoute requiredModule="calculadora"><CalculadoraRapida /></ProtectedRoute>
       },
       { 
         path: "precificacao", 

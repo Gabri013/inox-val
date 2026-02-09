@@ -91,7 +91,7 @@ export default function PopularBanco() {
 
       try {
         // Tentar criar conta admin
-        const userCredential = await createUserWithEmailAndPassword(
+        await createUserWithEmailAndPassword(
           auth,
           'admin@inoxval.com',
           'Admin123!'
@@ -193,8 +193,8 @@ export default function PopularBanco() {
         numero: `ORC-${new Date().getFullYear()}-001`,
         clienteId,
         clienteNome,
-        data: new Date().toISOString(),
-        validade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        data: new Date(),
+        validade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         status: 'Rascunho',
         itens: [
           {
@@ -204,30 +204,14 @@ export default function PopularBanco() {
             quantidade: 5,
             precoUnitario: 850.0,
             subtotal: 4250.0,
-            especificacoes: {
-              comprimento: 1200,
-              largura: 800,
-              espessura: 1.5,
-              acabamento: 'Lixado',
-            },
-            bom: [
-              {
-                materialId: 'chapa-inox-304',
-                materialNome: 'Chapa Inox 304 - 1.5mm',
-                tipo: 'Chapa',
-                quantidade: 3.5,
-                unidade: 'M2',
-                precoCusto: 150.0,
-                custoTotal: 525.0,
-              },
-            ],
+            descricao: 'Item seed (demo)',
           },
         ],
         subtotal: 4250.0,
+        desconto: 0,
         total: 4250.0,
         observacoes: 'Orçamento criado automaticamente para demonstração',
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString(),
+        // createdAt/updatedAt são gerados automaticamente no BaseFirestoreService
       });
 
       if (orcamentoResult.success && orcamentoResult.data) {
