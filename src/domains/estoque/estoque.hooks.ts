@@ -65,12 +65,19 @@ export function useEntrada() {
       origem: string;
       usuario: string;
       observacoes?: string;
+      meta?: {
+        quantidadeLancada?: number;
+        unidadeLancada?: string;
+        fatorConversao?: number;
+        unidadeBase?: string;
+      };
     }) => estoqueService.entrada(
       params.produtoId,
       params.quantidade,
       params.origem,
       params.usuario,
-      params.observacoes
+      params.observacoes,
+      params.meta
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -95,12 +102,19 @@ export function useSaida() {
       origem: string;
       usuario: string;
       observacoes?: string;
+      meta?: {
+        quantidadeLancada?: number;
+        unidadeLancada?: string;
+        fatorConversao?: number;
+        unidadeBase?: string;
+      };
     }) => estoqueService.saida(
       params.produtoId,
       params.quantidade,
       params.origem,
       params.usuario,
-      params.observacoes
+      params.observacoes,
+      params.meta
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -125,12 +139,19 @@ export function useReserva() {
       origem: string;
       usuario: string;
       observacoes?: string;
+      meta?: {
+        quantidadeLancada?: number;
+        unidadeLancada?: string;
+        fatorConversao?: number;
+        unidadeBase?: string;
+      };
     }) => estoqueService.reserva(
       params.produtoId,
       params.quantidade,
       params.origem,
       params.usuario,
-      params.observacoes
+      params.observacoes,
+      params.meta
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -181,12 +202,19 @@ export function useAjuste() {
       origem: string;
       usuario: string;
       observacoes?: string;
+      meta?: {
+        quantidadeLancada?: number;
+        unidadeLancada?: string;
+        fatorConversao?: number;
+        unidadeBase?: string;
+      };
     }) => estoqueService.ajuste(
       params.produtoId,
       params.quantidade,
       params.origem,
       params.usuario,
-      params.observacoes
+      params.observacoes,
+      params.meta
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });

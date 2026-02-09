@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
 	LayoutDashboard,
@@ -29,14 +29,14 @@ const navigation = [
 	{ name: "Clientes", href: "/clientes", icon: Users },
 	{ name: "Produtos", href: "/produtos", icon: Package },
 	{ name: "Estoque", href: "/estoque", icon: Archive },
-	{ name: "OrÃ§amentos", href: "/orcamentos", icon: FileText },
+	{ name: "OrÃƒÂ§amentos", href: "/orcamentos", icon: FileText },
 	{ name: "Ordens", href: "/ordens", icon: ClipboardList },
 	{ name: "Compras", href: "/compras", icon: ShoppingCart },
-	{ name: "Controle de ProduÃ§Ã£o", href: "/controle-producao", icon: Factory },
+	{ name: "Controle de ProduÃƒÂ§ÃƒÂ£o", href: "/controle-producao", icon: Factory },
 	{ name: "Chat", href: "/chat", icon: MessageCircle },
-	{ name: "AnÃºncios", href: "/anuncios", icon: Megaphone },
-	{ name: "UsuÃ¡rios", href: "/usuarios", icon: UserCog },
-	{ name: "ConfiguraÃ§Ã£o de Custos", href: "/configuracoes?tab=custos", icon: Settings },
+	{ name: "AnÃƒÂºncios", href: "/anuncios", icon: Megaphone },
+	{ name: "UsuÃƒÂ¡rios", href: "/usuarios", icon: UserCog },
+	{ name: "ConfiguraÃƒÂ§ÃƒÂ£o de Custos", href: "/configuracoes?tab=custos", icon: Settings },
 	{ name: "Precificacao", href: "/precificacao", icon: Calculator },
 	{ name: "Auditoria", href: "/auditoria", icon: Shield },
 ];
@@ -46,7 +46,7 @@ export default function Root() {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	// Mock user data - em produÃ§Ã£o virÃ¡ do AuthContext
+	// Mock user data - em produÃƒÂ§ÃƒÂ£o virÃƒÂ¡ do AuthContext
 	const user = {
 		name: "Admin User",
 		email: "admin@inoxval.com",
@@ -83,7 +83,7 @@ export default function Root() {
 							</div>
 							<div>
 								<h1 className="text-base font-semibold text-white">ERP Inox</h1>
-								<p className="text-xs text-neutral-400">Sistema de GestÃ£o</p>
+								<p className="text-xs text-neutral-400">Sistema de GestÃƒÂ£o</p>
 							</div>
 						</div>
 					) : (
@@ -201,3 +201,4 @@ export default function Root() {
 		</div>
 	);
 }
+

@@ -28,6 +28,7 @@ import PrecificacaoPage from "@/domains/precificacao/pages/Precificacao";
 // Importar pÃ¡ginas de Clientes e Produtos
 import { ClienteDetail, ClienteForm } from "@/domains/clientes";
 import { ProdutoDetail, ProdutoForm } from "@/domains/produtos";
+import { EstoqueMovimentos, EstoqueMovimentoForm, EstoqueProdutoDetail } from "@/domains/estoque";
 
 // Importar pÃ¡ginas de ProduÃ§Ã£o
 import { ApontamentoOP, ControleProducao, DashboardTV } from "@/domains/producao";
@@ -109,6 +110,18 @@ export const router = createBrowserRouter([
       { 
         path: "estoque", 
         element: <ProtectedRoute requiredModule="estoque"><Estoque /></ProtectedRoute>
+      },
+      {
+        path: "estoque/produto/:id",
+        element: <ProtectedRoute requiredModule="estoque"><EstoqueProdutoDetail /></ProtectedRoute>
+      },
+      {
+        path: "estoque/movimentos",
+        element: <ProtectedRoute requiredModule="estoque"><EstoqueMovimentos /></ProtectedRoute>
+      },
+      {
+        path: "estoque/movimento/novo",
+        element: <ProtectedRoute requiredModule="estoque"><EstoqueMovimentoForm /></ProtectedRoute>
       },
       { 
         path: "orcamentos", 

@@ -43,6 +43,10 @@ export async function registrarMovimentoEstoque(params: {
   usuario: string;
   saldoDelta?: number;
   reservadoDelta?: number;
+  quantidadeLancada?: number;
+  unidadeLancada?: string;
+  fatorConversao?: number;
+  unidadeBase?: string;
 }) {
   const db = getFirestore();
   const empresaId = await getEmpresaId();
@@ -85,12 +89,23 @@ export async function registrarMovimentoEstoque(params: {
     });
 
     const movRef = doc(collection(db, COLLECTIONS.estoque_movimentos));
+    const unidadeBase = params.unidadeBase ?? item.unidade ?? "UN";
+    const unidadeLancada = params.unidadeLancada ?? unidadeBase;
+    const quantidadeLancada = params.quantidadeLancada ?? params.quantidade;
+    const fatorConversao =
+      params.fatorConversao ??
+      (unidadeLancada === unidadeBase ? 1 : undefined);
+
     tx.set(movRef, {
       produtoId: item.produtoId,
       produtoNome: item.produtoNome,
       produtoCodigo: item.produtoCodigo,
       tipo: params.tipo,
       quantidade: params.quantidade,
+      quantidadeLancada,
+      unidadeBase,
+      unidadeLancada,
+      fatorConversao,
       saldoAnterior,
       saldoNovo,
       origem: params.origem,

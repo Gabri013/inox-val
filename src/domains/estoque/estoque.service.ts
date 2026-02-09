@@ -9,6 +9,20 @@ import { PaginationParams } from '@/services/http/client';
 import { produtosService } from '../produtos/produtos.service';
 
 class EstoqueService {
+  private buildMovimentoMeta(meta?: {
+    quantidadeLancada?: number;
+    unidadeLancada?: string;
+    fatorConversao?: number;
+    unidadeBase?: string;
+  }) {
+    if (!meta) return {};
+    return {
+      quantidadeLancada: meta.quantidadeLancada,
+      unidadeLancada: meta.unidadeLancada,
+      fatorConversao: meta.fatorConversao,
+      unidadeBase: meta.unidadeBase,
+    };
+  }
   private async getItemByProdutoId(produtoId: ID): Promise<EstoqueItem | null> {
     const result = await estoqueItensService.list({
       where: [{ field: 'produtoId', operator: '==', value: String(produtoId) }],
@@ -79,7 +93,19 @@ class EstoqueService {
     return item;
   }
 
-  async entrada(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+  async entrada(
+    produtoId: ID,
+    quantidade: number,
+    origem: string,
+    usuario: string,
+    observacoes?: string,
+    meta?: {
+      quantidadeLancada?: number;
+      unidadeLancada?: string;
+      fatorConversao?: number;
+      unidadeBase?: string;
+    }
+  ) {
     if (quantidade <= 0) throw new Error('Quantidade deve ser positiva');
     const item = await this.ensureItem(produtoId);
     await registrarMovimentoEstoque({
@@ -89,10 +115,23 @@ class EstoqueService {
       origem,
       observacoes,
       usuario,
+      ...this.buildMovimentoMeta(meta),
     });
   }
 
-  async saida(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+  async saida(
+    produtoId: ID,
+    quantidade: number,
+    origem: string,
+    usuario: string,
+    observacoes?: string,
+    meta?: {
+      quantidadeLancada?: number;
+      unidadeLancada?: string;
+      fatorConversao?: number;
+      unidadeBase?: string;
+    }
+  ) {
     if (quantidade <= 0) throw new Error('Quantidade deve ser positiva');
     const item = await this.ensureItem(produtoId);
     if (quantidade > (item.saldoDisponivel || 0)) {
@@ -105,10 +144,23 @@ class EstoqueService {
       origem,
       observacoes,
       usuario,
+      ...this.buildMovimentoMeta(meta),
     });
   }
 
-  async reserva(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+  async reserva(
+    produtoId: ID,
+    quantidade: number,
+    origem: string,
+    usuario: string,
+    observacoes?: string,
+    meta?: {
+      quantidadeLancada?: number;
+      unidadeLancada?: string;
+      fatorConversao?: number;
+      unidadeBase?: string;
+    }
+  ) {
     if (quantidade <= 0) throw new Error('Quantidade deve ser positiva');
     const item = await this.ensureItem(produtoId);
     if (quantidade > (item.saldoDisponivel || 0)) {
@@ -121,6 +173,7 @@ class EstoqueService {
       origem,
       observacoes: observacoes || 'Reserva automática',
       usuario,
+      ...this.buildMovimentoMeta(meta),
     });
   }
 
@@ -168,7 +221,19 @@ class EstoqueService {
     });
   }
 
-  async ajuste(produtoId: ID, quantidade: number, origem: string, usuario: string, observacoes?: string) {
+  async ajuste(
+    produtoId: ID,
+    quantidade: number,
+    origem: string,
+    usuario: string,
+    observacoes?: string,
+    meta?: {
+      quantidadeLancada?: number;
+      unidadeLancada?: string;
+      fatorConversao?: number;
+      unidadeBase?: string;
+    }
+  ) {
     if (quantidade === 0) throw new Error('Quantidade deve ser diferente de zero');
     const item = await this.ensureItem(produtoId);
     await registrarMovimentoEstoque({
@@ -179,6 +244,7 @@ class EstoqueService {
       observacoes,
       usuario,
       saldoDelta: quantidade,
+      ...this.buildMovimentoMeta(meta),
     });
   }
 

@@ -19,6 +19,8 @@ type FieldValue = string | boolean;
 
 const DEFAULT_GLOBAL_VALUES: Record<string, string> = {
   precoKgInox: '37',
+  fatorTampo: '3',
+  fatorCuba: '3',
   fatorVenda: '3',
   percentualDesperdicio: '5',
   percentualMaoDeObra: '20',
@@ -78,6 +80,8 @@ const setNestedValue = (values: Record<string, FieldValue>, path: string, value:
 
 const buildGlobalParams = (values: Record<string, string>): GlobalParams => ({
   precoKgInox: parseNumber(values.precoKgInox),
+  fatorTampo: parseNumber(values.fatorTampo),
+  fatorCuba: parseNumber(values.fatorCuba),
   fatorVenda: parseNumber(values.fatorVenda),
   percentualDesperdicio: parseNumber(values.percentualDesperdicio) / 100,
   percentualMaoDeObra: parseNumber(values.percentualMaoDeObra) / 100,
@@ -88,6 +92,8 @@ export default function PrecificacaoPage() {
   const [globalValues, setGlobalValues] = useState<Record<string, string>>(DEFAULT_GLOBAL_VALUES);
   const [productValues, setProductValues] = useState<Record<string, FieldValue>>({});
   const [result, setResult] = useState<Record<string, number> | null>(null);
+  // Opção de orçamento: 'somenteCuba', 'bancadaSemCuba', 'bancadaComCuba'
+  const [orcamentoTipo, setOrcamentoTipo] = useState<'somenteCuba' | 'bancadaSemCuba' | 'bancadaComCuba'>('bancadaComCuba');
 
   const productConfig = useMemo(() => getProductConfig(produtoTipo), [produtoTipo]);
 
@@ -97,7 +103,31 @@ export default function PrecificacaoPage() {
     setResult(null);
   }, [productConfig, produtoTipo]);
 
+  // Exibe campos conforme a opção de orçamento
   const isFieldVisible = (field: FieldConfig) => {
+    if (produtoTipo !== 'bancadas') {
+      if (!field.dependsOn) return true;
+      const currentValue = getNestedValue(productValues, field.dependsOn.field);
+      return String(currentValue) === String(field.dependsOn.value);
+    }
+    // Para bancadas/cubas:
+    if (orcamentoTipo === 'somenteCuba') {
+      // Mostra campos de cuba e dimensões/espessura
+      return [
+        'quantidadeCubas',
+        'tipoCuba',
+        'comprimento',
+        'largura',
+        'espessuraChapa',
+        'alturaFrontal', // se altura da cuba for relevante
+      ].includes(field.name);
+    }
+    if (orcamentoTipo === 'bancadaSemCuba') {
+      // Não mostra campos de cuba
+      if (['quantidadeCubas', 'tipoCuba'].includes(field.name)) return false;
+      return true;
+    }
+    // Padrão: mostra tudo
     if (!field.dependsOn) return true;
     const currentValue = getNestedValue(productValues, field.dependsOn.field);
     return String(currentValue) === String(field.dependsOn.value);
@@ -124,27 +154,52 @@ export default function PrecificacaoPage() {
   const handleCalculate = () => {
     const params = buildGlobalParams(globalValues);
     switch (produtoTipo) {
-      case 'bancadas':
-        setResult(toResultMap(
-          calcularBancadas(
-            {
-              comprimento: parseNumber(productValues.comprimento),
-              largura: parseNumber(productValues.largura),
-              alturaFrontal: parseNumber(productValues.alturaFrontal),
-              espessuraChapa: parseNumber(productValues.espessuraChapa),
-              quantidadeCubas: parseNumber(productValues.quantidadeCubas),
-              tipoCuba: String(productValues.tipoCuba || 'sem') as any,
-              quantidadePes: parseNumber(productValues.quantidadePes) as 4 | 5 | 6 | 7,
-              tipoTuboPes: String(productValues.tipoTuboPes || 'tuboRedondo') as any,
-              alturaPes: parseNumber(productValues.alturaPes),
-              temContraventamento: Boolean(productValues.temContraventamento),
-              tipoPrateleiraInferior: String(productValues.tipoPrateleiraInferior || 'nenhuma') as any,
-              usarMaoFrancesa: Boolean(productValues.usarMaoFrancesa),
-            },
-            params
-          )
-        ));
+      case 'bancadas': {
+        // Monta os parâmetros conforme a opção de orçamento
+        let args: any = {};
+        if (orcamentoTipo === 'somenteCuba') {
+          args = {
+            quantidadeCubas: parseNumber(productValues.quantidadeCubas),
+            tipoCuba: String(productValues.tipoCuba || 'sem'),
+            comprimento: parseNumber(productValues.comprimento),
+            largura: parseNumber(productValues.largura),
+            alturaFrontal: parseNumber(productValues.alturaFrontal),
+            espessuraChapa: parseNumber(productValues.espessuraChapa),
+          };
+        } else if (orcamentoTipo === 'bancadaSemCuba') {
+          args = {
+            comprimento: parseNumber(productValues.comprimento),
+            largura: parseNumber(productValues.largura),
+            alturaFrontal: parseNumber(productValues.alturaFrontal),
+            espessuraChapa: parseNumber(productValues.espessuraChapa),
+            quantidadePes: parseNumber(productValues.quantidadePes) as 4 | 5 | 6 | 7,
+            tipoTuboPes: String(productValues.tipoTuboPes || 'tuboRedondo'),
+            alturaPes: parseNumber(productValues.alturaPes),
+            temContraventamento: Boolean(productValues.temContraventamento),
+            tipoPrateleiraInferior: String(productValues.tipoPrateleiraInferior || 'nenhuma'),
+            usarMaoFrancesa: Boolean(productValues.usarMaoFrancesa),
+            quantidadeCubas: 0,
+            tipoCuba: 'sem',
+          };
+        } else {
+          args = {
+            comprimento: parseNumber(productValues.comprimento),
+            largura: parseNumber(productValues.largura),
+            alturaFrontal: parseNumber(productValues.alturaFrontal),
+            espessuraChapa: parseNumber(productValues.espessuraChapa),
+            quantidadeCubas: parseNumber(productValues.quantidadeCubas),
+            tipoCuba: String(productValues.tipoCuba || 'sem'),
+            quantidadePes: parseNumber(productValues.quantidadePes) as 4 | 5 | 6 | 7,
+            tipoTuboPes: String(productValues.tipoTuboPes || 'tuboRedondo'),
+            alturaPes: parseNumber(productValues.alturaPes),
+            temContraventamento: Boolean(productValues.temContraventamento),
+            tipoPrateleiraInferior: String(productValues.tipoPrateleiraInferior || 'nenhuma'),
+            usarMaoFrancesa: Boolean(productValues.usarMaoFrancesa),
+          };
+        }
+        setResult(toResultMap(calcularBancadas(args, params)));
         return;
+      }
       case 'lavatorios':
         setResult(toResultMap(
           calcularLavatorios(
@@ -379,6 +434,21 @@ export default function PrecificacaoPage() {
       {productConfig && (
         <div className="rounded-md border p-4">
           <h2 className="text-sm font-semibold">3) Medidas e opções</h2>
+          {/* Campo de seleção para tipo de orçamento (apenas para bancadas/cubas) */}
+          {produtoTipo === 'bancadas' && (
+            <div className="mb-4">
+              <label className="text-xs font-medium text-muted-foreground">O que deseja orçar?</label>
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm mt-1"
+                value={orcamentoTipo}
+                onChange={e => setOrcamentoTipo(e.target.value as any)}
+              >
+                <option value="somenteCuba">Somente a cuba</option>
+                <option value="bancadaSemCuba">Bancada sem cuba</option>
+                <option value="bancadaComCuba">Bancada com cuba</option>
+              </select>
+            </div>
+          )}
           <div className="mt-3 grid gap-3 md:grid-cols-3">
             {productConfig.fields.filter(isFieldVisible).map((field) => (
               <div key={field.name} className="space-y-1">

@@ -70,6 +70,10 @@ export interface MovimentoEstoque {
   produtoCodigo?: string;
   tipo: TipoMovimento;
   quantidade: number;
+  quantidadeLancada?: number;
+  unidadeBase?: string;
+  unidadeLancada?: string;
+  fatorConversao?: number;
   saldoAnterior: number;
   saldoNovo: number;
   origem: string; // Ex: "Ordem de Produção #123", "Compra #456", etc

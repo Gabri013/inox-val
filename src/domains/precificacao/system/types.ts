@@ -1,5 +1,7 @@
 export interface GlobalParams {
   precoKgInox: number;
+  fatorTampo: number;
+  fatorCuba: number;
   fatorVenda: number;
   percentualDesperdicio: number;
   percentualMaoDeObra: number;

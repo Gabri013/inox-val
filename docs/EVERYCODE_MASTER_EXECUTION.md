@@ -9,6 +9,18 @@ Regras globais:
 - Nunca executar comandos que gerem saida massiva. Se houver risco de volume alto, usar filtros (head, tail, Select-Object, rg) ou limitar linhas. Se o comando puder estourar TPM, dividir em passos menores e parar apos a primeira amostra.
 - Se ocorrer erro de TPM, aguardar o tempo solicitado, ajustar o comando que causou o estouro (reduzir escopo/saida) e continuar a partir do ultimo passo valido.
 
+2 / 5 un                                                                                                            │
+   Aço Inox                                                                                                            │
+   2 / 5 un                                                                                                            │
+   Parafuso                                                                                                            │
+   0 / 1 un                                                                                                            │
+                                                                                                                       │
+   EVITAR ESSES ERROS DE DE ESCRITA Ã§Ã£ QUE ESTA COANTECNEDO                                                          │
+                                                                                                                       │
+   AÃ§Ãµes                                                                                                             │
+   AÃ§Ãµes RÃ¡pidas                                                                                                    │
+   Acesso rÃ¡pido Ã s principais funcionalidades   
+   
 ## Fase A - Auditoria
 A1. Inventario de rotas, paginas e modulos.
 A2. Scripts: typecheck, build, check e validate.ps1.

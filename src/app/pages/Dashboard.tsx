@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+﻿import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Progress } from "../components/ui/progress";
 import { 
@@ -30,7 +30,7 @@ import { useDashboardMetrics } from "../hooks/useDashboardMetrics";
 export default function Dashboard() {
   const navigate = useNavigate();
   const metrics = useDashboardMetrics();
-  const { ordensProducaoList, materiaisCriticos, loading, error } = metrics;
+  const { ordensProducaoList, ordensConcluidasList, materiaisCriticos, loading, error } = metrics;
 
   // BarChart: Produção e Faturamento dos últimos 6 meses
   const now = new Date();
@@ -40,15 +40,15 @@ export default function Dashboard() {
   });
   const salesData = months.map((d) => {
     // Faturamento e produção por mês
-    const faturamento = metrics.ordensProducaoList
+    const faturamento = metrics.ordensConcluidasList
       .filter((op: any) => {
-        const data = op.dataConclusao ? new Date(op.dataConclusao) : null;
+        const data = op.dataConclusao ? new Date(op.dataConclusao) : op.dataAbertura ? new Date(op.dataAbertura) : null;
         return data && data.getMonth() === d.getMonth() && data.getFullYear() === d.getFullYear();
       })
       .reduce((acc: number, op: any) => acc + (op.total ?? 0), 0);
-    const producao = metrics.ordensProducaoList
+    const producao = metrics.ordensConcluidasList
       .filter((op: any) => {
-        const data = op.dataConclusao ? new Date(op.dataConclusao) : null;
+        const data = op.dataConclusao ? new Date(op.dataConclusao) : op.dataAbertura ? new Date(op.dataAbertura) : null;
         return data && data.getMonth() === d.getMonth() && data.getFullYear() === d.getFullYear();
       }).length;
     return {
@@ -129,7 +129,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{metrics.comprasPendentes}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {metrics.comprasPendentes > 0 ? "Aguardando aprovação" : "Módulo não implementado"}
+              {metrics.comprasPendentes > 0 ? "Aguardando aprovação" : "Nenhuma compra pendente"}
             </p>
           </CardContent>
         </Card>
@@ -388,3 +388,8 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
+
+
+

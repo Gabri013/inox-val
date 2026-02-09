@@ -273,21 +273,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         );
         await signOut(auth);
         setProfile(null);
+        setEmpresaContext(null);
         window.location.assign(pendingApprovalPath);
         throw new Error('Conta criada. Aguarde liberação do administrador.');
       }
 
-      const profile = userSnap.data() as { ativo?: boolean };
+      const profile = userSnap.data() as { ativo?: boolean, empresaId?: string };
       if (!profile?.ativo) {
         markPendingApproval(result.user.email);
         await signOut(auth);
         setProfile(null);
+        setEmpresaContext(null);
         window.location.assign(pendingApprovalPath);
         throw new Error('Conta aguardando liberação do administrador.');
       }
 
       setUser(result.user);
-      setProfile({ id: result.user.uid, ...(userSnap.data() as Partial<UserProfile>) } as UserProfile);
+      const userProfile = { id: result.user.uid, ...(userSnap.data() as Partial<UserProfile>) } as UserProfile;
+      setProfile(userProfile);
+      setEmpresaContext(userProfile.empresaId || defaultEmpresaId);
       toast.success('Login realizado com sucesso!');
     } catch (error: unknown) {
       console.error('Erro ao fazer login:', error);
@@ -296,7 +300,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Mensagens de erro amigáveis
       let errorMessage = 'Erro ao fazer login';
-      
+
       switch (err.code) {
         case 'auth/user-not-found':
           errorMessage = 'Usuário não encontrado';

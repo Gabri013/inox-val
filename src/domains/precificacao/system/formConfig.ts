@@ -31,7 +31,9 @@ export interface ProductConfig {
 
 export const GLOBAL_FIELDS: FieldConfig[] = [
   { name: 'precoKgInox', label: 'Preço do Kg Inox', type: 'number', unit: 'R$' },
-  { name: 'fatorVenda', label: 'Fator de Venda', type: 'number' },
+  { name: 'fatorTampo', label: 'Fator Tampo', type: 'number' },
+  { name: 'fatorCuba', label: 'Fator Cuba', type: 'number' },
+  { name: 'fatorVenda', label: 'Fator de Venda (geral)', type: 'number' },
   { name: 'percentualDesperdicio', label: 'Desperdício (%)', type: 'number', unit: '%' },
   { name: 'percentualMaoDeObra', label: 'Mão de Obra (%)', type: 'number', unit: '%' },
 ];

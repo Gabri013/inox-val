@@ -61,3 +61,4 @@ Data: 2026-02-07
 - Permissoes por role agora sao filtradas por `empresaId` e possuem fallback para docs legados sem `empresaId`.
 - Auditoria em aprovacoes depende de `empresaId` passado pela tela de aprovacoes.
 - Engine de formulas implementada com parser basico (SUM/IF/AND/OR etc). Pode precisar ajustes para casos avancados.
+- 2026-02-09: Iniciado ajuste incremental (dashboard: duplicacao materiais + acentos quebrados). Em andamento.

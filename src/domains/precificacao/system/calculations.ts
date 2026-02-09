@@ -105,9 +105,9 @@ export const calcularBancadas = (input: BancadasInput, params: GlobalParams): Ba
   const areaContraventamento = input.temContraventamento ? areaTampo * 0.05 : 0;
   const areaChapa = areaTampo + areaFrontal + areaPrateleira + areaContraventamento;
 
+  // Cuba: área 600x400, multiplicador 1 (igual planilha)
   const cubaAreaBase = toArea(600, 400);
-  const cubaMultiplier = input.tipoCuba === 'comEspelho' ? 1.3 : input.tipoCuba === 'com' ? 1.1 : 0.9;
-  const areaCubas = cubaAreaBase * input.quantidadeCubas * cubaMultiplier;
+  const areaCubas = cubaAreaBase * input.quantidadeCubas;
 
   const pesoChapaTotal = pesoChapa(areaChapa, input.espessuraChapa);
   const pesoCubasTotal = pesoChapa(areaCubas, input.espessuraChapa);
@@ -117,8 +117,9 @@ export const calcularBancadas = (input: BancadasInput, params: GlobalParams): Ba
 
   const pesoMaoFrancesa = input.usarMaoFrancesa ? maoFrancesaKg(input.comprimento) : 0;
 
-  const custoChapa = custoMaterial(pesoChapaTotal, params.precoKgInox);
-  const custoCubas = custoMaterial(pesoCubasTotal, params.precoKgInox);
+  // Aplica fatorTampo e fatorCuba separadamente
+  const custoChapa = custoMaterial(pesoChapaTotal, params.precoKgInox) * params.fatorTampo;
+  const custoCubas = custoMaterial(pesoCubasTotal, params.precoKgInox) * params.fatorCuba;
   const custoEstrutura = custoMaterial(pesoEstrutura, params.precoKgInox);
   const custoAcessorios = custoMaterial(pesoMaoFrancesa, params.precoKgInox);
 

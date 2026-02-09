@@ -1,6 +1,6 @@
 /**
- * P√°gina de listagem de Clientes
- * Usa ListPage para consist√™ncia visual com outras p√°ginas
+ * P·gina de listagem de Clientes
+ * Usa ListPage para consistÍncia visual com outras p·ginas
  */
 
 import { useState } from 'react';
@@ -25,7 +25,7 @@ export default function ClientesList() {
   const navigate = useNavigate();
   const { logCreate, logDelete, logView } = useModuleAudit('clientes');
   
-  // Estado de filtros e pagina√ß√£o
+  // Estado de filtros e paginaÁ„o
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClienteStatus | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,7 +35,7 @@ export default function ClientesList() {
     ? "Nenhum cliente encontrado para os filtros. Limpe filtros."
     : "Nenhum cliente cadastrado";
   
-  // Estado do dialog de confirma√ß√£o
+  // Estado do dialog de confirmaÁ„o
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
     clienteId: string | null;
@@ -100,7 +100,7 @@ export default function ClientesList() {
     }
   };
   
-  // Estat√≠sticas
+  // EstatÌsticas
   const statsData = [
     {
       title: "Total de Clientes",
@@ -167,7 +167,7 @@ export default function ClientesList() {
     },
   ];
   
-  // A√ß√µes por linha
+  // AÁıes por linha
   const actions = [
     {
       icon: Eye,
@@ -186,7 +186,7 @@ export default function ClientesList() {
     }
   ];
   
-  // Renderizar c√©lula customizada
+  // Renderizar cÈlula customizada
   const renderCell = (cliente: Cliente, columnKey: string) => {
     switch (columnKey) {
       case 'nome':
@@ -268,14 +268,14 @@ export default function ClientesList() {
         showPagination={true}
       />
 
-      {/* Dialog de confirma√ß√£o de exclus√£o */}
+      {/* Dialog de confirmaÁ„o de exclus„o */}
       <ConfirmDialog
         open={deleteConfirm.open}
         onOpenChange={(open) =>
           setDeleteConfirm({ ...deleteConfirm, open })
         }
         title="Excluir Cliente"
-        description={`Tem certeza que deseja excluir o cliente "${deleteConfirm.clienteNome}"? Esta a√ß√£o n√£o pode ser desfeita.`}
+        description={`Tem certeza que deseja excluir o cliente "${deleteConfirm.clienteNome}"? Esta aÁ„o n„o pode ser desfeita.`}
         onConfirm={handleDeleteConfirm}
         confirmLabel="Excluir"
         variant="destructive"
@@ -283,3 +283,4 @@ export default function ClientesList() {
     </>
   );
 }
+

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
-import { getOrdensRef } from "@/services/firebase/ordens.service";
-import { getEstoqueService } from "@/services/firebase/estoque.service";
-import { getOrcamentosService } from "@/services/firebase/orcamentos.service";
-// import { getComprasService } from "@/services/firebase/compras.service"; // Não existe
+import { getFirestore } from "@/lib/firebase";
+import { getEmpresaId } from "@/services/firestore/base";
+import { COLLECTIONS } from "@/types/firebase";
 
 export interface DashboardMetrics {
   receitaTotal: number;
@@ -11,12 +11,34 @@ export interface DashboardMetrics {
   ordensEmAberto: number;
   ordensEmProducao: number;
   ordensProducaoList: any[];
+  ordensConcluidasList: any[];
   materiaisCriticos: any[];
   comprasPendentes: number;
   comprasPendentesList: any[];
   loading: boolean;
   error: string | null;
   // TODO: Adicionar mais métricas conforme necessário
+}
+
+const COMPRAS_PENDENTES = new Set([
+  "solicitada",
+  "cotacao",
+  "aprovada",
+  "pedido_enviado",
+]);
+
+const ORDENS_ABERTAS = new Set(["pendente", "em_producao", "pausada"]);
+
+function normalizeStatus(value: unknown) {
+  return value
+    ? value
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/\s+/g, "_")
+    : "";
 }
 
 export function useDashboardMetrics() {
@@ -27,6 +49,7 @@ export function useDashboardMetrics() {
     ordensEmAberto: 0,
     ordensEmProducao: 0,
     ordensProducaoList: [],
+    ordensConcluidasList: [],
     materiaisCriticos: [],
     comprasPendentes: 0,
     comprasPendentesList: [],
@@ -35,114 +58,167 @@ export function useDashboardMetrics() {
   });
 
   useEffect(() => {
-    if (authLoading || !user) {
-      setMetrics((m) => ({ ...m, loading: authLoading }));
-      return;
-    }
+  if (authLoading || !user) {
+    setMetrics((m) => ({ ...m, loading: authLoading }));
+    return;
+  }
 
-    let unsubOrdens: (() => void) | null = null;
-    let unsubEstoque: (() => void) | null = null;
-    let unsubOrcamentos: (() => void) | null = null;
-    let unsubCompras: (() => void) | null = null;
-    setMetrics((m) => ({ ...m, loading: true }));
+  let unsubOrdens: (() => void) | null = null;
+  let unsubEstoque: (() => void) | null = null;
+  let unsubCompras: (() => void) | null = null;
+  let canceled = false;
+  setMetrics((m) => ({ ...m, loading: true, error: null }));
 
-    function handleFirestoreError(error: any) {
-      if (error && error.message && error.message.includes("INTERNAL ASSERTION FAILED")) {
-        // Limpa IndexedDB e recarrega
-        if (window.indexedDB) {
-          const req = window.indexedDB.deleteDatabase("firebaseLocalStorageDb");
-          req.onsuccess = () => window.location.reload();
-          req.onerror = () => window.location.reload();
-        } else {
-          window.location.reload();
-        }
+  function handleFirestoreError(error: any) {
+    if (error && error.message && error.message.includes("INTERNAL ASSERTION FAILED")) {
+      // Limpa IndexedDB e recarrega
+      if (window.indexedDB) {
+        const req = window.indexedDB.deleteDatabase("firebaseLocalStorageDb");
+        req.onsuccess = () => window.location.reload();
+        req.onerror = () => window.location.reload();
       } else {
-        setMetrics((m) => ({ ...m, error: error.message || "Erro ao carregar métricas" }));
+        window.location.reload();
       }
+    } else {
+      setMetrics((m) => ({ ...m, error: error?.message || "Erro ao carregar metricas" }));
     }
+  }
 
+  const setup = async () => {
     try {
+      const empresaId = await getEmpresaId();
+      if (canceled) return;
+
+      const db = getFirestore();
+
       // Ordens
-      unsubOrdens = getOrdensRef((ordens) => {
-        try {
-          const emAberto = ordens.filter((o: any) =>
-            ["Pendente", "Em Produção", "Pausada"].includes(o.status)
-          );
-          const emProducao = ordens.filter((o: any) => o.status === "Em Produção");
-          setMetrics((m) => ({
-            ...m,
-            ordensEmAberto: emAberto.length,
-            ordensEmProducao: emProducao.length,
-            ordensProducaoList: emProducao,
-          }));
-        } catch (error) {
-          handleFirestoreError(error);
-        }
-      });
-
-      // Estoque
-      unsubEstoque = getEstoqueService((materiais: any[]) => {
-        try {
-          const criticos = materiais.filter((mat) => mat.saldoDisponivel <= (mat.minimo ?? 0));
-          setMetrics((m) => ({ ...m, materiaisCriticos: criticos }));
-        } catch (error) {
-          handleFirestoreError(error);
-        }
-      });
-
-      // Orcamentos (para receita)
-      unsubOrcamentos = getOrcamentosService((orcamentos: any[]) => {
-        try {
-          // Receita do mês atual
-          const now = new Date();
-          const mesAtual = now.getMonth() + 1;
-          const anoAtual = now.getFullYear();
-          const orcamentosMes = orcamentos.filter((o) => {
-            const d = o.dataFaturamento ? new Date(o.dataFaturamento) : null;
-            return d && d.getMonth() + 1 === mesAtual && d.getFullYear() === anoAtual && o.status === "FATURADO";
-          });
-          const receitaTotal = orcamentosMes.reduce((acc, o) => acc + (o.valorTotal ?? 0), 0);
-          // Receita mês anterior
-          const mesAnterior = mesAtual === 1 ? 12 : mesAtual - 1;
-          const anoAnterior = mesAtual === 1 ? anoAtual - 1 : anoAtual;
-          const orcamentosAnt = orcamentos.filter((o) => {
-            const d = o.dataFaturamento ? new Date(o.dataFaturamento) : null;
-            return d && d.getMonth() + 1 === mesAnterior && d.getFullYear() === anoAnterior && o.status === "FATURADO";
-          });
-          const receitaAnterior = orcamentosAnt.reduce((acc, o) => acc + (o.valorTotal ?? 0), 0);
-          const receitaVaria = receitaAnterior > 0 ? ((receitaTotal - receitaAnterior) / receitaAnterior) * 100 : null;
-          setMetrics((m) => ({ ...m, receitaTotal, receitaVaria }));
-        } catch (error) {
-          handleFirestoreError(error);
-        }
-      });
-
-      // Compras (pendentes)
-      try {
-        const { getComprasService } = require("@/services/firebase/compras.service");
-        unsubCompras = getComprasService((compras: any[]) => {
+      const ordensRef = query(
+        collection(db, COLLECTIONS.ordens_producao),
+        where("empresaId", "==", empresaId)
+      );
+      unsubOrdens = onSnapshot(
+        ordensRef,
+        (snap) => {
           try {
-            const pendentes = compras.filter((c) => c.status === "PENDENTE" || c.status === "AGUARDANDO_APROVACAO");
-            setMetrics((m) => ({ ...m, comprasPendentes: pendentes.length, comprasPendentesList: pendentes }));
+            const ordens = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const emAberto = ordens.filter((o: any) => ORDENS_ABERTAS.has(normalizeStatus(o.status)));
+            const emProducao = ordens.filter((o: any) => normalizeStatus(o.status) === "em_producao");
+            const concluidas = ordens.filter((o: any) => normalizeStatus(o.status) === "concluida");
+
+            const now = new Date();
+            const mesAtual = now.getMonth() + 1;
+            const anoAtual = now.getFullYear();
+            const mesAnterior = mesAtual === 1 ? 12 : mesAtual - 1;
+            const anoAnterior = mesAtual === 1 ? anoAtual - 1 : anoAtual;
+
+            const concluidasMes = concluidas.filter((o: any) => {
+              const d = o.dataConclusao ? new Date(o.dataConclusao) : o.dataAbertura ? new Date(o.dataAbertura) : null;
+              return d && d.getMonth() + 1 === mesAtual && d.getFullYear() === anoAtual;
+            });
+            const receitaTotal = concluidasMes.reduce((acc, o: any) => acc + (o.total ?? 0), 0);
+
+            const concluidasAnt = concluidas.filter((o: any) => {
+              const d = o.dataConclusao ? new Date(o.dataConclusao) : o.dataAbertura ? new Date(o.dataAbertura) : null;
+              return d && d.getMonth() + 1 === mesAnterior && d.getFullYear() === anoAnterior;
+            });
+            const receitaAnterior = concluidasAnt.reduce((acc, o: any) => acc + (o.total ?? 0), 0);
+            const receitaVaria =
+              receitaAnterior > 0 ? ((receitaTotal - receitaAnterior) / receitaAnterior) * 100 : null;
+            setMetrics((m) => ({
+              ...m,
+              ordensEmAberto: emAberto.length,
+              ordensEmProducao: emProducao.length,
+              ordensProducaoList: emProducao,
+              ordensConcluidasList: concluidas,
+              receitaTotal,
+              receitaVaria,
+            }));
           } catch (error) {
             handleFirestoreError(error);
           }
-        });
-      } catch {
-        setMetrics((m) => ({ ...m, comprasPendentes: 0, comprasPendentesList: [] }));
-      }
+        },
+        handleFirestoreError
+      );
+
+      // Estoque (saldos por produto)
+      const estoqueRef = query(
+        collection(db, COLLECTIONS.estoque_itens),
+        where("empresaId", "==", empresaId)
+      );
+      unsubEstoque = onSnapshot(
+        estoqueRef,
+        (snap) => {
+          try {
+            const itens = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const criticos = itens
+              .map((item: any) => {
+                const saldoDisponivel = item.saldoDisponivel ?? item.saldo ?? 0;
+                const minimo = item.estoqueMinimo ?? 0;
+                const urgencia = saldoDisponivel <= 0 ? "critica" : "alta";
+                return {
+                  ...item,
+                  nome: item.produtoNome || item.produtoCodigo || item.id,
+                  minimo,
+                  atual: saldoDisponivel,
+                  saldoDisponivel,
+                  urgencia,
+                };
+              })
+              .filter((item: any) => item.saldoDisponivel <= (item.minimo ?? 0));
+
+            setMetrics((m) => ({ ...m, materiaisCriticos: criticos }));
+          } catch (error) {
+            handleFirestoreError(error);
+          }
+        },
+        handleFirestoreError
+      );
+
+      // Compras (pendentes)
+      const comprasRef = query(
+        collection(db, COLLECTIONS.compras),
+        where("empresaId", "==", empresaId)
+      );
+      unsubCompras = onSnapshot(
+        comprasRef,
+        (snap) => {
+          try {
+            const compras = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const pendentes = compras.filter((c: any) => COMPRAS_PENDENTES.has(normalizeStatus(c.status)));
+            setMetrics((m) => ({
+              ...m,
+              comprasPendentes: pendentes.length,
+              comprasPendentesList: pendentes,
+            }));
+          } catch (error) {
+            handleFirestoreError(error);
+          }
+        },
+        handleFirestoreError
+      );
     } catch (error: any) {
       handleFirestoreError(error);
+    } finally {
+      setMetrics((m) => ({ ...m, loading: false }));
     }
+  };
 
-    setMetrics((m) => ({ ...m, loading: false }));
-    return () => {
-      unsubOrdens && unsubOrdens();
-      unsubEstoque && unsubEstoque();
-      unsubOrcamentos && unsubOrcamentos();
-      unsubCompras && unsubCompras();
-    };
-  }, [authLoading, user?.uid]);
+  void setup();
+
+  return () => {
+    canceled = true;
+    unsubOrdens && unsubOrdens();
+    unsubEstoque && unsubEstoque();
+    unsubCompras && unsubCompras();
+  };
+}, [authLoading, user?.uid]);
 
   return metrics;
 }
+
+
+
+
+
+
+

@@ -412,3 +412,4 @@ export function ListPage<T>({
 
 // Componentes auxiliares exportados para uso conveniente
 export { Edit as EditIcon, Eye as EyeIcon, Trash2 as DeleteIcon } from "lucide-react";
+

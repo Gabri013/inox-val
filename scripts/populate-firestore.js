@@ -41,10 +41,10 @@ import {
 const QUIET = process.env.SEED_QUIET === 'true';
 const log = (...args) => {
   if (!QUIET) console.log(...args);
-};
+
 const info = (...args) => {
   if (!QUIET) console.info(...args);
-};
+
 const warn = (...args) => console.warn(...args);
 const logError = (...args) => console.error(...args);
 
@@ -67,138 +67,88 @@ const EMPRESA_ID = process.env.SEED_EMPRESA_ID || 'empresa-demo-001';
 // DADOS DE EXEMPLO
 // ============================================================================
 
+
+// Funções utilitárias para gerar dados mock
+function gerarClientesMock(qtd) {
+  return Array.from({ length: qtd }, (_, i) => ({
+    empresaId: EMPRESA_ID,
+    nome: `Cliente Teste ${i + 1}`,
+    cnpj: `${10000000000000 + i}`,
+    email: `cliente${i + 1}@teste.com`,
+    telefone: `1199${String(1000000 + i).slice(1)}`,
+    cidade: 'São Paulo',
+    estado: 'SP',
+    endereco: `Rua Teste, ${i + 1}`,
+    cep: '01234-567',
+    status: 'Ativo',
+    totalCompras: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }));
+}
+
+function gerarMateriaisMock(qtd) {
+  return Array.from({ length: qtd }, (_, i) => ({
+    empresaId: EMPRESA_ID,
+    codigo: `MAT-${i + 1}`,
+    nome: `Material Teste ${i + 1}`,
+
+    data: new Date().toISOString(),
+    validade: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+    status: 'Aprovado',
+    itens: [],
+    subtotal: 1000 + i * 10,
+    desconto: 0,
+    descontoPercentual: 0,
+    total: 1000 + i * 10,
+    observacoes: 'Orçamento mock',
+    condicoesPagamento: '50% entrada, 50% na entrega',
+    prazoEntrega: '15 dias úteis',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    aprovadoEm: serverTimestamp(),
+  }));
+}
+
+function gerarComprasMock(qtd) {
+  return Array.from({ length: qtd }, (_, i) => ({
+    empresaId: EMPRESA_ID,
+    numero: `CMP-${2026}-${i + 1}`,
+    data: new Date().toISOString(),
+    status: i % 3 === 0 ? 'PENDENTE' : (i % 3 === 1 ? 'AGUARDANDO_APROVACAO' : 'CONCLUIDA'),
+    fornecedorNome: `Fornecedor ${i + 1}`,
+    itens: [],
+    total: 500 + i * 10,
+    justificativa: 'Compra mock',
+    observacoes: 'Compra criada pelo seed',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    isDeleted: false,
+  }));
+}
+
+function gerarOrdensProducaoMock(qtd, orcamentos, clientes) {
+  return Array.from({ length: qtd }, (_, i) => ({
+    empresaId: EMPRESA_ID,
+    numero: `OP-${2026}-${i + 1}`,
+    orcamentoId: orcamentos[i % orcamentos.length]?.id || 'orcamento-temp',
+    orcamentoNumero: orcamentos[i % orcamentos.length]?.numero || 'ORC-temp',
+    clienteId: clientes[i % clientes.length]?.id || 'cliente-temp',
+    clienteNome: clientes[i % clientes.length]?.nome || 'Cliente Seed',
+    status: i % 4 === 0 ? 'Aberta' : (i % 4 === 1 ? 'Em Produção' : (i % 4 === 2 ? 'Pausada' : 'Concluída')),
+    dataAbertura: new Date().toISOString(),
+    prioridade: 'Normal',
+    prazoEntrega: new Date(Date.now() + 15*24*60*60*1000).toISOString(),
+    itens: [],
+    observacoes: 'Ordem mock',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }));
+}
+
 const dadosExemplo = {
-  clientes: [
-    {
-      empresaId: EMPRESA_ID,
-      nome: 'Metalúrgica Silva & Cia',
-      cnpj: '12345678000190',
-      email: 'contato@metalurgicasilva.com.br',
-      telefone: '11987654321',
-      cidade: 'São Paulo',
-      estado: 'SP',
-      endereco: 'Rua das Indústrias, 1000',
-      cep: '01234-567',
-      status: 'Ativo',
-      totalCompras: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      empresaId: EMPRESA_ID,
-      nome: 'Construções Rodrigues LTDA',
-      cnpj: '98765432000123',
-      email: 'obras@construcoesrodrigues.com',
-      telefone: '11976543210',
-      cidade: 'Guarulhos',
-      estado: 'SP',
-      status: 'Ativo',
-      totalCompras: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      empresaId: EMPRESA_ID,
-      nome: 'Indústria Mecânica Santos',
-      cnpj: '45678912000156',
-      email: 'vendas@mecanicasantos.ind.br',
-      telefone: '11965432109',
-      cidade: 'São Bernardo do Campo',
-      estado: 'SP',
-      status: 'Ativo',
-      totalCompras: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-  ],
-
-  materiais: [
-    {
-      empresaId: EMPRESA_ID,
-      codigo: 'CHAPA-INOX-304-1.5',
-      nome: 'Chapa Inox 304 - 1.5mm',
-      tipo: 'Chapa',
-      unidade: 'M2',
-      espessura: 1.5,
-      comprimento: 3000,
-      largura: 1500,
-      precoCusto: 150.00,
-      precoVenda: 225.00,
-      margemLucro: 50,
-      estoqueMinimo: 10,
-      estoqueAtual: 50,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      empresaId: EMPRESA_ID,
-      codigo: 'CHAPA-INOX-304-2.0',
-      nome: 'Chapa Inox 304 - 2.0mm',
-      tipo: 'Chapa',
-      unidade: 'M2',
-      espessura: 2.0,
-      comprimento: 3000,
-      largura: 1500,
-      precoCusto: 180.00,
-      precoVenda: 270.00,
-      margemLucro: 50,
-      estoqueMinimo: 10,
-      estoqueAtual: 35,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      empresaId: EMPRESA_ID,
-      codigo: 'TUBO-INOX-304-50',
-      nome: 'Tubo Inox 304 - Ø50mm',
-      tipo: 'Tubo',
-      unidade: 'M',
-      comprimento: 6000,
-      precoCusto: 85.00,
-      precoVenda: 127.50,
-      margemLucro: 50,
-      estoqueMinimo: 20,
-      estoqueAtual: 100,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      empresaId: EMPRESA_ID,
-      codigo: 'PERFIL-U-100',
-      nome: 'Perfil U 100mm',
-      tipo: 'Perfil',
-      unidade: 'M',
-      comprimento: 6000,
-      largura: 100,
-      precoCusto: 45.00,
-      precoVenda: 67.50,
-      margemLucro: 50,
-      estoqueMinimo: 30,
-      estoqueAtual: 80,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      empresaId: EMPRESA_ID,
-      codigo: 'PARAFUSO-INOX-M8',
-      nome: 'Parafuso Inox M8x20',
-      tipo: 'Acessorio',
-      unidade: 'UN',
-      precoCusto: 0.50,
-      precoVenda: 1.00,
-      margemLucro: 100,
-      estoqueMinimo: 500,
-      estoqueAtual: 2000,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-  ],
-
+  clientes: gerarClientesMock(50),
+  materiais: gerarMateriaisMock(50),
   empresas: [
     {
       id: EMPRESA_ID,
@@ -218,37 +168,16 @@ const dadosExemplo = {
       updatedAt: serverTimestamp(),
     }
   ],
+  produtos: gerarProdutosMock(50),
+  configuracoes: [
+    {
+      tipo: 'CUSTOS',
+      versao: 1,
+      ativa: true,
+      dados: {
+        margemPadrao: 35,
+        impostosPercentual: 8.5,
 
-  produtos: [
-    {
-      codigo: 'PRD-INOX-001',
-      nome: 'Bancada Inox 304 2m',
-      descricao: 'Bancada industrial em inox 304',
-      tipo: 'Produto',
-      unidade: 'UN',
-      preco: 2500.0,
-      custo: 1650.0,
-      estoque: 5,
-      estoqueMinimo: 2,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    {
-      codigo: 'PRD-INOX-002',
-      nome: 'Prateleira Inox 1m',
-      descricao: 'Prateleira inox para cozinha industrial',
-      tipo: 'Produto',
-      unidade: 'UN',
-      preco: 600.0,
-      custo: 380.0,
-      estoque: 12,
-      estoqueMinimo: 3,
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-  ],
 
   configuracoes: [
     {
@@ -276,17 +205,8 @@ const dadosExemplo = {
     },
   ],
 
-  usuarios: [
-    {
-      nome: 'Admin Seed',
-      email: 'admin@inoxval.com',
-      role: 'Administrador',
-      ativo: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-  ],
-};
+
+
 
 // ============================================================================
 // FUNÇÕES DE POPULAÇÃO
@@ -303,6 +223,9 @@ async function popularClientes() {
       log(`  ✅ Cliente criado: ${cliente.nome} (${docRef.id})`);
       count++;
       created.push({ id: docRef.id, nome: cliente.nome });
+  
+  
+  
     } catch (err) {
       logError(`  ❌ Erro ao criar ${cliente.nome}:`, err?.message);
     }
