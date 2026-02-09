@@ -500,11 +500,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return role;
   };
 
+  const mergePermissions = (base: PermissionsMap, override?: PermissionsMap): PermissionsMap => {
+    if (!override) return base;
+    const merged: PermissionsMap = { ...base };
+    Object.entries(override).forEach(([module, perms]) => {
+      if (!perms) return;
+      const key = module as keyof PermissionsMap;
+      merged[key] = {
+        ...(base[key] || { view: false, create: false, edit: false, delete: false }),
+        ...perms,
+      };
+    });
+    return merged;
+  };
+
   const getEffectivePermissions = (): PermissionsMap | null => {
     if (!profile?.role) return null;
     const role = normalizeRole(profile.role) as keyof typeof defaultPermissionsByRole;
     const base = defaultPermissionsByRole[role];
-    return profile.permissoesCustomizadas || base || null;
+    const custom = profile.permissoesCustomizadas;
+    const hasCustom = !!custom && Object.keys(custom).length > 0;
+    if (!base) return null;
+    return hasCustom ? mergePermissions(base, custom) : base;
   };
 
   // Verificar permissão de acesso ao módulo (view)

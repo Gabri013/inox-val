@@ -41,6 +41,20 @@ export function usePermissions() {
     return role;
   };
 
+  const mergePermissions = (base: PermissionsMap, override?: PermissionsMap): PermissionsMap => {
+    if (!override) return base;
+    const merged: PermissionsMap = { ...base };
+    Object.entries(override).forEach(([module, perms]) => {
+      if (!perms) return;
+      const key = module as keyof PermissionsMap;
+      merged[key] = {
+        ...(base[key] || { view: false, create: false, edit: false, delete: false }),
+        ...perms,
+      };
+    });
+    return merged;
+  };
+
   const getProfileForPermissions = () => {
     if (!profile) return null;
     return {
@@ -55,7 +69,9 @@ export function usePermissions() {
     if (!userProfile?.role) return null;
     const role = userProfile.role as keyof typeof defaultPermissionsByRole;
     const base = rolePermissions?.[role] || defaultPermissionsByRole[role];
-    return userProfile.permissoesCustomizadas || base;
+    const custom = userProfile.permissoesCustomizadas;
+    const hasCustom = !!custom && Object.keys(custom).length > 0;
+    return hasCustom ? mergePermissions(base, custom) : base;
   };
 
   /**

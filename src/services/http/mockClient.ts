@@ -77,14 +77,21 @@ function getStoreFromUrl(url: string): string {
  * Extrai ID da URL (ex: /api/clientes/123 -> 123)
  */
 function extractIdFromUrl(url: string): ID | null {
-  const parts = url.split('/');
+  const cleanUrl = url.split('?')[0].replace(/\/$/, '');
+
+  // Se for exatamente uma rota mapeada (lista), não há ID
+  if (URL_TO_STORE_MAP[cleanUrl]) {
+    return null;
+  }
+
+  const parts = cleanUrl.split('/');
   const lastPart = parts[parts.length - 1];
-  
-  // Se o último part não contém '?' e não está vazio, assume que é um ID
-  if (lastPart && !lastPart.includes('?')) {
+
+  // Se o último part não está vazio, assume que é um ID
+  if (lastPart) {
     return lastPart;
   }
-  
+
   return null;
 }
 

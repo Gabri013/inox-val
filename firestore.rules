@@ -84,8 +84,8 @@ service cloud.firestore {
      * Obtém permissões efetivas (customizadas ou por role)
      */
     function getRolePermissions() {
-      return getUserRole() != null && exists(/databases/$(database)/documents/permissoes_roles/$(getUserRole()))
-        ? get(/databases/$(database)/documents/permissoes_roles/$(getUserRole())).data.permissions
+      return getUserRole() != null && exists(/databases/$(database)/documents/permissoes_roles/$(getEmpresaId() + '_' + getUserRole()))
+        ? get(/databases/$(database)/documents/permissoes_roles/$(getEmpresaId() + '_' + getUserRole())).data.permissions
         : null;
     }
 
@@ -96,7 +96,8 @@ service cloud.firestore {
     }
 
     function hasPermission(module, action) {
-      return isDev() || (let perms = getEffectivePermissions(); perms != null && perms[module] != null && perms[module][action] == true);
+      let perms = getEffectivePermissions();
+      return isDev() || isAdmin() || (perms != null && perms[module] != null && perms[module][action] == true);
     }
     
     /**

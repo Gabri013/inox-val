@@ -22,6 +22,20 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const { isAuthenticated, loading: authLoading } = useAuth();
   const mockEnabled = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
 
+  const mergePermissions = (base: PermissionsMap, override?: PermissionsMap): PermissionsMap => {
+    if (!override) return base;
+    const merged: PermissionsMap = { ...base };
+    Object.entries(override).forEach(([module, perms]) => {
+      if (!perms) return;
+      const key = module as keyof PermissionsMap;
+      merged[key] = {
+        ...(base[key] || { view: false, create: false, edit: false, delete: false }),
+        ...perms,
+      };
+    });
+    return merged;
+  };
+
   useEffect(() => {
     if (mockEnabled || !isFirebaseConfigured()) {
       setRolePermissions(defaultPermissionsByRole);
@@ -61,7 +75,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
               const data = docSnap.data() as { role?: UserRole; permissions?: PermissionsMap };
               const role = data?.role || (docSnap.id as UserRole);
               if (data?.permissions && role) {
-                base[role] = data.permissions;
+                base[role] = mergePermissions(base[role], data.permissions);
               }
             });
 
@@ -79,7 +93,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
               legacy.forEach((entry) => {
                 if (entry) {
-                  base[entry.role] = entry.permissions;
+                  base[entry.role] = mergePermissions(base[entry.role], entry.permissions);
                 }
               });
             }
