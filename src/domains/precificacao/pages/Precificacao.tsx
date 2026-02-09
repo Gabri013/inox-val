@@ -9,7 +9,7 @@ const DEFAULT_OVERRIDES: OverrideRow[] = [{ cell: '', value: '' }];
 
 export default function PrecificacaoPage() {
   const { user, profile } = useAuth();
-  const [sheetName, setSheetName] = useState('');
+  const [sheetName, setSheetName] = useState('PLANILHA DE PRECO - INOX(Recuperado Automaticamente)');
   const [overrides, setOverrides] = useState<OverrideRow[]>(DEFAULT_OVERRIDES);
   const [result, setResult] = useState<any>(null);
 
@@ -29,7 +29,6 @@ export default function PrecificacaoPage() {
   }, [overrides]);
 
   const handleCompute = async () => {
-    if (!sheetName) return;
     const computed = compute(sheetName, overrideMap);
     setResult(computed);
     if (user?.uid && profile?.empresaId) {
@@ -56,7 +55,7 @@ export default function PrecificacaoPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Aba</label>
+          <label className="text-sm font-medium">Planilha</label>
           <input
             className="w-full rounded-md border px-3 py-2 text-sm"
             placeholder="Nome da aba"
