@@ -142,6 +142,13 @@ export function Login() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
+          <div className="w-full">
+            <Link to="/precificacao-teste" className="block">
+              <Button variant="outline" className="w-full">
+                Testar precificação (sem login)
+              </Button>
+            </Link>
+          </div>
           <div className="text-sm text-center text-muted-foreground">
             Não tem uma conta?{' '}
             <Link to="/signup" className="text-blue-600 hover:underline">
