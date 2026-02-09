@@ -112,16 +112,17 @@ export default function PrecificacaoPage() {
     }
     // Para bancadas/cubas:
     if (orcamentoTipo === 'somenteCuba') {
-      // Mostra campos de cuba e dimensões/espessura
+      // Mostra apenas campos de cuba e dimensões/espessura, mas NÃO tipoCuba
       return [
         'quantidadeCubas',
-        'tipoCuba',
         'comprimento',
         'largura',
         'espessuraChapa',
         'alturaFrontal', // se altura da cuba for relevante
       ].includes(field.name);
     }
+    // Só mostra tipoCuba se não for "somenteCuba"
+    if (field.name === 'tipoCuba' && orcamentoTipo !== 'bancadaComCuba') return false;
     if (orcamentoTipo === 'bancadaSemCuba') {
       // Não mostra campos de cuba
       if (['quantidadeCubas', 'tipoCuba'].includes(field.name)) return false;

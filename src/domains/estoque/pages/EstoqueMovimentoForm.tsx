@@ -11,10 +11,9 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
-import { useProdutos } from "@/domains/produtos";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAjuste, useEntrada, useReserva, useSaida } from "../estoque.hooks";
-import type { Produto } from "@/domains/produtos/produtos.types";
+import { useAjuste, useEntrada, useReserva, useSaida, useSaldosEstoque } from "../estoque.hooks";
+import type { SaldoEstoque } from "../estoque.types";
 import { formatNumber } from "@/shared/lib/format";
 import { toast } from "sonner";
 
@@ -32,8 +31,11 @@ const UNIDADES = ["UN", "KG", "MT", "M2"];
 export default function EstoqueMovimentoForm() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
-  const { data: produtosData } = useProdutos({ page: 1, pageSize: 2000 });
-  const produtos = produtosData?.items || [];
+  const { data: saldos = [] } = useSaldosEstoque();
+  const materiais = useMemo(
+    () => saldos.filter((item) => item.materialId || item.materialCodigo || item.materialNome),
+    [saldos]
+  );
 
   const entrada = useEntrada();
   const saida = useSaida();
@@ -54,8 +56,13 @@ export default function EstoqueMovimentoForm() {
   });
 
   const produtoSelecionado = useMemo(() => {
-    return produtos.find((p: Produto) => p.id === formData.produtoId) || null;
-  }, [produtos, formData.produtoId]);
+    return (
+      materiais.find(
+        (item: SaldoEstoque) =>
+          (item.materialId || item.produtoId) === formData.produtoId
+      ) || null
+    );
+  }, [materiais, formData.produtoId]);
 
   const unidadeBase = produtoSelecionado?.unidade || "";
 
@@ -85,7 +92,7 @@ export default function EstoqueMovimentoForm() {
 
   const validate = () => {
     if (!formData.produtoId) {
-      toast.error("Selecione um produto");
+      toast.error("Selecione um material");
       return false;
     }
     if (!formData.origem.trim()) {
@@ -189,18 +196,21 @@ export default function EstoqueMovimentoForm() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label htmlFor="produto">Produto *</Label>
+            <Label htmlFor="produto">Material *</Label>
             <Select
               value={formData.produtoId}
               onValueChange={(value) => handleChange("produtoId", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um produto" />
+                <SelectValue placeholder="Selecione um material" />
               </SelectTrigger>
               <SelectContent>
-                {produtos.map((produto: Produto) => (
-                  <SelectItem key={produto.id} value={produto.id}>
-                    {produto.codigo} - {produto.nome}
+                {materiais.map((item: SaldoEstoque) => (
+                  <SelectItem
+                    key={item.materialId || item.produtoId}
+                    value={item.materialId || item.produtoId}
+                  >
+                    {(item.materialCodigo || item.produtoCodigo) || "-"} - {(item.materialNome || item.produtoNome) || "-"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -257,7 +267,7 @@ export default function EstoqueMovimentoForm() {
             </Select>
             {unidadeBase && (
               <p className="text-xs text-muted-foreground mt-1">
-                Unidade base do produto: {unidadeBase}
+                Unidade base do material: {unidadeBase}
               </p>
             )}
           </div>

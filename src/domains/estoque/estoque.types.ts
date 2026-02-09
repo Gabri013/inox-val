@@ -68,6 +68,9 @@ export interface MovimentoEstoque {
   produtoId: ID;
   produtoNome?: string; // Denormalizado para facilitar exibição
   produtoCodigo?: string;
+  materialId?: ID;
+  materialNome?: string;
+  materialCodigo?: string;
   tipo: TipoMovimento;
   quantidade: number;
   quantidadeLancada?: number;
@@ -96,6 +99,9 @@ export interface SaldoEstoque {
   produtoId: ID;
   produtoNome: string;
   produtoCodigo: string;
+  materialId?: ID;
+  materialNome?: string;
+  materialCodigo?: string;
   saldo: number;
   saldoDisponivel: number; // Saldo - Reservas
   saldoReservado: number;

@@ -129,6 +129,7 @@ export function DataTable<T>({
   sortBy,
   sortOrder,
   emptyMessage = 'Nenhum registro encontrado',
+  onRowClick,
 }: DataTableProps<T>) {
   const totalPages = Math.ceil(total / pageSize);
   
@@ -187,13 +188,16 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {data.map((row) => (
-              <TableRow key={getRowId(row)}>
+              <TableRow
+                key={getRowId(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={onRowClick ? 'cursor-pointer transition-colors hover:bg-primary/10 hover:shadow-sm' : ''}
+              >
                 {columns.map((column) => {
                   const value = (row as any)[column.key];
                   const content = column.render
                     ? column.render(value, row)
                     : value;
-                  
                   return (
                     <TableCell
                       key={column.key}

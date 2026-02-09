@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/app/components/ui/select';
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
-import { useProdutos, useDeleteProduto, useProdutosStats } from '../produtos.hooks';
+import { useProdutos, useDeleteProduto } from '../produtos.hooks';
 import { Produto, ProdutoTipo } from '../produtos.types';
 import { formatCurrency, formatNumber } from '@/shared/lib/format';
 import { useModuleAudit } from '@/app/contexts/AuditContext';
@@ -33,7 +33,7 @@ export default function ProdutosList() {
   const hasFilters = search.trim() !== '' || tipoFilter !== 'all' || ativoFilter !== undefined;
   const emptyMessage = hasFilters
     ? 'Nenhum produto encontrado para os filtros. Limpe filtros.'
-    : 'Nenhum produto cadastrado';
+    : 'Nenhum produto acabado cadastrado';
   
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
@@ -49,12 +49,14 @@ export default function ProdutosList() {
     ativo: ativoFilter,
   });
   
-  const { data: stats } = useProdutosStats();
   const deleteMutation = useDeleteProduto();
   
   // Dados filtrados
   const produtos = data?.items || [];
-  const produtosFiltrados = produtos.filter(produto => {
+  const produtosBase = produtos.filter(
+    (produto) => produto.tipo === 'Acabado' || produto.tipo === 'Semiacabado'
+  );
+  const produtosFiltrados = produtosBase.filter(produto => {
     const matchSearch = search === '' || 
       produto.nome.toLowerCase().includes(search.toLowerCase()) ||
       produto.codigo.toLowerCase().includes(search.toLowerCase()) ||
@@ -103,24 +105,24 @@ export default function ProdutosList() {
   const statsData = [
     {
       title: "Total de Produtos",
-      value: stats?.total || 0,
+      value: produtosBase.length,
       description: "Cadastrados no sistema"
     },
     {
       title: "Ativos",
-      value: stats?.ativos || 0,
+      value: produtosBase.filter((p) => p.ativo).length,
       description: "Produtos ativos",
       className: "border-green-200 dark:border-green-800"
     },
     {
       title: "Baixo Estoque",
-      value: stats?.baixoEstoque || 0,
+      value: produtosBase.filter((p) => p.estoque <= p.estoqueMinimo).length,
       description: "Produtos críticos",
       className: "border-red-200 dark:border-red-800"
     },
     {
       title: "Valor em Estoque",
-      value: formatCurrency(stats?.valorEstoque || 0),
+      value: formatCurrency(produtosBase.reduce((acc, p) => acc + p.estoque * p.custo, 0)),
       description: "Total em produtos"
     }
   ];
@@ -248,7 +250,7 @@ export default function ProdutosList() {
           { label: "Produtos" }
         ]}
         title="Produtos"
-        description="Gerencie o catalogo de produtos e materiais"
+        description="Gerencie produtos acabados e semiacabados"
         icon={Package}
         stats={statsData}
         searchPlaceholder="Buscar por código, nome ou descrição..."
@@ -266,8 +268,6 @@ export default function ProdutosList() {
                 <SelectItem value="all">Todos os Tipos</SelectItem>
                 <SelectItem value="Acabado">Acabado</SelectItem>
                 <SelectItem value="Semiacabado">Semiacabado</SelectItem>
-                <SelectItem value="Matéria-Prima">Matéria-Prima</SelectItem>
-                <SelectItem value="Componente">Componente</SelectItem>
               </SelectContent>
             </Select>
             

@@ -35,14 +35,16 @@ export default function EstoqueMovimentos() {
   const [tipo, setTipo] = useState<TipoMovimento | "all">("all");
 
   const { data = [] } = useMovimentos({ tipo: tipo === "all" ? undefined : tipo });
+  const getNome = (mov: MovimentoEstoque) => mov.materialNome || mov.produtoNome || "";
+  const getCodigo = (mov: MovimentoEstoque) => mov.materialCodigo || mov.produtoCodigo || "";
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return data;
     return data.filter((mov) => {
       return (
-        mov.produtoNome?.toLowerCase().includes(term) ||
-        mov.produtoCodigo?.toLowerCase().includes(term) ||
+        getNome(mov).toLowerCase().includes(term) ||
+        getCodigo(mov).toLowerCase().includes(term) ||
         mov.origem?.toLowerCase().includes(term) ||
         mov.usuario?.toLowerCase().includes(term)
       );
@@ -51,7 +53,7 @@ export default function EstoqueMovimentos() {
 
   const columns = [
     { key: "produtoCodigo", label: "Código", sortable: true },
-    { key: "produtoNome", label: "Produto", sortable: true },
+    { key: "produtoNome", label: "Material", sortable: true },
     { key: "tipo", label: "Tipo", sortable: true },
     { key: "quantidade", label: "Quantidade", sortable: true, className: "text-right" },
     { key: "origem", label: "Origem", sortable: false },
@@ -61,6 +63,10 @@ export default function EstoqueMovimentos() {
 
   const renderCell = (mov: MovimentoEstoque, columnKey: string) => {
     switch (columnKey) {
+      case "produtoCodigo":
+        return getCodigo(mov) || "-";
+      case "produtoNome":
+        return getNome(mov) || "-";
       case "tipo":
         return <Badge variant={TIPO_BADGE[mov.tipo]}>{TIPO_LABEL[mov.tipo]}</Badge>;
       case "quantidade": {
@@ -102,13 +108,13 @@ export default function EstoqueMovimentos() {
         { label: "Estoque", href: "/estoque" },
         { label: "Movimentos" },
       ]}
-      title="Movimentos de Estoque"
-      description="Entradas, saídas, reservas e ajustes"
+      title="Movimentos de Materiais"
+      description="Entradas, saidas, reservas e ajustes de materiais"
       icon={PackageSearch}
       showExport={false}
       onNew={() => navigate("/estoque/movimento/novo")}
       newButtonLabel="Novo Movimento"
-      searchPlaceholder="Buscar por produto, origem ou usuário..."
+      searchPlaceholder="Buscar por material, origem ou usuario..."
       searchValue={search}
       onSearchChange={setSearch}
       filterContent={

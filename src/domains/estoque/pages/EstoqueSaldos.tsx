@@ -19,39 +19,51 @@ export default function EstoqueSaldos() {
   
   const { data: saldos = [] } = useSaldosEstoque();
   const { data: stats } = useEstoqueStats();
+
+  const getNome = (saldo: SaldoEstoque) => saldo.materialNome || saldo.produtoNome;
+  const getCodigo = (saldo: SaldoEstoque) => saldo.materialCodigo || saldo.produtoCodigo;
+  const getItemId = (saldo: SaldoEstoque) => saldo.materialId || saldo.produtoId;
+  const materiais = saldos.filter(
+    (saldo) => saldo.materialId || saldo.materialCodigo || saldo.materialNome
+  );
   
   // Filtrar saldos
-  const filteredSaldos = saldos.filter(saldo => {
+  const filteredSaldos = materiais.filter(saldo => {
     const searchLower = search.toLowerCase();
     return (
-      saldo.produtoNome.toLowerCase().includes(searchLower) ||
-      saldo.produtoCodigo.toLowerCase().includes(searchLower)
+      getNome(saldo).toLowerCase().includes(searchLower) ||
+      getCodigo(saldo).toLowerCase().includes(searchLower)
     );
   });
   
   // Estatísticas
+  const valorTotal = materiais.reduce((acc, item) => {
+    const custo = (item as any).custoUnitario ?? 0;
+    return acc + (item.saldo || 0) * custo;
+  }, 0);
+
   const statsData = [
     {
-      title: "Total de Produtos",
-      value: stats?.totalProdutos || 0,
+      title: "Total de Materiais",
+      value: materiais.length,
       description: "No estoque",
       className: "border-blue-200 dark:border-blue-800"
     },
     {
       title: "Baixo Estoque",
-      value: stats?.baixoEstoque || 0,
-      description: "Produtos críticos",
+      value: materiais.filter((s) => s.saldo > 0 && s.saldo <= s.estoqueMinimo).length,
+      description: "Materiais críticos",
       className: "border-orange-200 dark:border-orange-800"
     },
     {
       title: "Sem Estoque",
-      value: stats?.semEstoque || 0,
-      description: "Produtos zerados",
+      value: materiais.filter((s) => s.saldo === 0).length,
+      description: "Materiais zerados",
       className: "border-red-200 dark:border-red-800"
     },
     {
       title: "Valor em Estoque",
-      value: formatCurrency(stats?.valorTotal || 0),
+      value: formatCurrency(valorTotal),
       description: `${stats?.totalMovimentos || 0} movimentos`
     }
   ];
@@ -65,7 +77,7 @@ export default function EstoqueSaldos() {
     },
     {
       key: 'produtoNome',
-      label: 'Produto',
+      label: 'Material',
       sortable: true,
     },
     {
@@ -110,7 +122,7 @@ export default function EstoqueSaldos() {
       icon: Eye,
       label: "Ver Detalhes",
       onClick: (saldo: SaldoEstoque) => {
-        navigate(`/estoque/produto/${saldo.produtoId}`);
+        navigate(`/estoque/produto/${getItemId(saldo)}`);
       }
     }
   ];
@@ -119,7 +131,7 @@ export default function EstoqueSaldos() {
   const renderCell = (saldo: SaldoEstoque, columnKey: string) => {
     switch (columnKey) {
       case 'produtoCodigo':
-        return <span className="font-mono font-medium">{saldo.produtoCodigo}</span>;
+        return <span className="font-mono font-medium">{getCodigo(saldo)}</span>;
       
       case 'saldo':
         const baixoEstoque = saldo.saldo <= saldo.estoqueMinimo && saldo.saldo > 0;
@@ -201,6 +213,9 @@ export default function EstoqueSaldos() {
         );
       
       default:
+        if (columnKey === 'produtoNome') {
+          return getNome(saldo);
+        }
         return saldo[columnKey as keyof SaldoEstoque];
     }
   };
@@ -212,10 +227,10 @@ export default function EstoqueSaldos() {
         { label: "Estoque" }
       ]}
       title="Estoque"
-      description="Visualize e gerencie os saldos de estoque"
+      description="Visualize e gerencie os saldos de materiais"
       icon={Package}
       stats={statsData}
-      searchPlaceholder="Buscar por código ou nome do produto..."
+      searchPlaceholder="Buscar por código ou nome do material..."
       searchValue={search}
       onSearchChange={setSearch}
       onNew={() => navigate('/estoque/movimento/novo')}
@@ -230,7 +245,7 @@ export default function EstoqueSaldos() {
       renderCell={renderCell as any}
       actions={actions as any}
       keyExtractor={(saldo) => saldo.produtoId}
-      emptyMessage="Nenhum produto no estoque"
+      emptyMessage="Nenhum material no estoque"
       showPagination={false}
     />
   );

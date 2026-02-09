@@ -15,6 +15,7 @@ const options = {
   file: "",
   dryRun: false,
   createEstoque: false,
+  target: "produtos",
 };
 
 for (let i = 0; i < args.length; i += 1) {
@@ -26,8 +27,15 @@ for (let i = 0; i < args.length; i += 1) {
     options.dryRun = true;
   } else if (arg === "--estoque") {
     options.createEstoque = true;
+  } else if (arg === "--target" && args[i + 1]) {
+    options.target = args[i + 1];
+    i += 1;
+  } else if (arg === "--materiais") {
+    options.target = "materiais";
+  } else if (arg === "--produtos") {
+    options.target = "produtos";
   } else if (arg === "--help" || arg === "-h") {
-    console.log("Uso: node scripts/import-sldmat.js [--file caminho] [--dry-run] [--estoque]");
+    console.log("Uso: node scripts/import-sldmat.js [--file caminho] [--dry-run] [--estoque] [--target materiais|produtos]");
     process.exit(0);
   }
 }
@@ -54,6 +62,14 @@ const serverTimestamp = () => FieldValue.serverTimestamp();
 
 const TIPO_MATERIA_PRIMA = "Mat\u00e9ria-Prima";
 const TIPO_COMPONENTE = "Componente";
+const TARGETS = new Set(["produtos", "materiais"]);
+
+if (!TARGETS.has(options.target)) {
+  throw new Error(`Target invalido: ${options.target}. Use 'produtos' ou 'materiais'.`);
+}
+
+const TARGET_COLLECTION = options.target;
+const TARGET_LABEL = TARGET_COLLECTION === "materiais" ? "Materiais" : "Produtos";
 
 const COMPONENTE_CLASSIFICACOES = new Set([
   "DIVERSOS",
@@ -125,7 +141,7 @@ function extractMaterials(xml) {
   return results;
 }
 
-function buildProduto({ classificacao, material, description }) {
+function buildProdutoDoc({ classificacao, material, description }) {
   const nome = normalizeSpaces(`${classificacao} - ${material}`);
   const codigo = nome;
   const tipo = resolveTipo(classificacao);
@@ -159,8 +175,46 @@ function buildProduto({ classificacao, material, description }) {
   };
 }
 
-async function loadExistingProdutos() {
-  const snap = await db.collection("produtos").where("empresaId", "==", EMPRESA_ID).get();
+function buildMaterialDoc({ classificacao, material, description }) {
+  const nome = normalizeSpaces(`${classificacao} - ${material}`);
+  const codigo = nome;
+  const tipo = resolveTipo(classificacao);
+  const unidade = resolveUnidade(classificacao);
+  const nowIso = new Date().toISOString();
+  const descricao = description || classificacao;
+  const observacoes = description
+    ? `SW: ${description} | Importado do SolidWorks (.sldmat)`
+    : "Importado do SolidWorks (.sldmat)";
+
+  return {
+    empresaId: EMPRESA_ID,
+    codigo,
+    nome,
+    descricao,
+    classificacao,
+    tipo,
+    unidade,
+    custoUnitario: 0,
+    estoqueMinimo: 0,
+    ativo: true,
+    origem: "SolidWorks",
+    observacoes,
+    criadoEm: nowIso,
+    atualizadoEm: nowIso,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    createdBy: "import-sldmat",
+    updatedBy: "import-sldmat",
+    isDeleted: false,
+  };
+}
+
+function buildDoc(item) {
+  return TARGET_COLLECTION === "materiais" ? buildMaterialDoc(item) : buildProdutoDoc(item);
+}
+
+async function loadExistingDocs() {
+  const snap = await db.collection(TARGET_COLLECTION).where("empresaId", "==", EMPRESA_ID).get();
   const map = new Map();
   snap.docs.forEach((doc) => {
     const data = doc.data();
@@ -171,12 +225,13 @@ async function loadExistingProdutos() {
   return map;
 }
 
-async function loadExistingEstoqueProdutoIds() {
+async function loadExistingEstoqueIds() {
   const snap = await db.collection("estoque_itens").where("empresaId", "==", EMPRESA_ID).get();
   const ids = new Set();
   snap.docs.forEach((doc) => {
     const data = doc.data();
     if (data.produtoId) ids.add(data.produtoId);
+    if (data.materialId) ids.add(data.materialId);
   });
   return ids;
 }
@@ -229,29 +284,29 @@ async function run() {
   const desired = [];
 
   for (const item of materials) {
-    const produto = buildProduto(item);
-    if (seen.has(produto.codigo)) {
-      duplicates.push(produto.codigo);
+    const doc = buildDoc(item);
+    if (seen.has(doc.codigo)) {
+      duplicates.push(doc.codigo);
       continue;
     }
-    seen.add(produto.codigo);
-    desired.push(produto);
+    seen.add(doc.codigo);
+    desired.push(doc);
   }
 
-  const existingMap = await loadExistingProdutos();
+  const existingMap = await loadExistingDocs();
   const toCreate = [];
   const alreadyExists = [];
 
-  desired.forEach((produto) => {
-    if (existingMap.has(produto.codigo)) {
-      alreadyExists.push(produto.codigo);
+  desired.forEach((doc) => {
+    if (existingMap.has(doc.codigo)) {
+      alreadyExists.push(doc.codigo);
       return;
     }
-    toCreate.push(produto);
+    toCreate.push(doc);
   });
 
   console.log(`Materiais no arquivo: ${materials.length}`);
-  console.log(`Produtos unicos: ${desired.length}`);
+  console.log(`${TARGET_LABEL} unicos: ${desired.length}`);
   console.log(`Duplicados no arquivo: ${duplicates.length}`);
   console.log(`Ja existentes no Firestore: ${alreadyExists.length}`);
   console.log(`Novos para criar: ${toCreate.length}`);
@@ -270,60 +325,74 @@ async function run() {
     return;
   }
 
-  console.log("Criando produtos...");
+  console.log(`Criando ${TARGET_LABEL.toLowerCase()}...`);
   const { committed, createdRefs } = await commitBatches(
     toCreate,
     (item) => item,
-    "produtos"
+    TARGET_COLLECTION
   );
-  console.log(`Produtos criados: ${committed}`);
+  console.log(`${TARGET_LABEL} criados: ${committed}`);
 
   if (options.createEstoque) {
-    const estoqueExistente = await loadExistingEstoqueProdutoIds();
-    const produtosParaEstoque = [];
+    const estoqueExistente = await loadExistingEstoqueIds();
+    const docsParaEstoque = [];
 
-    // Mapear produtos criados + produtos existentes no arquivo
+    // Mapear criados + existentes no arquivo
     const createdByCodigo = new Map();
     createdRefs.forEach((entry) => {
       createdByCodigo.set(entry.data.codigo, entry);
     });
 
-    desired.forEach((produto) => {
-      const created = createdByCodigo.get(produto.codigo);
+    desired.forEach((doc) => {
+      const created = createdByCodigo.get(doc.codigo);
       if (created) {
-        produtosParaEstoque.push({
+        docsParaEstoque.push({
           id: created.id,
-          data: produto,
+          data: doc,
         });
         return;
       }
-      const existing = existingMap.get(produto.codigo);
+      const existing = existingMap.get(doc.codigo);
       if (existing) {
-        produtosParaEstoque.push({
+        docsParaEstoque.push({
           id: existing.id,
           data: existing,
         });
       }
     });
 
-    const estoquePayloads = produtosParaEstoque
+    const estoquePayloads = docsParaEstoque
       .filter((p) => !estoqueExistente.has(p.id))
-      .map((p) => ({
-        empresaId: EMPRESA_ID,
-        produtoId: p.id,
-        produtoNome: p.data.nome,
-        produtoCodigo: p.data.codigo,
-        saldo: 0,
-        saldoDisponivel: 0,
-        saldoReservado: 0,
-        estoqueMinimo: 0,
-        unidade: p.data.unidade || "UN",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: "import-sldmat",
-        updatedBy: "import-sldmat",
-        isDeleted: false,
-      }));
+      .map((p) => {
+        const estoqueMinimo = Number.isFinite(p.data.estoqueMinimo) ? p.data.estoqueMinimo : 0;
+        const payload = {
+          empresaId: EMPRESA_ID,
+          produtoId: p.id,
+          produtoNome: p.data.nome,
+          produtoCodigo: p.data.codigo,
+          saldo: 0,
+          saldoDisponivel: 0,
+          saldoReservado: 0,
+          estoqueMinimo,
+          unidade: p.data.unidade || "UN",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: "import-sldmat",
+          updatedBy: "import-sldmat",
+          isDeleted: false,
+        };
+
+        if (TARGET_COLLECTION === "materiais") {
+          return {
+            ...payload,
+            materialId: p.id,
+            materialNome: p.data.nome,
+            materialCodigo: p.data.codigo,
+          };
+        }
+
+        return payload;
+      });
 
     if (estoquePayloads.length > 0) {
       console.log(`Criando estoque_itens: ${estoquePayloads.length}...`);

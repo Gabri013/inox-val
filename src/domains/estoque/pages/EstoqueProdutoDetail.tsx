@@ -41,6 +41,8 @@ export default function EstoqueProdutoDetail() {
     ...(produtoId ? { produtoId } : {}),
     tipo: tipo === "all" ? undefined : tipo,
   });
+  const getNome = () => saldo?.materialNome || saldo?.produtoNome || "Detalhes";
+  const getCodigo = () => saldo?.materialCodigo || saldo?.produtoCodigo || "";
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -56,7 +58,7 @@ export default function EstoqueProdutoDetail() {
   if (!produtoId) {
     return (
       <div className="flex items-center justify-center p-12">
-        <p className="text-muted-foreground">Produto nao informado</p>
+        <p className="text-muted-foreground">Material nao informado</p>
       </div>
     );
   }
@@ -72,7 +74,7 @@ export default function EstoqueProdutoDetail() {
   if (!saldo) {
     return (
       <div className="flex items-center justify-center p-12">
-        <p className="text-muted-foreground">Produto nao encontrado no estoque</p>
+        <p className="text-muted-foreground">Material nao encontrado no estoque</p>
       </div>
     );
   }
@@ -164,10 +166,10 @@ export default function EstoqueProdutoDetail() {
       breadcrumbs={[
         { label: "Dashboard", href: "/" },
         { label: "Estoque", href: "/estoque" },
-        { label: saldo.produtoNome || "Detalhes" },
+        { label: getNome() },
       ]}
-      title={saldo.produtoNome || "Detalhes do estoque"}
-      description={`Codigo: ${saldo.produtoCodigo}`}
+      title={getNome()}
+      description={`Codigo: ${getCodigo()}`}
       icon={PackageSearch}
       stats={statsData}
       searchPlaceholder="Buscar por origem ou usuario..."

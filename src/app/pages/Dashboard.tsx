@@ -149,6 +149,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               {materiaisCriticos
                 .filter(m => m.urgencia === "critica")
+                .slice(0, 5)
                 .map((material, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-card rounded-lg border">
                     <div className="flex items-center gap-3">
@@ -160,11 +161,16 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => navigate("/compras")}>
+                    <Button size="sm" onClick={() => navigate("/compras")}> 
                       Solicitar Compra
                     </Button>
                   </div>
                 ))}
+              {materiaisCriticos.filter(m => m.urgencia === "critica").length > 5 && (
+                <div className="text-center mt-2">
+                  <Button variant="outline" size="sm" onClick={() => navigate("/estoque")}>Ver todos os alertas</Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -188,24 +194,31 @@ export default function Dashboard() {
             {ordensProducaoList.length === 0 ? (
               <div className="text-muted-foreground">Nenhuma ordem em produção</div>
             ) : (
-              ordensProducaoList.map((op: any) => (
-                <div key={op.id} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium font-mono text-sm">{op.numero}</p>
-                      <p className="text-xs text-muted-foreground">{op.clienteNome}</p>
+              <>
+                {ordensProducaoList.slice(0, 5).map((op: any) => (
+                  <div key={op.id} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium font-mono text-sm">{op.numero}</p>
+                        <p className="text-xs text-muted-foreground">{op.clienteNome}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{op.progresso ?? 0}%</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {op.dataPrevisao ? new Date(op.dataPrevisao).toLocaleDateString("pt-BR") : "-"}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{op.progresso ?? 0}%</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="size-3" />
-                        {op.dataPrevisao ? new Date(op.dataPrevisao).toLocaleDateString("pt-BR") : "-"}
-                      </p>
-                    </div>
+                    <Progress value={op.progresso ?? 0} className="h-2" />
                   </div>
-                  <Progress value={op.progresso ?? 0} className="h-2" />
-                </div>
-              ))
+                ))}
+                {ordensProducaoList.length > 5 && (
+                  <div className="text-center mt-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate("/ordens")}>Ver todas as ordens</Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -226,32 +239,39 @@ export default function Dashboard() {
             {materiaisCriticos.length === 0 ? (
               <div className="text-muted-foreground">Nenhum material abaixo do mínimo</div>
             ) : (
-              materiaisCriticos.map((material: any, index: number) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      {material.urgencia === "critica" && (
-                        <AlertTriangle className="size-4 text-red-600" />
-                      )}
-                      {material.urgencia === "alta" && (
-                        <AlertTriangle className="size-4 text-yellow-600" />
-                      )}
-                      <span className="font-medium text-sm">{material.nome}</span>
+              <>
+                {materiaisCriticos.slice(0, 5).map((material: any, index: number) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {material.urgencia === "critica" && (
+                          <AlertTriangle className="size-4 text-red-600" />
+                        )}
+                        {material.urgencia === "alta" && (
+                          <AlertTriangle className="size-4 text-yellow-600" />
+                        )}
+                        <span className="font-medium text-sm">{material.nome}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {material.saldoDisponivel} / {material.minimo} un
+                      </span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {material.saldoDisponivel} / {material.minimo} un
-                    </span>
+                    <Progress 
+                      value={material.saldoDisponivel && material.minimo ? Math.round((material.saldoDisponivel / material.minimo) * 100) : 0} 
+                      className={`h-2 ${
+                        material.urgencia === "critica" ? "[&>div]:bg-red-600" :
+                        material.urgencia === "alta" ? "[&>div]:bg-yellow-600" :
+                        "[&>div]:bg-blue-600"
+                      }`}
+                    />
                   </div>
-                  <Progress 
-                    value={material.saldoDisponivel && material.minimo ? Math.round((material.saldoDisponivel / material.minimo) * 100) : 0} 
-                    className={`h-2 ${
-                      material.urgencia === "critica" ? "[&>div]:bg-red-600" :
-                      material.urgencia === "alta" ? "[&>div]:bg-yellow-600" :
-                      "[&>div]:bg-blue-600"
-                    }`}
-                  />
-                </div>
-              ))
+                ))}
+                {materiaisCriticos.length > 5 && (
+                  <div className="text-center mt-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate("/estoque")}>Ver todos os materiais</Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

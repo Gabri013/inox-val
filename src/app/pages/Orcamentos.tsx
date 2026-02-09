@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, ArrowRight, CheckCircle, XCircle, Clock, Eye as EyeIcon, FileDown } from "lucide-react";
+import { FileText, ArrowRight, CheckCircle, XCircle, Clock, Eye as EyeIcon, FileDown, FileUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { Badge } from "../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ListPage } from "../components/layout/ListPage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Button } from "../components/ui/button";
 import { OrcamentoForm } from "../components/workflow/OrcamentoForm";
 import { pdfService } from "@/domains/custos";
 
@@ -19,6 +20,8 @@ export default function Orcamentos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusOrcamento | "all">("all");
   const [showFormulario, setShowFormulario] = useState(false);
+  const [formMode, setFormMode] = useState<"manual" | "omei">("manual");
+  const [formKey, setFormKey] = useState(0);
 
   // ============= SEM MOCKS - DADOS REAIS APENAS =============
   // Filtros
@@ -222,6 +225,14 @@ export default function Orcamentos() {
 
   // Handlers
   const handleNew = () => {
+    setFormMode("manual");
+    setFormKey((prev) => prev + 1);
+    setShowFormulario(true);
+  };
+
+  const handleImportOmei = () => {
+    setFormMode("omei");
+    setFormKey((prev) => prev + 1);
     setShowFormulario(true);
   };
 
@@ -309,6 +320,12 @@ export default function Orcamentos() {
         icon={<FileText className="size-8 text-primary" />}
         onNew={handleNew}
         newButtonLabel="Novo Orçamento"
+        customActions={(
+          <Button variant="outline" onClick={handleImportOmei} className="gap-2">
+            <FileUp className="size-4" />
+            Importar OMEI
+          </Button>
+        )}
         onExport={handleExport}
         stats={stats}
         searchPlaceholder="Buscar por número ou cliente..."
@@ -323,10 +340,12 @@ export default function Orcamentos() {
           <DialogHeader>
             <DialogTitle>Novo Orçamento</DialogTitle>
           </DialogHeader>
-          <OrcamentoForm
-            onSubmit={handleSubmitOrcamento}
-            onCancel={() => setShowFormulario(false)}
-          />
+        <OrcamentoForm
+          key={formKey}
+          onSubmit={handleSubmitOrcamento}
+          onCancel={() => setShowFormulario(false)}
+          initialMode={formMode}
+        />
         </DialogContent>
       </Dialog>
     </>

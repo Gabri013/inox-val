@@ -230,6 +230,7 @@ export default function UsuariosList() {
         isLoading={isLoading}
         total={usuarios.length}
         emptyMessage="Nenhum usuário encontrado"
+        onRowClick={(usuario) => navigate(`/usuarios/${usuario.id}/editar`)}
       />
     </div>
   );

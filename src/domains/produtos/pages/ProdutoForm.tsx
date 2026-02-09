@@ -196,13 +196,17 @@ export default function ProdutoForm() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Acabado">Acabado</SelectItem>
-                  <SelectItem value="Semiacabado">Semiacabado</SelectItem>
-                  <SelectItem value="Matéria-Prima">Matéria-Prima</SelectItem>
-                  <SelectItem value="Componente">Componente</SelectItem>
-                </SelectContent>
-              </Select>
+              <SelectContent>
+                <SelectItem value="Acabado">Acabado</SelectItem>
+                <SelectItem value="Semiacabado">Semiacabado</SelectItem>
+                {isEditing && formData.tipo === "Matéria-Prima" && (
+                  <SelectItem value="Matéria-Prima">Matéria-Prima (legado)</SelectItem>
+                )}
+                {isEditing && formData.tipo === "Componente" && (
+                  <SelectItem value="Componente">Componente (legado)</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
             </div>
 
             {/* Nome */}
