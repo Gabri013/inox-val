@@ -19,16 +19,55 @@ export default function Compras() {
   const { compras, updateCompra } = useCompras({ autoLoad: true });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusCompra | "all">("all");
+  const formatDateSafe = (value: unknown) => {
+    if (!value) return "-";
+    const date = value instanceof Date ? value : new Date(value as any);
+    if (Number.isNaN(date.getTime())) return "-";
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
+  };
 
   // ❌ REMOVIDO: Mock de compras (apenas solicitações reais criadas pelo sistema)
-  const todasSolicitacoes = compras; // Apenas solicitações reais
+  const STATUS_MAP: Record<string, StatusCompra> = {
+    solicitada: "Solicitada",
+    cotacao: "Cotação",
+    aprovada: "Aprovada",
+    pedido_enviado: "Pedido Enviado",
+    recebida: "Recebida",
+    cancelada: "Cancelada",
+    pendente: "Solicitada",
+    aguardando_aprovacao: "Solicitada",
+    concluida: "Recebida",
+  };
+
+  const normalizeStatus = (value: unknown): StatusCompra => {
+    if (!value) return "Solicitada";
+    if (typeof value === "string") {
+      const normalized = value
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/\s+/g, "_");
+      return STATUS_MAP[normalized] ?? (value as StatusCompra);
+    }
+    return value as StatusCompra;
+  };
+
+  const todasSolicitacoes = compras.map((compra) => ({
+    ...compra,
+    status: normalizeStatus(compra.status),
+  })); // Apenas solicitações reais
 
   // Filtros
   const filteredSolicitacoes = todasSolicitacoes.filter((sol) => {
-    const matchesSearch = 
-      sol.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sol.fornecedorNome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sol.justificativa.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = searchTerm.toLowerCase();
+    const numero = sol.numero ? sol.numero.toLowerCase() : "";
+    const fornecedor = sol.fornecedorNome ? sol.fornecedorNome.toLowerCase() : "";
+    const justificativa = sol.justificativa ? sol.justificativa.toLowerCase() : "";
+    const matchesSearch =
+      numero.includes(search) ||
+      fornecedor.includes(search) ||
+      justificativa.includes(search);
     
     const matchesStatus = statusFilter === "all" || sol.status === statusFilter;
     
@@ -44,7 +83,7 @@ export default function Compras() {
     },
     {
       title: "Valor Total",
-      value: `R$ ${(todasSolicitacoes.reduce((acc, s) => acc + s.total, 0) / 1000).toFixed(0)}k`,
+      value: `R$ ${(todasSolicitacoes.reduce((acc, s) => acc + (s.total ?? 0), 0) / 1000).toFixed(0)}k`,
       description: "Valor de todas solicitações"
     },
     {
@@ -106,7 +145,7 @@ export default function Compras() {
       key: "data",
       label: "Data",
       sortable: true,
-      render: (sol: SolicitacaoCompra) => format(sol.data, "dd/MM/yyyy", { locale: ptBR })
+      render: (sol: SolicitacaoCompra) => formatDateSafe(sol.data)
     },
     {
       key: "fornecedorNome",
@@ -120,7 +159,7 @@ export default function Compras() {
       key: "itens",
       label: "Itens",
       render: (sol: SolicitacaoCompra) => (
-        <Badge variant="outline">{sol.itens.length} itens</Badge>
+        <Badge variant="outline">{sol.itens?.length ?? 0} itens</Badge>
       )
     },
     {
@@ -129,7 +168,7 @@ export default function Compras() {
       sortable: true,
       className: "text-right",
       render: (sol: SolicitacaoCompra) => (
-        <span className="font-medium">R$ {sol.total.toLocaleString('pt-BR')}</span>
+        <span className="font-medium">R$ {(sol.total ?? 0).toLocaleString('pt-BR')}</span>
       )
     },
     {

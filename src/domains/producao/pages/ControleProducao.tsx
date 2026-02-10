@@ -41,6 +41,9 @@ import type { MaterialNecessario, ProducaoItem, SetorProducao } from '../produca
 import { useItensSetor, useMoverItem, useAtualizarStatus } from '../producao.hooks';
 import { formatNumber } from '@/shared/lib/format';
 import { toFirestoreErrorView } from '@/shared/lib/firestoreErrors';
+import { ordensService } from '@/services/firestore/ordens.service';
+import { producaoItensService } from '../services/producao-itens.service';
+import { toast } from 'sonner';
 
 const SETORES: { id: SetorProducao; nome: string; cor: string }[] = [
   { id: 'Corte', nome: 'Corte', cor: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' },
@@ -65,6 +68,7 @@ export default function ControleProducao() {
   const [showMateriais, setShowMateriais] = useState(false);
   const [showMovimentacao, setShowMovimentacao] = useState(false);
   const [observacoes, setObservacoes] = useState('');
+  const [syncing, setSyncing] = useState(false);
 
   const { data: itens, isLoading, isError, error } = useItensSetor(setorSelecionado);
   const moverItemMutation = useMoverItem();
@@ -73,6 +77,36 @@ export default function ControleProducao() {
   const handleBuscar = () => {
     // Implementar busca por código/QR
     void codigoBusca;
+  };
+
+  const handleSyncOrdens = async () => {
+    setSyncing(true);
+    try {
+      const result = await ordensService.list({ limit: 2000 });
+      if (!result.success || !result.data) {
+        toast.error(result.error || 'Erro ao carregar ordens');
+        setSyncing(false);
+        return;
+      }
+
+      const ordens = result.data.items.filter((ordem: any) => ordem?.isDeleted !== true);
+      for (const ordem of ordens) {
+        const orderId = ordem?.id || ordem?.ordemId || ordem?.orderId;
+        if (!orderId) {
+          toast.error(`Ordem sem ID: ${ordem?.numero || 'sem numero'}`);
+          continue;
+        }
+        await producaoItensService.criarItensDaOrdem({ ...ordem, id: orderId }, { skipIfExists: true });
+      }
+
+      toast.success('Itens de produção sincronizados');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao sincronizar itens de produção'
+      );
+    } finally {
+      setSyncing(false);
+    }
   };
 
   if (isError) {
@@ -243,6 +277,14 @@ export default function ControleProducao() {
             <div className="text-center py-12">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">Nenhum item neste setor</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={handleSyncOrdens}
+                disabled={syncing}
+              >
+                {syncing ? 'Sincronizando...' : 'Sincronizar OPs'}
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">

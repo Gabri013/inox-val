@@ -20,6 +20,25 @@ import { COLLECTIONS } from '@/types/firebase';
 import type { OrdemProducao, StatusOrdem } from '@/app/types/workflow';
 import { orcamentosService } from './orcamentos.service';
 
+const toDateValue = (value: unknown): Date => {
+  if (!value) return new Date();
+  if (value instanceof Date) return value;
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'toDate' in value &&
+    typeof (value as { toDate?: unknown }).toDate === 'function'
+  ) {
+    const dateValue = (value as { toDate: () => Date }).toDate();
+    return dateValue instanceof Date ? dateValue : new Date();
+  }
+  return new Date();
+};
+
 export function getOrdensRef(callback: (ordens: any[]) => void): () => void {
   const empresaInfo = getEmpresaContext();
   if (!empresaInfo.empresaId) {
@@ -134,13 +153,18 @@ export class OrdensService extends BaseFirestoreService<OrdemProducao> {
       ).padStart(6, '0')}`;
 
       // 5. Criar OP
+      const dataAprovacao = toDateValue(
+        (orcamento.data as { aprovadoEm?: unknown }).aprovadoEm ?? (orcamento.data as any).updatedAt ?? orcamento.data.data
+      );
+      const dataAbertura = new Date();
+      const dataPrevisao = new Date(dataAprovacao.getTime() + 15 * 24 * 60 * 60 * 1000);
       const novaOrdem: Omit<OrdemProducao, 'id' | 'empresaId' | 'createdAt' | 'updatedAt'> = {
         numero: numeroOrdem,
         orcamentoId: orcamento.data.id,
         clienteId: orcamento.data.clienteId,
         clienteNome: orcamento.data.clienteNome,
-        dataAbertura: new Date(),
-        dataPrevisao: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 dias
+        dataAbertura,
+        dataPrevisao, // 15 dias a partir da aprovação
         status: 'Pendente',
         itens: orcamento.data.itens.map((item) => ({
           id: item.id,

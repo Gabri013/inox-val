@@ -8,6 +8,7 @@ import {
   Eye as EyeIcon,
   FileDown,
   FileUp,
+  Pencil,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -28,6 +29,7 @@ export default function Orcamentos() {
   const {
     orcamentos,
     createOrcamento,
+    updateOrcamento,
     aprovarOrcamento,
     rejeitarOrcamento,
     error,
@@ -42,6 +44,7 @@ export default function Orcamentos() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [orcamentoToReject, setOrcamentoToReject] = useState<Orcamento | null>(null);
+  const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
   const statusLabels: Record<StatusOrcamento, string> = {
     Aprovado: "Aprovado",
     Rejeitado: "Rejeitado",
@@ -230,6 +233,17 @@ export default function Orcamentos() {
       },
     },
     {
+      icon: Pencil,
+      label: "Editar",
+      onClick: (orc: Orcamento) => {
+        setEditingOrcamento(orc);
+        setFormMode("manual");
+        setFormKey((prev) => prev + 1);
+        setShowFormulario(true);
+      },
+      show: (orc: Orcamento) => !orc.ordemId,
+    },
+    {
       icon: CheckCircle,
       label: "Aprovar",
       onClick: (orc: Orcamento) => {
@@ -289,18 +303,47 @@ export default function Orcamentos() {
 
   // Handlers
   const handleNew = () => {
+    setEditingOrcamento(null);
     setFormMode("manual");
     setFormKey((prev) => prev + 1);
     setShowFormulario(true);
   };
 
   const handleImportOmei = () => {
+    setEditingOrcamento(null);
     setFormMode("omei");
     setFormKey((prev) => prev + 1);
     setShowFormulario(true);
   };
 
   const handleSubmitOrcamento = (data: Omit<Orcamento, "id" | "numero">) => {
+    if (editingOrcamento) {
+      updateOrcamento(editingOrcamento.id, {
+        clienteId: data.clienteId,
+        clienteNome: data.clienteNome,
+        data: data.data,
+        validade: data.validade,
+        status: editingOrcamento.status,
+        itens: data.itens,
+        subtotal: data.subtotal,
+        desconto: data.desconto,
+        total: data.total,
+        observacoes: data.observacoes,
+        aprovadoEm: editingOrcamento.aprovadoEm,
+      } as any)
+        .then((result) => {
+          if (result.success && result.data) {
+            toast.success(`Orçamento ${result.data.numero} atualizado com sucesso!`);
+            setShowFormulario(false);
+            setEditingOrcamento(null);
+          } else {
+            toast.error(result.error || "Não foi possível atualizar o orçamento. Tente novamente.");
+          }
+        })
+        .catch(() => toast.error("Não foi possível atualizar o orçamento. Tente novamente."));
+      return;
+    }
+
     createOrcamento(data as any)
       .then((result) => {
         if (result.success && result.data) {
@@ -417,13 +460,18 @@ export default function Orcamentos() {
       <Dialog open={showFormulario} onOpenChange={setShowFormulario}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Orçamento</DialogTitle>
+            <DialogTitle>{editingOrcamento ? "Editar Orçamento" : "Novo Orçamento"}</DialogTitle>
           </DialogHeader>
           <OrcamentoForm
             key={formKey}
             onSubmit={handleSubmitOrcamento}
-            onCancel={() => setShowFormulario(false)}
+            onCancel={() => {
+              setShowFormulario(false);
+              setEditingOrcamento(null);
+            }}
             initialMode={formMode}
+            initialData={editingOrcamento}
+            submitLabel={editingOrcamento ? "Salvar alterações" : "Criar Orçamento"}
           />
         </DialogContent>
       </Dialog>

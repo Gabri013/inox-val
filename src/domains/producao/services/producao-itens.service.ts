@@ -10,16 +10,18 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  limit,
 } from 'firebase/firestore';
 
 import { getFirestore } from '@/lib/firebase';
-import { getCurrentUserId, writeAuditLog } from '@/services/firestore/base';
+import { getCurrentUserId, getEmpresaId, writeAuditLog } from '@/services/firestore/base';
 import type {
   MovimentacaoItem,
   ProducaoItem,
   SetorProducao,
   StatusProducaoItem,
 } from '../producao.types';
+import type { OrdemProducao } from '@/app/types/workflow';
 
 /**
  * Service do domínio de Produção.
@@ -233,6 +235,63 @@ class ProducaoItensService {
       documentId: movRef.id,
       after: payload as FirestoreData,
     });
+  }
+
+  async criarItensDaOrdem(
+    ordem: OrdemProducao,
+    options?: { skipIfExists?: boolean }
+  ): Promise<void> {
+    const orderId =
+      ordem.id ||
+      (ordem as unknown as { ordemId?: string }).ordemId ||
+      (ordem as unknown as { orderId?: string }).orderId;
+    if (!orderId) {
+      return;
+    }
+
+    const itensRef = collection(db, 'ordens_producao', orderId, 'itens');
+    if (options?.skipIfExists !== false) {
+      const existing = await getDocs(query(itensRef, limit(1)));
+      if (!existing.empty) return;
+    }
+
+    const empresaId = ordem.empresaId || (await getEmpresaId());
+    const userId = await getCurrentUserId();
+
+    const itens = ordem.itens || [];
+    for (const item of itens) {
+      const produtoCodigo = item.produtoId || item.id;
+      const payload = {
+        empresaId,
+        orderId,
+        ordemId: orderId,
+        numeroOrdem: ordem.numero,
+        clienteNome: ordem.clienteNome,
+        produtoId: item.produtoId,
+        produtoCodigo,
+        produtoNome: item.produtoNome,
+        quantidade: item.quantidade,
+        unidade: item.unidade || 'un',
+        setorAtual: 'Corte' as SetorProducao,
+        status: 'Aguardando' as StatusProducaoItem,
+        progresso: 0,
+        materiaisNecessarios: [],
+        materiaisDisponiveis: true,
+        updatedAt: serverTimestamp(),
+        updatedBy: userId,
+        createdAt: serverTimestamp(),
+        createdBy: userId,
+        isDeleted: false,
+      } as Omit<ProducaoItem, 'id'>;
+
+      const docRef = await addDoc(itensRef, payload);
+      await auditCreate({
+        empresaId,
+        collectionPath: `ordens_producao/${orderId}/itens`,
+        documentId: docRef.id,
+        after: payload as FirestoreData,
+      });
+    }
   }
 }
 

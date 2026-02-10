@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ListPage, EyeIcon } from "../components/layout/ListPage";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useOrdens } from "@/hooks/useOrdens";
+import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { useCompras } from "@/hooks/useCompras";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -17,7 +19,10 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { toast } from "sonner";
-import { OrdemProducao, StatusOrdem } from "../types/workflow";
+import { Orcamento, OrdemProducao, StatusOrdem } from "../types/workflow";
+import type { ResultadoCalculadora } from "@/domains/calculadora/types";
+import type { BOMItem } from "@/bom/types";
+import { estoqueItensService, registrarMovimentoEstoque } from "@/services/firestore/estoque.service";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +33,21 @@ import {
 } from "../components/ui/dialog";
 
 export default function Ordens() {
-  const { ordens, iniciarProducao, concluirProducao, verificarNecessidadeCompra } = useOrdens({ autoLoad: true });
+  type ConsumoMaterial = {
+    materialId: string;
+    materialNome: string;
+    quantidade: number;
+    unidade: string;
+    saldoDisponivel: number;
+    falta: number;
+    estoqueItemId?: string;
+  };
+
+  const { ordens, iniciarProducao, concluirProducao, updateOrdem } = useOrdens({ autoLoad: true });
+  const { orcamentos } = useOrcamentos({ autoLoad: true });
   const { createCompra } = useCompras({ autoLoad: false });
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusOrdem | "all">("all");
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemProducao | null>(null);
@@ -40,6 +57,10 @@ export default function Ordens() {
     : "Nenhuma ordem cadastrada";
   const [showCompraDialog, setShowCompraDialog] = useState(false);
   const [materiaisFaltantes, setMateriaisFaltantes] = useState<any[]>([]);
+  const [showConsumoDialog, setShowConsumoDialog] = useState(false);
+  const [consumoLoading, setConsumoLoading] = useState(false);
+  const [consumoMateriais, setConsumoMateriais] = useState<ConsumoMaterial[]>([]);
+  const [consumoOrdem, setConsumoOrdem] = useState<OrdemProducao | null>(null);
 
   // ❌ REMOVIDO: Mock de ordens (apenas ordens reais de orçamentos aprovados)
   const todasOrdens = ordens; // Apenas ordens convertidas de orçamentos aprovados
@@ -48,6 +69,57 @@ export default function Ordens() {
     const date = value instanceof Date ? value : new Date(value as any);
     if (Number.isNaN(date.getTime())) return "-";
     return format(date, "dd/MM/yyyy", { locale: ptBR });
+  };
+  const getDiasRestantes = (value: unknown) => {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value as any);
+    if (Number.isNaN(date.getTime())) return null;
+    return Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const extrairMateriaisDaOrcamento = (orcamento: Orcamento) => {
+    const materiaisAgrupados = new Map<string, { quantidade: number; unidade: string; nome: string }>();
+
+    orcamento.itens.forEach((itemOrcamento) => {
+      const snapshot = itemOrcamento.calculoSnapshot as ResultadoCalculadora | undefined;
+      if (!snapshot?.bomResult?.bom || snapshot.bomResult.bom.length === 0) return;
+
+      snapshot.bomResult.bom.forEach((bomItem: BOMItem) => {
+        const materialId = bomItem.material || "DESCONHECIDO";
+        const quantidade = (bomItem.pesoTotal || bomItem.qtd || 0) * itemOrcamento.quantidade;
+        const unidade = bomItem.unidade || "un";
+        const nome = bomItem.desc || materialId;
+
+        if (materiaisAgrupados.has(materialId)) {
+          const atual = materiaisAgrupados.get(materialId)!;
+          atual.quantidade += quantidade;
+        } else {
+          materiaisAgrupados.set(materialId, { quantidade, unidade, nome });
+        }
+      });
+    });
+
+    return Array.from(materiaisAgrupados.entries()).map(([materialId, dados]) => ({
+      materialId,
+      materialNome: dados.nome,
+      quantidade: dados.quantidade,
+      unidade: dados.unidade,
+    }));
+  };
+
+  const montarMateriaisDaOrdem = (ordem: OrdemProducao) => {
+    const orcamento = orcamentos.find((o) => o.id === ordem.orcamentoId);
+    if (orcamento) {
+      const materiais = extrairMateriaisDaOrcamento(orcamento);
+      if (materiais.length > 0) return materiais;
+    }
+
+    return (ordem.itens || []).map((item) => ({
+      materialId: item.produtoId,
+      materialNome: item.produtoNome,
+      quantidade: item.quantidade,
+      unidade: item.unidade || "un",
+    }));
   };
 
   // Filtros
@@ -143,7 +215,7 @@ export default function Ordens() {
     },
     {
       key: "dataAbertura",
-      label: "Data Abertura",
+      label: "Liberação",
       sortable: true,
       render: (ord: OrdemProducao) => formatDateSafe(ord.dataAbertura)
     },
@@ -171,11 +243,21 @@ export default function Ordens() {
     },
     {
       key: "dataPrevisao",
-      label: "Previsão",
+      label: "Prazo",
       render: (ord: OrdemProducao) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDateSafe(ord.dataPrevisao)}
-        </span>
+        <div className="text-sm">
+          <div>{formatDateSafe(ord.dataPrevisao)}</div>
+          {(() => {
+            const dias = getDiasRestantes(ord.dataPrevisao);
+            if (dias === null) return <div className="text-muted-foreground">-</div>;
+            const vencido = dias < 0;
+            return (
+              <div className={vencido ? "text-destructive" : "text-muted-foreground"}>
+                {vencido ? "Vencido" : `${dias} dias`}
+              </div>
+            );
+          })()}
+        </div>
       )
     },
     {
@@ -190,29 +272,125 @@ export default function Ordens() {
     }
   ];
 
-  // Handler para iniciar produção
-  const handleIniciarProducao = async (ordem: OrdemProducao) => {
-    const faltantes = await verificarNecessidadeCompra(ordem.id);
-    
-    if (faltantes.length > 0) {
-      setMateriaisFaltantes(faltantes);
-      setSelectedOrdem(ordem);
-      setShowCompraDialog(true);
+  const carregarConsumo = async (ordem: OrdemProducao) => {
+    setConsumoLoading(true);
+    setConsumoOrdem(ordem);
+    setSelectedOrdem(ordem);
+
+    const materiaisBase = montarMateriaisDaOrdem(ordem);
+    if (materiaisBase.length === 0) {
+      toast.error("Não foi possível identificar materiais para consumo");
+      setConsumoLoading(false);
       return;
     }
 
-    // Iniciar produção
-    const operador = user?.displayName || user?.email || "Sistema";
-    const result = await iniciarProducao(ordem.id, operador);
+    const estoqueResult = await estoqueItensService.list({ limit: 2000 });
+    const estoqueItems = estoqueResult.success && estoqueResult.data ? estoqueResult.data.items : [];
 
-    if (result.success) {
-      toast.success(`Produção iniciada para ${ordem.numero}`, {
-        description: "Materiais consumidos do estoque"
+    const materiaisComSaldo: ConsumoMaterial[] = materiaisBase.map((material) => {
+      const item = estoqueItems.find(
+        (estoque) =>
+          estoque.materialId === material.materialId ||
+          estoque.produtoId === material.materialId ||
+          estoque.produtoCodigo === material.materialId
+      );
+      const saldoDisponivel = item?.saldoDisponivel ?? 0;
+      const falta = saldoDisponivel < material.quantidade ? material.quantidade - saldoDisponivel : 0;
+      return {
+        ...material,
+        saldoDisponivel,
+        falta,
+        estoqueItemId: item?.id,
+      };
+    });
+
+    const faltantes = materiaisComSaldo.filter((item) => item.falta > 0 || !item.estoqueItemId);
+    setConsumoMateriais(materiaisComSaldo);
+    setMateriaisFaltantes(
+      faltantes.map((item) => ({
+        id: item.materialId,
+        produtoId: item.materialId,
+        produtoNome: item.materialNome,
+        quantidade: item.falta > 0 ? item.falta : item.quantidade,
+        unidade: item.unidade,
+        precoUnitario: 0,
+        subtotal: 0,
+      }))
+    );
+    setShowConsumoDialog(true);
+    setConsumoLoading(false);
+  };
+
+  // Handler para iniciar produção
+  const handleIniciarProducao = async (ordem: OrdemProducao) => {
+    if (ordem.materiaisConsumidos) {
+      const operador = user?.displayName || user?.email || "Sistema";
+      const result = await iniciarProducao(ordem.id, operador);
+      if (result.success) {
+        toast.success(`Produção iniciada para ${ordem.numero}`);
+      } else {
+        toast.error("Não foi possível iniciar a produção", {
+          description: result.error || "Verifique a disponibilidade de materiais",
+        });
+      }
+      return;
+    }
+
+    await carregarConsumo(ordem);
+  };
+
+  const handleRegistrarConsumoEIniciar = async () => {
+    if (!consumoOrdem) return;
+
+    const faltantes = consumoMateriais.filter(
+      (item) => item.falta > 0 || !item.estoqueItemId
+    );
+    if (faltantes.length > 0) {
+      toast.error("Materiais insuficientes para iniciar produção");
+      return;
+    }
+
+    const usuario = user?.displayName || user?.email || "Sistema";
+    setConsumoLoading(true);
+
+    try {
+      for (const material of consumoMateriais) {
+        if (!material.estoqueItemId) continue;
+        await registrarMovimentoEstoque({
+          itemId: material.estoqueItemId,
+          tipo: "SAIDA",
+          quantidade: material.quantidade,
+          origem: `OP ${consumoOrdem.numero}`,
+          observacoes: "Consumo registrado ao iniciar produção",
+          usuario,
+        });
+      }
+
+      await updateOrdem(consumoOrdem.id, {
+        materiaisConsumidos: true,
+        materiaisReservados: true,
       });
-    } else {
-      toast.error("Não foi possível iniciar a produção", {
-        description: result.error || "Verifique a disponibilidade de materiais"
-      });
+
+      const result = await iniciarProducao(consumoOrdem.id, usuario);
+
+      if (result.success) {
+        toast.success(`Produção iniciada para ${consumoOrdem.numero}`, {
+          description: "Consumo registrado no estoque",
+        });
+        setShowConsumoDialog(false);
+        setConsumoOrdem(null);
+        setConsumoMateriais([]);
+      } else {
+        toast.error("Não foi possível iniciar a produção", {
+          description: result.error || "Verifique a disponibilidade de materiais",
+        });
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao registrar consumo no estoque"
+      );
+    } finally {
+      setConsumoLoading(false);
     }
   };
 
@@ -234,6 +412,7 @@ export default function Ordens() {
       toast.success(`Solicitação ${result.data.numero} criada com sucesso`, {
         description: "Encaminhada para o setor de compras"
       });
+      navigate("/compras");
     } else {
       toast.error(result.error || "Erro ao criar solicitação");
     }
@@ -306,7 +485,7 @@ export default function Ordens() {
           { label: "Ordens de Produção" }
         ]}
         title="Ordens de Produção"
-        description="Gerencie e acompanhe o processo produtivo - OPs criadas apenas de orçamentos aprovados"
+        description="Gerencie e acompanhe o processo produtivo - prazo conta a partir da aprovação do projeto"
         icon={<Factory className="size-8 text-primary" />}
         // ❌ REMOVIDO: onNew e newButtonLabel (não pode criar OP livre)
         onExport={handleExport}
@@ -321,6 +500,79 @@ export default function Ordens() {
         actions={actions as any}
         emptyMessage={emptyMessage}
       />
+
+      {/* Dialog de Revisão de Consumo */}
+      <Dialog open={showConsumoDialog} onOpenChange={setShowConsumoDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="size-5 text-yellow-600" />
+              Revisão de Consumo de Materiais
+            </DialogTitle>
+            <DialogDescription>
+              Revise matéria-prima e insumos antes de iniciar a produção da ordem {consumoOrdem?.numero}
+            </DialogDescription>
+          </DialogHeader>
+
+          {consumoLoading ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Carregando materiais...</div>
+          ) : (
+            <div className="space-y-4">
+              <div className="border rounded-lg divide-y">
+                {consumoMateriais.length === 0 ? (
+                  <div className="p-4 text-sm text-muted-foreground">Nenhum material encontrado.</div>
+                ) : (
+                  consumoMateriais.map((item, index) => (
+                    <div key={index} className="p-3 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium">{item.materialNome}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Necessário: {item.quantidade} {item.unidade}
+                        </p>
+                      </div>
+                      <div className="text-right text-sm">
+                        <div className="text-muted-foreground">
+                          Disponível: {item.saldoDisponivel} {item.unidade}
+                        </div>
+                        {item.falta > 0 ? (
+                          <div className="text-destructive">
+                            Falta: {item.falta} {item.unidade}
+                          </div>
+                        ) : (
+                          <div className="text-green-600">OK</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConsumoDialog(false)} disabled={consumoLoading}>
+              Cancelar
+            </Button>
+            {materiaisFaltantes.length > 0 ? (
+              <Button
+                onClick={() => {
+                  setShowConsumoDialog(false);
+                  setShowCompraDialog(true);
+                }}
+                className="gap-2"
+                disabled={consumoLoading}
+              >
+                <ShoppingCart className="size-4" />
+                Criar Solicitação de Compra
+              </Button>
+            ) : (
+              <Button onClick={handleRegistrarConsumoEIniciar} disabled={consumoLoading}>
+                Registrar consumo e iniciar
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Materiais Faltantes */}
       <Dialog open={showCompraDialog} onOpenChange={setShowCompraDialog}>

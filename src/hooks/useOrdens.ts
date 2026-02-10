@@ -24,6 +24,7 @@ import { orcamentosService } from '@/services/firestore/orcamentos.service';
 import { estoqueItensService } from '@/services/firestore/estoque.service';
 import { httpClient, type PaginatedResponse } from '@/services/http/client';
 import type { OrdemProducao, StatusOrdem, ItemMaterial } from '@/app/types/workflow';
+import { producaoItensService } from '@/domains/producao/services/producao-itens.service';
 import { toast } from 'sonner';
 
 type ServiceResult<T> = { success: boolean; data?: T; error?: string };
@@ -34,6 +35,14 @@ interface UseOrdensOptions {
   clienteId?: string;
 }
 
+const STATUS_MAP: Record<string, StatusOrdem> = {
+  pendente: "Pendente",
+  em_producao: "Em Produção",
+  pausada: "Pausada",
+  concluida: "Concluída",
+  cancelada: "Cancelada",
+};
+
 export function useOrdens(options: UseOrdensOptions = {}) {
   const { autoLoad = true, status, clienteId } = options;
   const isMock = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
@@ -41,6 +50,39 @@ export function useOrdens(options: UseOrdensOptions = {}) {
   const [ordens, setOrdens] = useState<OrdemProducao[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const normalizeStatus = (value: unknown): StatusOrdem => {
+    if (!value) return "Pendente";
+    if (typeof value === "string") {
+      const normalized = value
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/\s+/g, "_");
+      return STATUS_MAP[normalized] ?? (value as StatusOrdem);
+    }
+    return value as StatusOrdem;
+  };
+
+  const toDateValue = (value: unknown): Date => {
+    if (!value) return new Date();
+    if (value instanceof Date) return value;
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'toDate' in value &&
+      typeof (value as { toDate?: unknown }).toDate === 'function'
+    ) {
+      const dateValue = (value as { toDate: () => Date }).toDate();
+      return dateValue instanceof Date ? dateValue : new Date();
+    }
+    return new Date();
+  };
 
   const getTimeValue = (value: unknown) => {
     if (!value) return 0;
@@ -80,6 +122,7 @@ export function useOrdens(options: UseOrdensOptions = {}) {
 
     return {
       ...ordem,
+      status: normalizeStatus(ordem.status),
       dataAbertura: toDate(ordem.dataAbertura),
       dataPrevisao: toDate(ordem.dataPrevisao),
       dataConclusao: toDate(ordem.dataConclusao),
@@ -156,14 +199,19 @@ export function useOrdens(options: UseOrdensOptions = {}) {
         }
 
         const numero = `OP-${Date.now()}`;
+        const dataAprovacao = toDateValue(
+          (orcamento as { aprovadoEm?: unknown }).aprovadoEm ?? (orcamento as any).updatedAt ?? orcamento.data
+        );
+        const dataAbertura = new Date();
+        const dataPrevisao = new Date(dataAprovacao.getTime() + 15 * 24 * 60 * 60 * 1000);
         const novaOrdem: OrdemProducao = {
           id: `op_${Date.now()}`,
           numero,
           orcamentoId: orcamento.id,
           clienteId: orcamento.clienteId,
           clienteNome: orcamento.clienteNome,
-          dataAbertura: new Date(),
-          dataPrevisao: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          dataAbertura,
+          dataPrevisao,
           status: 'Pendente',
           itens: orcamento.itens.map((item: any) => ({
             id: item.id,
@@ -206,14 +254,19 @@ export function useOrdens(options: UseOrdensOptions = {}) {
         }
 
       const numero = `OP-${Date.now()}`;
+      const dataAprovacao = toDateValue(
+        (orcamento as { aprovadoEm?: unknown }).aprovadoEm ?? (orcamento as any).updatedAt ?? orcamento.data
+      );
+      const dataAbertura = new Date();
+      const dataPrevisao = new Date(dataAprovacao.getTime() + 15 * 24 * 60 * 60 * 1000);
       const novaOrdem: OrdemProducao = {
         id: '',
         numero,
         orcamentoId: orcamento.id,
         clienteId: orcamento.clienteId,
         clienteNome: orcamento.clienteNome,
-        dataAbertura: new Date(),
-        dataPrevisao: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        dataAbertura,
+        dataPrevisao,
         status: 'Pendente',
         itens: orcamento.itens.map((item) => ({
           id: item.id,
@@ -234,6 +287,15 @@ export function useOrdens(options: UseOrdensOptions = {}) {
       const result = await ordensService.create(novaOrdem as OrdemProducao);
       if (result.success && result.data) {
         setOrdens((prev) => [normalizeOrdem(result.data!), ...prev]);
+        try {
+          await producaoItensService.criarItensDaOrdem(result.data);
+        } catch (error) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : 'Erro ao sincronizar itens de produção'
+          );
+        }
         await orcamentosService.update(orcamentoId, {
           ordemId: result.data.id,
         } as Partial<any>);
@@ -332,8 +394,6 @@ export function useOrdens(options: UseOrdensOptions = {}) {
         pausas: [],
         tempoDecorridoMs: 0,
       },
-      materiaisReservados: true,
-      materiaisConsumidos: true,
     });
   };
 

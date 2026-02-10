@@ -41,6 +41,25 @@ function normalizeStatus(value: unknown) {
     : "";
 }
 
+function toTime(value: unknown) {
+  if (!value) return 0;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  }
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof (value as { toDate?: unknown }).toDate === "function"
+  ) {
+    const dateValue = (value as { toDate: () => Date }).toDate();
+    return dateValue instanceof Date ? dateValue.getTime() : 0;
+  }
+  return 0;
+}
+
 export function useDashboardMetrics() {
   const { user, loading: authLoading } = useAuth();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
@@ -100,10 +119,16 @@ export function useDashboardMetrics() {
         ordensRef,
         (snap) => {
           try {
-            const ordens = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const ordens = snap.docs
+              .map((doc) => ({ id: doc.id, ...doc.data() }))
+              .filter((ordem: any) => ordem?.isDeleted !== true);
             const emAberto = ordens.filter((o: any) => ORDENS_ABERTAS.has(normalizeStatus(o.status)));
-            const emProducao = ordens.filter((o: any) => normalizeStatus(o.status) === "em_producao");
-            const concluidas = ordens.filter((o: any) => normalizeStatus(o.status) === "concluida");
+            const emProducao = ordens
+              .filter((o: any) => normalizeStatus(o.status) === "em_producao")
+              .sort((a: any, b: any) => toTime(b.dataAbertura) - toTime(a.dataAbertura));
+            const concluidas = ordens
+              .filter((o: any) => normalizeStatus(o.status) === "concluida")
+              .sort((a: any, b: any) => toTime(b.dataConclusao ?? b.dataAbertura) - toTime(a.dataConclusao ?? a.dataAbertura));
 
             const now = new Date();
             const mesAtual = now.getMonth() + 1;
@@ -149,7 +174,13 @@ export function useDashboardMetrics() {
         estoqueRef,
         (snap) => {
           try {
-            const itens = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const itens = snap.docs
+              .map((doc) => ({ id: doc.id, ...doc.data() }))
+              .filter((item: any) => item?.isDeleted !== true)
+              .filter(
+                (item: any) =>
+                  item.materialId || item.materialCodigo || item.materialNome
+              );
             const criticos = itens
               .map((item: any) => {
                 const saldoDisponivel = item.saldoDisponivel ?? item.saldo ?? 0;
@@ -183,7 +214,9 @@ export function useDashboardMetrics() {
         comprasRef,
         (snap) => {
           try {
-            const compras = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const compras = snap.docs
+              .map((doc) => ({ id: doc.id, ...doc.data() }))
+              .filter((compra: any) => compra?.isDeleted !== true);
             const pendentes = compras.filter((c: any) => COMPRAS_PENDENTES.has(normalizeStatus(c.status)));
             setMetrics((m) => ({
               ...m,

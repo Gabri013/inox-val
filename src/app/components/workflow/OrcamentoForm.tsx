@@ -2,7 +2,6 @@
  * Formulario de Orcamento
  * - Manual (descricao/codigo/quantidade)
  * - Importacao OMEI (PDF)
- * - Calculadora Rapida (modelos)
  */
 
 import { useEffect, useState } from 'react';
@@ -12,15 +11,19 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Orcamento, ItemOrcamento } from '../../types/workflow';
-import { CalculadoraModal } from './CalculadoraModal';
 import { formatCurrency } from '@/shared/lib/format';
 import { parseOmeiText } from '@/app/lib/omeiImport';
+import { useSaldosEstoque } from '@/domains/estoque';
+import type { SaldoEstoque } from '@/domains/estoque/estoque.types';
 
 interface OrcamentoFormProps {
   onSubmit: (orcamento: Omit<Orcamento, 'id' | 'numero'>) => void;
   onCancel: () => void;
   initialMode?: 'manual' | 'omei';
+  initialData?: Orcamento | null;
+  submitLabel?: string;
 }
 
 async function extractTextFromPdf(file: File) {
@@ -46,7 +49,13 @@ async function extractTextFromPdf(file: File) {
   return text;
 }
 
-export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: OrcamentoFormProps) {
+export function OrcamentoForm({
+  onSubmit,
+  onCancel,
+  initialMode = 'manual',
+  initialData = null,
+  submitLabel = 'Criar Orcamento',
+}: OrcamentoFormProps) {
   const [mode, setMode] = useState<'manual' | 'omei'>(initialMode);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteId, setClienteId] = useState('');
@@ -54,27 +63,52 @@ export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: Or
   const [desconto, setDesconto] = useState(0);
   const [observacoes, setObservacoes] = useState('');
   const [itens, setItens] = useState<ItemOrcamento[]>([]);
-  const [showCalculadora, setShowCalculadora] = useState(false);
   const [dataEmissao, setDataEmissao] = useState<Date | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const { data: saldos = [] } = useSaldosEstoque();
   const [manualItem, setManualItem] = useState({
     codigo: '',
     descricao: '',
     quantidade: 1,
     precoUnitario: 0,
   });
+  const [estoqueItemId, setEstoqueItemId] = useState('');
+  const [estoqueQuantidade, setEstoqueQuantidade] = useState(1);
+  const [estoquePrecoUnitario, setEstoquePrecoUnitario] = useState(0);
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
 
-  const handleAddItem = (item: ItemOrcamento) => {
-    setItens(prev => [...prev, item]);
-    setShowCalculadora(false);
-    toast.success('Item adicionado ao orcamento');
-  };
+  useEffect(() => {
+    if (!initialData) return;
+    setClienteNome(initialData.clienteNome || '');
+    setClienteId(initialData.clienteId || '');
+    setDesconto(initialData.desconto || 0);
+    setObservacoes(initialData.observacoes || '');
+    setItens(initialData.itens || []);
+
+    const baseDate =
+      initialData.data instanceof Date
+        ? initialData.data
+        : initialData.data
+        ? new Date(initialData.data)
+        : new Date();
+    setDataEmissao(baseDate);
+
+    const validadeDate =
+      initialData.validade instanceof Date
+        ? initialData.validade
+        : initialData.validade
+        ? new Date(initialData.validade)
+        : null;
+    if (validadeDate && !Number.isNaN(validadeDate.getTime())) {
+      const diffDays = Math.ceil((validadeDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+      setValidade(diffDays > 0 ? diffDays : 1);
+    }
+  }, [initialData]);
 
   const handleRemoveItem = (index: number) => {
     setItens(prev => prev.filter((_, i) => i !== index));
@@ -106,6 +140,47 @@ export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: Or
     setItens(prev => [...prev, novoItem]);
     setManualItem({ codigo: '', descricao: '', quantidade: 1, precoUnitario: 0 });
     toast.success('Item manual adicionado');
+  };
+
+  const getSaldoId = (item: SaldoEstoque) => String(item.materialId || item.produtoId);
+  const getSaldoNome = (item: SaldoEstoque) => item.materialNome || item.produtoNome || 'Material';
+  const getSaldoCodigo = (item: SaldoEstoque) => item.materialCodigo || item.produtoCodigo || '';
+
+  const handleAddEstoqueItem = () => {
+    if (!estoqueItemId) {
+      toast.error('Selecione um material do estoque');
+      return;
+    }
+
+    const saldoItem = saldos.find((item) => getSaldoId(item) === estoqueItemId);
+    if (!saldoItem) {
+      toast.error('Material nao encontrado no estoque');
+      return;
+    }
+
+    const quantidade = estoqueQuantidade > 0 ? estoqueQuantidade : 1;
+    const precoUnitario = estoquePrecoUnitario >= 0 ? estoquePrecoUnitario : 0;
+    const subtotal = quantidade * precoUnitario;
+    const codigo = getSaldoCodigo(saldoItem);
+    const nome = getSaldoNome(saldoItem);
+    const unidade = saldoItem.unidade ? ` (${saldoItem.unidade})` : '';
+    const id = `estoque-${estoqueItemId}-${Date.now()}`;
+
+    const novoItem: ItemOrcamento = {
+      id,
+      modeloId: codigo || estoqueItemId,
+      modeloNome: codigo || nome,
+      descricao: `${nome}${unidade}`,
+      quantidade,
+      precoUnitario,
+      subtotal,
+    };
+
+    setItens((prev) => [...prev, novoItem]);
+    setEstoqueItemId('');
+    setEstoqueQuantidade(1);
+    setEstoquePrecoUnitario(0);
+    toast.success('Material do estoque adicionado');
   };
 
   const applyOmeiImport = (rawText: string) => {
@@ -200,12 +275,13 @@ export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: Or
       clienteNome,
       data: baseDate,
       validade: new Date(baseDate.getTime() + validade * 24 * 60 * 60 * 1000),
-      status: 'Aguardando Aprovacao',
+      status: initialData?.status || 'Aguardando Aprovacao',
       itens,
       subtotal,
       desconto,
       total,
       observacoes: observacoes.trim() || undefined,
+      aprovadoEm: initialData?.aprovadoEm,
     };
 
     onSubmit(orcamento);
@@ -326,22 +402,8 @@ export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: Or
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Itens do Orcamento</h3>
             <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={handleAddManualItem}
-                size="sm"
-                variant="outline"
-              >
+              <Button type="button" onClick={handleAddManualItem} size="sm" variant="outline">
                 Adicionar Manual
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setShowCalculadora(true)}
-                size="sm"
-                className="gap-2"
-              >
-                <Calculator className="size-4" />
-                Adicionar via Calculadora
               </Button>
             </div>
           </div>
@@ -389,11 +451,61 @@ export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: Or
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/20">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="estoqueItem">Material/insumo do estoque</Label>
+              <Select value={estoqueItemId} onValueChange={setEstoqueItemId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um material" />
+                </SelectTrigger>
+                <SelectContent>
+                  {saldos.map((item) => {
+                    const id = getSaldoId(item);
+                    const codigo = getSaldoCodigo(item);
+                    const nome = getSaldoNome(item);
+                    return (
+                      <SelectItem key={id} value={id}>
+                        {codigo ? `${codigo} - ${nome}` : nome}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="estoqueQtd">Quantidade</Label>
+              <Input
+                id="estoqueQtd"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={estoqueQuantidade}
+                onChange={(e) => setEstoqueQuantidade(Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="estoquePreco">Preco Unitario</Label>
+              <Input
+                id="estoquePreco"
+                type="number"
+                min="0"
+                step="0.01"
+                value={estoquePrecoUnitario}
+                onChange={(e) => setEstoquePrecoUnitario(Number(e.target.value))}
+              />
+            </div>
+            <div className="md:col-span-4 flex justify-end">
+              <Button type="button" variant="outline" onClick={handleAddEstoqueItem}>
+                Adicionar do Estoque
+              </Button>
+            </div>
+          </div>
+
           {itens.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
               <Calculator className="size-12 mx-auto mb-2 opacity-50" />
               <p>Nenhum item adicionado</p>
-              <p className="text-sm">Use a calculadora ou adicione manualmente</p>
+              <p className="text-sm">Adicione manualmente ou do estoque</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -473,19 +585,10 @@ export function OrcamentoForm({ onSubmit, onCancel, initialMode = 'manual' }: Or
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit">
-            Criar Orcamento
-          </Button>
+          <Button type="submit">{submitLabel}</Button>
         </div>
       </form>
 
-      {/* Modal da Calculadora */}
-      {showCalculadora && (
-        <CalculadoraModal
-          onAddItem={handleAddItem}
-          onClose={() => setShowCalculadora(false)}
-        />
-      )}
     </>
   );
 }
