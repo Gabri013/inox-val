@@ -23,7 +23,7 @@ import { Orcamento, OrdemProducao, StatusOrdem } from "../types/workflow";
 import type { ResultadoCalculadora } from "@/domains/calculadora/types";
 import type { BOMItem } from "@/bom/types";
 import { estoqueItensService, registrarMovimentoEstoque } from "@/services/firestore/estoque.service";
-import OrdemProducaoPDF, { type OrdemProducaoData } from "@/components/OrdemProducaoPDF";
+import OrdemProducaoPDF, { type OrdemProducaoData, type StatusOP } from "@/components/OrdemProducaoPDF";
 import {
   Dialog,
   DialogContent,
@@ -123,34 +123,59 @@ export default function Ordens() {
     }));
   };
 
+  const getStatusOP = (status: string): StatusOP => {
+    switch (status) {
+      case "Em Produção":
+        return "EM_PRODUCAO";
+      case "Concluída":
+        return "CONCLUIDA";
+      case "Pausada":
+        return "PAUSADA";
+      default:
+        return "PENDENTE";
+    }
+  };
+
   const buildPdfData = (ordem: OrdemProducao): OrdemProducaoData => {
     const orcamento = orcamentos.find((o) => o.id === ordem.orcamentoId);
-    const itens = ordem.itens || [];
-    const itensResumo = itens.map((item, index) => {
-      const qtd = item.quantidade ?? 0;
-      const un = item.unidade || "un";
-      return `${index + 1}. ${item.produtoNome || item.produtoId} (${qtd} ${un})`;
-    });
-
-    const headerLines = [
-      `Cliente: ${ordem.clienteNome || "-"}`,
-      `Orçamento: ${orcamento?.numero || "-"}`,
-      `Status: ${ordem.status}`,
-      `Itens: ${itens.length}`,
-      ...itensResumo,
-    ];
+    const itens = (ordem.itens || []).map((item) => ({
+      codigo: item.produtoId || "",
+      descricao: item.produtoNome || item.produtoId || "",
+      quantidade: item.quantidade ?? 0,
+      unidade: item.unidade || "un",
+      observacoes: "",
+    }));
+    const dataEntrega = formatDateSafe(ordem.dataPrevisao);
+    const diasRestantes = (() => {
+      const dias = getDiasRestantes(ordem.dataPrevisao);
+      return dias === null ? undefined : dias;
+    })();
 
     return {
-      titulo: "ORDEM DE PRODUÇÃO",
-      numero: ordem.numero,
-      numeroLabel: "Nº da OP",
-      headerLines,
+      logoUrl: undefined,
+      nomeEmpresa: "Inoxval",
+      numeroOP: ordem.numero,
       dataEmissao: formatDateSafe(ordem.dataAbertura),
-      prazo: formatDateSafe(ordem.dataPrevisao),
-      cliente: ordem.clienteNome,
-      observacao: ordem.observacoes || orcamento?.observacoes || "",
-      processos: ["Corte", "Dobra", "Solda", "Acabamento", "Montagem", "Inspeção", "Embalagem"],
-      observacaoFinal: "",
+      status: getStatusOP(ordem.status),
+      cliente: ordem.clienteNome || "-",
+      numeroOrcamento: orcamento?.numero,
+      numeroPedido: undefined,
+      dataAprovacao: orcamento?.aprovadoEm ? formatDateSafe(orcamento.aprovadoEm) : undefined,
+      itens,
+      dataEntrega,
+      diasRestantes,
+      prioridade: ordem.prioridade ? ordem.prioridade.toUpperCase() as any : undefined,
+      processos: [
+        { etapa: "Corte" },
+        { etapa: "Dobra" },
+        { etapa: "Solda" },
+        { etapa: "Acabamento" },
+        { etapa: "Montagem" },
+        { etapa: "Inspecao" },
+        { etapa: "Embalagem" },
+      ],
+      observacoesGerais: ordem.observacoes || orcamento?.observacoes || "",
+      observacoesCliente: "",
     };
   };
 

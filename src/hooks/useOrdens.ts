@@ -41,6 +41,8 @@ const STATUS_MAP: Record<string, StatusOrdem> = {
   pausada: "Pausada",
   concluida: "Concluída",
   cancelada: "Cancelada",
+  aberta: "Pendente",
+  em_aberto: "Pendente",
 };
 
 export function useOrdens(options: UseOrdensOptions = {}) {

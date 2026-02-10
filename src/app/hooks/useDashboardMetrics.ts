@@ -25,9 +25,11 @@ const COMPRAS_PENDENTES = new Set([
   "cotacao",
   "aprovada",
   "pedido_enviado",
+  "pendente",
+  "aguardando_aprovacao",
 ]);
 
-const ORDENS_ABERTAS = new Set(["pendente", "em_producao", "pausada"]);
+const ORDENS_ABERTAS = new Set(["pendente", "em_producao", "pausada", "aberta", "em_aberto"]);
 
 function normalizeStatus(value: unknown) {
   return value
@@ -179,7 +181,12 @@ export function useDashboardMetrics() {
               .filter((item: any) => item?.isDeleted !== true)
               .filter(
                 (item: any) =>
-                  item.materialId || item.materialCodigo || item.materialNome
+                  item.materialId ||
+                  item.materialCodigo ||
+                  item.materialNome ||
+                  item.produtoId ||
+                  item.produtoCodigo ||
+                  item.produtoNome
               );
             const criticos = itens
               .map((item: any) => {

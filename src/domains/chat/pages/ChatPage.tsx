@@ -46,6 +46,7 @@ export default function ChatPage() {
   const [novaMensagem, setNovaMensagem] = useState('');
   const [searchUsuarios, setSearchUsuarios] = useState('');
   const [showNovaConversa, setShowNovaConversa] = useState(false);
+  const [pendingConversaId, setPendingConversaId] = useState<string | null>(null);
   const [anexoFile, setAnexoFile] = useState<File | null>(null);
   const [anexoPreview, setAnexoPreview] = useState<string | null>(null);
   const [anexoError, setAnexoError] = useState<string | null>(null);
@@ -172,10 +173,7 @@ export default function ChatPage() {
             return;
           }
           setShowNovaConversa(false);
-          const conversaDetalhada = conversas.find((c) => c.id === conversa.id);
-          if (conversaDetalhada) {
-            setSelectedConversa(conversaDetalhada as ConversaDetalhada);
-          }
+          setPendingConversaId(conversa.id);
         },
       }
     );
@@ -222,6 +220,15 @@ export default function ChatPage() {
       void Notification.requestPermission();
     }
   }, []);
+
+  useEffect(() => {
+    if (!pendingConversaId) return;
+    const conversaDetalhada = conversas.find((c) => c.id === pendingConversaId);
+    if (conversaDetalhada) {
+      setSelectedConversa(conversaDetalhada as ConversaDetalhada);
+      setPendingConversaId(null);
+    }
+  }, [conversas, pendingConversaId]);
 
   useEffect(() => {
     if (!user) return;

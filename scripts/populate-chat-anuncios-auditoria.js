@@ -158,11 +158,13 @@ async function ensureSeedUsers() {
         )
       )
     );
-    return existing;
+    if (existing.length >= 2) {
+      return existing;
+    }
   }
 
   info("👥 Nenhum usuário encontrado. Criando usuários seed...");
-  const created = [];
+  const created = [...existing];
   for (const user of usersSeed) {
     const payload = {
       nome: user.nome,
@@ -177,9 +179,13 @@ async function ensureSeedUsers() {
       createdBy: "seed-script",
       updatedBy: "seed-script",
     };
+    if (created.find((u) => u.id === user.id)) {
+      continue;
+    }
     await db.collection("users").doc(user.id).set({ ...payload, isDeleted: false });
     await db.collection("usuarios").doc(user.id).set({ ...payload, isDeleted: false });
     created.push({ id: user.id, ...payload });
+    if (created.length >= 2) break;
   }
   info(`✅ ${created.length} usuários seed criados`);
   return created;
@@ -190,14 +196,20 @@ async function ensureChatUsuarios(users) {
     .collection("chat_usuarios")
     .where("empresaId", "==", EMPRESA_ID)
     .get();
-  if (!snap.empty) {
-    info(`✅ chat_usuarios já possui ${snap.size} registros`);
-    return;
-  }
+  const existing = new Set(snap.docs.map((d) => d.id));
 
-  info("💬 Criando chat_usuarios...");
+  info("💬 Garantindo chat_usuarios...");
   await Promise.all(
     users.map((user, index) => {
+      if (existing.has(user.id)) {
+        return db.collection("chat_usuarios").doc(user.id).set(
+          {
+            updatedAt: serverTimestamp(),
+            updatedBy: "seed-script",
+          },
+          { merge: true }
+        );
+      }
       const status = index === 0 ? "online" : index % 3 === 0 ? "ausente" : "offline";
       const ultimaAtividade =
         status === "offline"
@@ -218,7 +230,7 @@ async function ensureChatUsuarios(users) {
       });
     })
   );
-  info(`✅ chat_usuarios criado para ${users.length} usuários`);
+  info(`✅ chat_usuarios garantido para ${users.length} usuários`);
 }
 
 async function ensureConversasEMensagens(users) {
@@ -397,6 +409,9 @@ async function ensureAuditLogs(users) {
   info("🛡️ Criando logs de auditoria...");
   for (let i = 0; i < logs.length; i += 1) {
     const logItem = logs[i];
+    const statusBefore = logItem.before?.status ?? null;
+    const statusAfter = logItem.after?.status ?? null;
+    const changes = statusBefore !== null || statusAfter !== null ? { status: { before: statusBefore, after: statusAfter } } : {};
     await db.collection("audit_logs").add({
       ...logItem,
       empresaId: EMPRESA_ID,
@@ -404,11 +419,7 @@ async function ensureAuditLogs(users) {
       userName: user.nome || "Administrador",
       userRole: user.role || "ADMIN",
       timestamp: FieldValue.serverTimestamp(),
-      changes: {
-        status: logItem.before?.status
-          ? { before: logItem.before.status, after: logItem.after?.status }
-          : undefined,
-      },
+      changes,
       createdAt: new Date(now - i * 60000).toISOString(),
     });
   }

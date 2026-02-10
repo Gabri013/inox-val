@@ -55,6 +55,10 @@ type FirestoreValue =
 
 type FirestoreData = Record<string, FirestoreValue>;
 
+function stripUndefined<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
+}
+
 function toStringField(value: FirestoreValue): string {
   if (typeof value === 'string') return value;
   if (value == null) return '';
@@ -98,15 +102,26 @@ async function auditCreate(params: {
 
 class ProducaoItensService {
   async getItensPorSetor(empresaId: string, setor: SetorProducao): Promise<ProducaoItem[]> {
-    const q = query(
+    const base = [
       collectionGroup(db, 'itens'),
       where('empresaId', '==', empresaId),
       where('setorAtual', '==', setor),
-      orderBy('updatedAt', 'desc')
-    );
+    ] as const;
 
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as FirestoreData) } as ProducaoItem));
+    try {
+      const q = query(...base, orderBy('updatedAt', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as FirestoreData) } as ProducaoItem));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const isIndexError =
+        message.toLowerCase().includes('requires an index') ||
+        message.toLowerCase().includes('failed precondition');
+      if (!isIndexError) throw error;
+      const fallback = query(...base);
+      const snap = await getDocs(fallback);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as FirestoreData) } as ProducaoItem));
+    }
   }
 
   async moverItemDeSetor(
@@ -260,14 +275,14 @@ class ProducaoItensService {
 
     const itens = ordem.itens || [];
     for (const item of itens) {
-      const produtoCodigo = item.produtoId || item.id;
-      const payload = {
+      const produtoCodigo = item.produtoId || item.id || item.produtoCodigo;
+      const payload = stripUndefined({
         empresaId,
         orderId,
         ordemId: orderId,
         numeroOrdem: ordem.numero,
         clienteNome: ordem.clienteNome,
-        produtoId: item.produtoId,
+        produtoId: item.produtoId ?? item.id ?? item.produtoCodigo ?? null,
         produtoCodigo,
         produtoNome: item.produtoNome,
         quantidade: item.quantidade,
@@ -282,7 +297,7 @@ class ProducaoItensService {
         createdAt: serverTimestamp(),
         createdBy: userId,
         isDeleted: false,
-      } as Omit<ProducaoItem, 'id'>;
+      } as Omit<ProducaoItem, 'id'>);
 
       const docRef = await addDoc(itensRef, payload);
       await auditCreate({

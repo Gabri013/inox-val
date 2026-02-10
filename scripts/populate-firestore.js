@@ -41,10 +41,10 @@ import {
 const QUIET = process.env.SEED_QUIET === 'true';
 const log = (...args) => {
   if (!QUIET) console.log(...args);
-
+};
 const info = (...args) => {
   if (!QUIET) console.info(...args);
-
+};
 const warn = (...args) => console.warn(...args);
 const logError = (...args) => console.error(...args);
 
@@ -92,6 +92,8 @@ function gerarMateriaisMock(qtd) {
     empresaId: EMPRESA_ID,
     codigo: `MAT-${i + 1}`,
     nome: `Material Teste ${i + 1}`,
+    unidade: 'KG',
+    estoqueAtual: 100 + i,
 
     data: new Date().toISOString(),
     validade: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
@@ -107,6 +109,26 @@ function gerarMateriaisMock(qtd) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     aprovadoEm: serverTimestamp(),
+  }));
+}
+
+function gerarProdutosMock(qtd) {
+  return Array.from({ length: qtd }, (_, i) => ({
+    empresaId: EMPRESA_ID,
+    codigo: `PRD-${String(i + 1).padStart(3, '0')}`,
+    nome: `Produto Teste ${i + 1}`,
+    descricao: `Descricao do produto teste ${i + 1}`,
+    tipo: 'Componente',
+    unidade: 'UN',
+    custo: 120 + i * 5,
+    preco: 200 + i * 8,
+    estoque: 10 + i,
+    estoqueMinimo: 5,
+    ativo: true,
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   }));
 }
 
@@ -168,17 +190,17 @@ const dadosExemplo = {
       updatedAt: serverTimestamp(),
     }
   ],
-  produtos: gerarProdutosMock(50),
-  configuracoes: [
+  usuarios: [
     {
-      tipo: 'CUSTOS',
-      versao: 1,
-      ativa: true,
-      dados: {
-        margemPadrao: 35,
-        impostosPercentual: 8.5,
-
-
+      nome: 'Administrador Seed',
+      email: 'administrador@inoxval.com',
+      role: 'Administrador',
+      ativo: true,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }
+  ],
+  produtos: gerarProdutosMock(50),
   configuracoes: [
     {
       tipo: 'CUSTOS',
@@ -209,6 +231,8 @@ const dadosExemplo = {
 
 
 // ============================================================================
+};
+
 // FUNÇÕES DE POPULAÇÃO
 // ============================================================================
 

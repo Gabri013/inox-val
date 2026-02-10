@@ -33,7 +33,7 @@ export default function ProdutosList() {
   const hasFilters = search.trim() !== '' || tipoFilter !== 'all' || ativoFilter !== undefined;
   const emptyMessage = hasFilters
     ? 'Nenhum produto encontrado para os filtros. Limpe filtros.'
-    : 'Nenhum produto acabado cadastrado';
+    : 'Nenhum produto cadastrado';
   
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
@@ -53,9 +53,7 @@ export default function ProdutosList() {
   
   // Dados filtrados
   const produtos = data?.items || [];
-  const produtosBase = produtos.filter(
-    (produto) => produto.tipo === 'Acabado' || produto.tipo === 'Semiacabado'
-  );
+  const produtosBase = produtos;
   const produtosFiltrados = produtosBase.filter(produto => {
     const matchSearch = search === '' || 
       produto.nome.toLowerCase().includes(search.toLowerCase()) ||

@@ -22,9 +22,15 @@ export default function EstoqueSaldos() {
 
   const getNome = (saldo: SaldoEstoque) => saldo.materialNome || saldo.produtoNome;
   const getCodigo = (saldo: SaldoEstoque) => saldo.materialCodigo || saldo.produtoCodigo;
-  const getItemId = (saldo: SaldoEstoque) => saldo.materialId || saldo.produtoId;
+  const getItemId = (saldo: SaldoEstoque) => saldo.materialId || saldo.produtoId || saldo.id;
   const materiais = saldos.filter(
-    (saldo) => saldo.materialId || saldo.materialCodigo || saldo.materialNome
+    (saldo) =>
+      saldo.materialId ||
+      saldo.materialCodigo ||
+      saldo.materialNome ||
+      saldo.produtoId ||
+      saldo.produtoCodigo ||
+      saldo.produtoNome
   );
   
   // Filtrar saldos

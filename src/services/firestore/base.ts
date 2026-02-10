@@ -143,26 +143,76 @@ export abstract class FirestoreService<T extends Record<string, any>> {
   async list(params: ListParams = {}): Promise<ServiceResult<ListResult<T>>> {
     try {
       const empresaId = await getEmpresaId();
-      const constraints: QueryConstraint[] = [where("empresaId", "==", empresaId)];
-      if (!params.includeDeleted) {
-        constraints.push(where("isDeleted", "==", false));
-      }
-      params.where?.forEach((filter) => constraints.push(where(filter.field, filter.operator, filter.value)));
-      params.orderBy?.forEach((order) => constraints.push(orderBy(order.field, order.direction)));
-      if (params.limit) constraints.push(limit(params.limit));
-      if (params.startAfter) constraints.push(startAfter(params.startAfter));
-      const q = query(collection(db, this.collectionName), ...constraints);
-      const snap = await getDocs(q);
-      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as unknown as T));
-      const lastDoc = snap.docs[snap.docs.length - 1];
-      return {
-        success: true,
-        data: {
-          items,
-          lastDoc,
-          hasMore: params.limit ? snap.size === params.limit : false,
-        },
+      const baseConstraints: QueryConstraint[] = [where("empresaId", "==", empresaId)];
+      params.where?.forEach((filter) => baseConstraints.push(where(filter.field, filter.operator, filter.value)));
+
+      const buildQuery = (withOrder: boolean) => {
+        const constraints = [...baseConstraints];
+        if (withOrder) {
+          params.orderBy?.forEach((order) => constraints.push(orderBy(order.field, order.direction)));
+          if (params.startAfter) constraints.push(startAfter(params.startAfter));
+          if (params.limit) constraints.push(limit(params.limit));
+        }
+        return query(collection(db, this.collectionName), ...constraints);
       };
+
+      try {
+        const q = buildQuery(true);
+        const snap = await getDocs(q);
+        const items = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as unknown as T))
+          .filter((item) => (params.includeDeleted ? true : (item as any)?.isDeleted !== true));
+        const lastDoc = snap.docs[snap.docs.length - 1];
+        return {
+          success: true,
+          data: {
+            items,
+            lastDoc,
+            hasMore: params.limit ? snap.size === params.limit : false,
+          },
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const isIndexError =
+          message.toLowerCase().includes("requires an index") ||
+          message.toLowerCase().includes("failed precondition");
+
+        if (!isIndexError) {
+          throw error;
+        }
+
+        const fallbackQuery = buildQuery(false);
+        const snap = await getDocs(fallbackQuery);
+        let items = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as unknown as T))
+          .filter((item) => (params.includeDeleted ? true : (item as any)?.isDeleted !== true));
+
+        if (params.orderBy && params.orderBy.length > 0) {
+          items = [...items].sort((a: any, b: any) => {
+            for (const order of params.orderBy ?? []) {
+              const av = a?.[order.field];
+              const bv = b?.[order.field];
+              if (av === bv) continue;
+              if (av === undefined || av === null) return order.direction === "asc" ? 1 : -1;
+              if (bv === undefined || bv === null) return order.direction === "asc" ? -1 : 1;
+              if (av > bv) return order.direction === "asc" ? 1 : -1;
+              if (av < bv) return order.direction === "asc" ? -1 : 1;
+            }
+            return 0;
+          });
+        }
+
+        const limited = params.limit ? items.slice(0, params.limit) : items;
+        const lastDoc = undefined;
+        return {
+          success: true,
+          data: {
+            items: limited,
+            lastDoc,
+            hasMore: params.limit ? items.length > limited.length : false,
+          },
+        };
+      }
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Erro ao listar" };
     }
