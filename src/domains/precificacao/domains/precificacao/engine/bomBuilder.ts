@@ -75,11 +75,14 @@ export interface BuiltBOM {
 const mm = (n: number) => (Number.isFinite(n) ? n : 0);
 const mFromMm = (mmVal: number) => mmVal / 1000;
 
+// tipo: "tuboRedondo" | "tuboQuadrado" | "tuboRetangular" | "contraventamento"
 function tubeKeyFromTipo(tipo: string) {
-  // padronize as chaves que existem na sua tabela kg/m
+  // Para pés: tuboRedondo_38_1x1_2
+  if (tipo === "tuboRedondo") return "tuboRedondo_38_1x1_2";
   if (tipo === "tuboQuadrado") return "tuboQuadrado";
   if (tipo === "tuboRetangular") return "tuboRetangular";
-  return "tuboRedondo";
+  if (tipo === "contraventamento") return "tuboRedondo_25_4x1_2";
+  return "tuboRedondo_38_1x1_2";
 }
 
 /* ==========================================================
@@ -173,6 +176,7 @@ export function buildBOM_Bancadas(
   const metrosTravessas = input.temContraventamento ? perimetro : perimetro * 0.5;
 
   const tubeKey = tubeKeyFromTipo(input.tipoTuboPes);
+  // Se tem contraventamento, adicionar tubo de 25,4mm para contraventamento
 
   tubeParts.push({
     id: "estrutura_tubos",

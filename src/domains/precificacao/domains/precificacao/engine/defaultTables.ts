@@ -34,10 +34,10 @@ export const DEFAULT_TUBE_KG_PER_METER: Record<string, number> = {
   tuboQuadrado: 2.8, // valor provisório
   tuboRetangular: 2.6, // valor provisório
 
-  // Exemplos de chaves detalhadas (coloque kg/m real)
-  // "tuboQuadrado_40x40x1.2": 0,
-  // "tuboRedondo_38.1x1.2": 0,
-  // "tuboRetangular_40x20x1.2": 0,
+  // Perfis reais usados na fábrica
+  tuboRedondo_38_1x1_2: 1.09, // Ø38,1mm x 1,2mm (pés)
+  tuboRedondo_25_4x1_2: 0.74, // Ø25,4mm x 1,2mm (contraventamento)
+  // Adicione outros perfis conforme necessário
 };
 
 /*
@@ -57,8 +57,8 @@ export const DEFAULT_ANGLE_KG_PER_METER: Record<string, number> = {
   Use os mesmos SKUs que você colocou no builder.
 */
 export const DEFAULT_ACCESSORY_UNIT_PRICE: Record<string, number> = {
-  peNivelador: 5, // valor provisório, ajuste para o real
-  maoFrancesa: 0,
+  peNivelador: 12, // valor real sugerido
+  maoFrancesa: 35, // valor real sugerido
   rodizio: 0,
   valvula: 0,
   mangueira: 0,

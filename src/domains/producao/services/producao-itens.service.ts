@@ -219,7 +219,7 @@ class ProducaoItensService {
       operadorNome: movimento.operadorNome ?? 'Operador',
       dataHora: movimento.dataHora ?? new Date().toISOString(),
       observacoes: movimento.observacoes,
-      fotos: movimento.fotos,
+      fotos: movimento.fotos ?? [],
       createdAt: serverTimestamp(),
       createdBy: userId,
       updatedAt: serverTimestamp(),
