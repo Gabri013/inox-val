@@ -342,24 +342,24 @@ export function quoteWithSheetSelectionV2(params: {
   // 4.3 Tubes
   let costTubes = 0;
   for (const t of bom.tubeParts) {
-    const kgpm = tables.tubeKgPerMeter[t.tubeKey] ?? 0;
-    if (t.meters > 0 && !kgpm) warnings.push(`Sem kg/m para tubo "${t.tubeKey}".`);
-    costTubes += (t.meters * kgpm) * tables.inoxKgPrice;
+    const kgpm = Number(tables.tubeKgPerMeter[t.tubeKey]) || 0;
+    if (t.meters > 0 && !(kgpm > 0)) warnings.push(`Sem kg/m para tubo "${t.tubeKey}".`);
+    costTubes += t.meters * kgpm * tables.inoxKgPrice;
   }
 
   // 4.4 Angles
   let costAngles = 0;
   for (const a of bom.angleParts ?? []) {
-    const kgpm = tables.angleKgPerMeter[a.angleKey] ?? 0;
-    if (a.meters > 0 && !kgpm) warnings.push(`Sem kg/m para cantoneira "${a.angleKey}".`);
-    costAngles += (a.meters * kgpm) * tables.inoxKgPrice;
+    const kgpm = Number(tables.angleKgPerMeter[a.angleKey]) || 0;
+    if (a.meters > 0 && !(kgpm > 0)) warnings.push(`Sem kg/m para cantoneira "${a.angleKey}".`);
+    costAngles += a.meters * kgpm * tables.inoxKgPrice;
   }
 
   // 4.5 Accessories
   let costAccessories = 0;
   for (const a of bom.accessories) {
-    const unit = tables.accessoryUnitPrice[a.sku] ?? 0;
-    if (a.qty > 0 && !unit) warnings.push(`Sem preço para acessório "${a.sku}".`);
+    const unit = Number(tables.accessoryUnitPrice[a.sku]) || 0;
+    if (a.qty > 0 && !(unit > 0)) warnings.push(`Sem preço para acessório "${a.sku}".`);
     costAccessories += a.qty * unit;
   }
 
@@ -372,7 +372,8 @@ export function quoteWithSheetSelectionV2(params: {
   }
 
   // 4.7 Overhead
-  const overhead = (costSheetTotal + costTubes + costAngles + costAccessories + costProcesses) * clamp01(tables.overheadPercent);
+  const overheadPercent = Number(tables.overheadPercent) || 0;
+  const overhead = (costSheetTotal + costTubes + costAngles + costAccessories + costProcesses) * clamp01(overheadPercent);
 
   // 4.8 Cost base
   const costBase = costSheetTotal + costTubes + costAngles + costAccessories + costProcesses + overhead;

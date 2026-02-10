@@ -1,6 +1,6 @@
 /**
- * DASHBOARD TV - Exibi√ß√£o em tempo real no ch√£o de f√°brica
- * Fonte oficial: itens em subcole√ß√µes via collectionGroup('itens')
+ * DASHBOARD TV - ExibiÁ„o em tempo real no ch„o de f·brica
+ * Fonte oficial: itens em subcoleÁıes via collectionGroup('itens')
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -36,7 +36,7 @@ export default function DashboardTV() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white p-8">
-        <div className="text-2xl">Carregando‚Ä¶</div>
+        <div className="text-2xl">Carregando...</div>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function DashboardTV() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Clock className="h-8 w-8" />
-          <h1 className="text-4xl font-bold">Dashboard Produ√ß√£o</h1>
+          <h1 className="text-4xl font-bold">Dashboard ProduÁ„o</h1>
         </div>
         <div className="text-3xl font-mono">{horaAtual.toLocaleTimeString('pt-BR')}</div>
       </div>
@@ -99,7 +99,7 @@ export default function DashboardTV() {
         <div className="bg-zinc-900 rounded-xl p-6">
           <div className="flex items-center gap-2 text-zinc-300 mb-2">
             <Clock className="h-5 w-5" />
-            <span className="text-xl">Em produ√ß√£o</span>
+            <span className="text-xl">Em produÁ„o</span>
           </div>
           <div className="text-6xl font-bold">{itensEmProducao.length}</div>
         </div>
@@ -107,7 +107,7 @@ export default function DashboardTV() {
         <div className="bg-zinc-900 rounded-xl p-6">
           <div className="flex items-center gap-2 text-zinc-300 mb-2">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="text-xl">Conclu√≠dos</span>
+            <span className="text-xl">ConcluÌdos</span>
           </div>
           <div className="text-6xl font-bold">{itensConcluidos.length}</div>
         </div>
@@ -115,13 +115,14 @@ export default function DashboardTV() {
 
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-zinc-900 rounded-xl p-6">
-          <h2 className="text-2xl font-semibold mb-4">Itens em produ√ß√£o</h2>
+          <h2 className="text-2xl font-semibold mb-4">Itens em produÁ„o</h2>
           <div className="space-y-3">
             {itensEmProducao.slice(0, 12).map((item) => (
               <div key={item.id} className="flex items-center justify-between border border-zinc-800 rounded-lg p-4">
                 <div>
                   <div className="text-lg font-semibold">{item.produtoCodigo} - {item.produtoNome}</div>
-                  <div className="text-zinc-400">OP: {item.numeroOrdem || item.orderId} ‚Ä¢ Setor: {String(item.setorAtual || '')}</div>
+                  <div className="text-sm text-zinc-300">Qtd: {item.quantidade} {item.unidade || 'un'}</div>
+                  <div className="text-zinc-400">OP: {item.numeroOrdem || item.orderId} ï Cliente: {item.clienteNome || 'N/A'} ï Setor: {String(item.setorAtual || '')}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xl font-mono">{formatarTempo(temposAtuais[item.id] || 0)}</div>
@@ -130,7 +131,7 @@ export default function DashboardTV() {
             ))}
 
             {itensEmProducao.length === 0 && (
-              <div className="text-zinc-400">Nenhum item em produ√ß√£o no momento.</div>
+              <div className="text-zinc-400">Nenhum item em produÁ„o no momento.</div>
             )}
           </div>
         </div>
@@ -141,7 +142,8 @@ export default function DashboardTV() {
             {itensAguardando.slice(0, 12).map((item) => (
               <div key={item.id} className="border border-zinc-800 rounded-lg p-4">
                 <div className="text-lg font-semibold">{item.produtoCodigo} - {item.produtoNome}</div>
-                <div className="text-zinc-400">OP: {item.numeroOrdem || item.orderId} ‚Ä¢ Setor: {String(item.setorAtual || '')}</div>
+                <div className="text-sm text-zinc-300">Qtd: {item.quantidade} {item.unidade || 'un'}</div>
+                <div className="text-zinc-400">OP: {item.numeroOrdem || item.orderId} ï Cliente: {item.clienteNome || 'N/A'} ï Setor: {String(item.setorAtual || '')}</div>
               </div>
             ))}
 

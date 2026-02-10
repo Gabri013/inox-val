@@ -24,11 +24,17 @@ export function ConfigPanel({
   setSheetMode,
   sheetSelected,
   setSheetSelected,
-  sheetCostMode,
-  setSheetCostMode,
+  // sheetCostMode removido, agora é automático
   scrapMinPct,
   setScrapMinPct,
 }: ConfigPanelProps) {
+  // Permite vírgula ou ponto e campo vazio
+  const parseInput = (val: string) => {
+    if (val === "") return "";
+    const num = Number(val.replace(",", "."));
+    return isNaN(num) ? "" : num;
+  };
+
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Configurações Globais</h3>
@@ -39,10 +45,10 @@ export function ConfigPanel({
             Preço/kg Inox (R$)
           </label>
           <input
-            type="number"
-            value={precoKgInox}
-            onChange={(e) => setPrecoKgInox(Number(e.target.value))}
-            step="0.01"
+            type="text"
+            inputMode="decimal"
+            value={precoKgInox === 0 ? "" : precoKgInox ?? ""}
+            onChange={(e) => setPrecoKgInox(parseInput(e.target.value))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -52,54 +58,44 @@ export function ConfigPanel({
             Fator de Venda (Markup)
           </label>
           <input
-            type="number"
-            value={fatorVenda}
-            onChange={(e) => setFatorVenda(Number(e.target.value))}
-            step="0.1"
+            type="text"
+            inputMode="decimal"
+            value={fatorVenda === 0 ? "" : fatorVenda ?? ""}
+            onChange={(e) => setFatorVenda(parseInput(e.target.value))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
+        {/* Modo de custo de chapa agora é automático */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Modo de Custo de Chapa
           </label>
-          <select
-            value={sheetCostMode}
-            onChange={(e) => setSheetCostMode(e.target.value as "bought" | "used")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="used">USADA (kg útil + scrap%) - Sobra vira estoque</option>
-            <option value="bought">COMPRADA (chapa inteira) - Sobra vira perda total</option>
-          </select>
+          <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700">
+            Automático
+          </div>
           <p className="mt-1 text-xs text-gray-600">
-            {sheetCostMode === "used"
-              ? "Recomendado para peças únicas: cobra apenas o material usado + desperdício mínimo"
-              : "Cobra a chapa inteira. Use apenas para lotes ou quando sobra não será reaproveitada"
-            }
+            O sistema escolhe automaticamente: peças únicas usam "USADA" (kg útil + scrap), lotes grandes usam "COMPRADA" (chapa inteira).
           </p>
         </div>
 
-        {sheetCostMode === "used" && (
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Desperdício Mínimo (%)
-            </label>
-            <input
-              type="number"
-              value={scrapMinPct}
-              onChange={(e) => setScrapMinPct(Number(e.target.value))}
-              min="0"
-              max="50"
-              step="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <p className="mt-1 text-xs text-gray-600">
-              Adiciona {scrapMinPct}% sobre o material útil para cobrir cortes, rebarbas e pequenas perdas.
-              Recomendado: 10-20% para cuba, 5-10% para tampos grandes.
-            </p>
-          </div>
-        )}
+        {/* Campo de scrap sempre visível, pois modo é automático */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Desperdício Mínimo (%)
+          </label>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={scrapMinPct === 0 ? "" : scrapMinPct ?? ""}
+            onChange={(e) => setScrapMinPct(parseInput(e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p className="mt-1 text-xs text-gray-600">
+            Adiciona {scrapMinPct}% sobre o material útil para cobrir cortes, rebarbas e pequenas perdas.
+            Recomendado: 10-20% para cuba, 5-10% para tampos grandes.
+          </p>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

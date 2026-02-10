@@ -2,7 +2,7 @@
  * Controle de Produção - Interface para operadores no chão de fábrica
  */
 
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
@@ -64,6 +64,7 @@ export default function ControleProducao() {
   const navigate = useNavigate();
   const [setorSelecionado, setSetorSelecionado] = useState<SetorProducao>('Corte');
   const [codigoBusca, setCodigoBusca] = useState('');
+  const buscaInputRef = useRef<HTMLInputElement | null>(null);
   const [itemSelecionado, setItemSelecionado] = useState<ProducaoItem | null>(null);
   const [showMateriais, setShowMateriais] = useState(false);
   const [showMovimentacao, setShowMovimentacao] = useState(false);
@@ -74,9 +75,47 @@ export default function ControleProducao() {
   const moverItemMutation = useMoverItem();
   const atualizarStatusMutation = useAtualizarStatus();
 
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .trim();
+
+  const itensList = useMemo(
+    () => ((itens ?? []) as ProducaoItem[]).filter((item) => item?.isDeleted !== true),
+    [itens]
+  );
+
+  const filteredItens = useMemo(() => {
+    if (!codigoBusca.trim()) return itensList;
+    const term = normalize(codigoBusca);
+    return itensList.filter((item) => {
+      const values = [
+        item.produtoCodigo,
+        item.produtoNome,
+        item.numeroOrdem,
+        item.orderId,
+        item.ordemId,
+        item.clienteNome,
+      ]
+        .filter(Boolean)
+        .map((val) => normalize(String(val)));
+      return values.some((val) => val.includes(term));
+    });
+  }, [codigoBusca, itensList]);
+
   const handleBuscar = () => {
-    // Implementar busca por código/QR
-    void codigoBusca;
+    if (!codigoBusca.trim()) return;
+    if (filteredItens.length == 1) {
+      handleEntrada(filteredItens[0]);
+      return;
+    }
+    if (filteredItens.length == 0) {
+      toast.error('Nenhum item encontrado para essa busca.');
+      return;
+    }
+    toast('Foram encontrados vários itens. Refine a busca.');
   };
 
   const handleSyncOrdens = async () => {
@@ -224,13 +263,14 @@ export default function ControleProducao() {
                 value={codigoBusca}
                 onChange={(e) => setCodigoBusca(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
+                ref={buscaInputRef}
               />
             </div>
             <Button onClick={handleBuscar}>
               <Search className="h-4 w-4 mr-2" />
               Buscar
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => buscaInputRef.current?.focus()}>
               <QrCode className="h-4 w-4 mr-2" />
               Scanner
             </Button>
@@ -273,7 +313,7 @@ export default function ControleProducao() {
         <CardContent>
           {isLoading ? (
             <p className="text-center text-muted-foreground py-8">Carregando...</p>
-          ) : !itens || itens.length === 0 ? (
+          ) : !filteredItens || filteredItens.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">Nenhum item neste setor</p>
@@ -288,7 +328,7 @@ export default function ControleProducao() {
             </div>
           ) : (
             <div className="space-y-4">
-              {(itens as ProducaoItem[]).map((item) => (
+              {filteredItens.map((item) => (
                 <Card key={item.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
@@ -315,7 +355,11 @@ export default function ControleProducao() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                           <div>
                             <p className="text-muted-foreground">Ordem</p>
-                            <p className="font-medium">{item.ordemId}</p>
+                            <p className="font-medium">{item.numeroOrdem || item.orderId || item.ordemId}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Cliente</p>
+                            <p className="font-medium">{item.clienteNome || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Quantidade</p>

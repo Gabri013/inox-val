@@ -109,7 +109,7 @@ export interface BancadasInput {
 
 export function buildBOM_Bancadas(
   input: BancadasInput,
-  orcamentoTipo: "somenteCuba" | "bancadaSemCuba" | "bancadaComCuba"
+  orcamentoTipo: "somenteTampo" | "somenteCuba" | "bancadaSemCuba" | "bancadaComCuba"
 ): BuiltBOM {
   const sheetParts: SheetPartRect[] = [];
   const tubeParts: TubePart[] = [];
@@ -119,6 +119,15 @@ export function buildBOM_Bancadas(
   const L = mm(input.comprimento);
   const W = mm(input.largura);
   const t = mm(input.espessuraChapa);
+
+
+  // 1.0 Somente tampo (apenas o tampo, sem estrutura, sem acessórios, sem cuba)
+  if (orcamentoTipo === "somenteTampo") {
+    // Força tipoPrateleiraInferior para 'nenhuma' para evitar erro de blank/espessura
+    sheetParts.push({ id: "tampo", w: L, h: W, qty: 1, thicknessMm: t, family: "tampo" });
+    // Garante que não será gerada prateleira inferior
+    return { sheetParts, tubeParts, accessories, processes };
+  }
 
   // 1.1 Somente cuba (cuba soldada retangular: 1 fundo + 4 laterais)
   if (orcamentoTipo === "somenteCuba") {

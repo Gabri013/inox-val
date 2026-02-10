@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { Calculator, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { buildBOMByTipo, type ProdutoTipo } from "../domains/precificacao/engine/bomBuilder";
@@ -33,6 +33,7 @@ const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
 ];
 
 export function PrecificacaoPage() {
+  // Recalcula orçamento automaticamente ao mudar qualquer campo relevante
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoTipo>("bancadas");
   const [formData, setFormData] = useState<any>({});
   const [quoteResult, setQuoteResult] = useState<any>(null);
@@ -42,9 +43,22 @@ export function PrecificacaoPage() {
   const [fatorVenda, setFatorVenda] = useState(3);
   const [sheetMode, setSheetMode] = useState<"auto" | "manual">("auto");
   const [sheetSelected, setSheetSelected] = useState("2000x1250");
-  const [sheetCostMode, setSheetCostMode] = useState<"bought" | "used">("used");
+  // sheetCostMode agora é automático
   const [scrapMinPct, setScrapMinPct] = useState(15);
   const [showConfig, setShowConfig] = useState(false);
+
+  const firstRender = useRef(true);
+
+  // Cálculo automático ao mudar qualquer campo relevante
+  // Remove cálculo automático para evitar toast ao abrir/alterar tipo de orçamento
+  // useEffect(() => {
+  //   if (firstRender.current) {
+  //     firstRender.current = false;
+  //     return;
+  //   }
+  //   handleCalcular();
+  //   // eslint-disable-next-line
+  // }, [formData, produtoSelecionado, precoKgInox, fatorVenda, sheetMode, sheetSelected, scrapMinPct]);
 
   const handleCalcular = () => {
     // Passo 1: Validações específicas antes de gerar BOM
@@ -93,11 +107,19 @@ export function PrecificacaoPage() {
     // Passo 4: Sheet policy (todas as famílias com mesmo modo)
     const families = Array.from(new Set(bom.sheetParts.map((p) => p.family)));
     const sheetPolicyByFamily: Record<string, SheetPolicy> = {};
+    // Lógica automática: se quantidade >= 6, usa "bought"; senão, "used"
+    let quantidade = 1;
+    if (formData.quantidade && Number.isFinite(formData.quantidade)) {
+      quantidade = Number(formData.quantidade);
+    } else if (formData.quantidadeCubas && Number.isFinite(formData.quantidadeCubas)) {
+      quantidade = Number(formData.quantidadeCubas);
+    }
+    const autoSheetCostMode = quantidade >= 6 ? "bought" : "used";
     for (const fam of families) {
       sheetPolicyByFamily[fam] = {
         mode: sheetMode,
         manualSheetId: sheetMode === "manual" ? sheetSelected : undefined,
-        costMode: sheetCostMode,
+        costMode: autoSheetCostMode,
         scrapMinPct: scrapMinPct / 100,
       };
     }
@@ -197,8 +219,6 @@ export function PrecificacaoPage() {
                 setSheetMode={setSheetMode}
                 sheetSelected={sheetSelected}
                 setSheetSelected={setSheetSelected}
-                sheetCostMode={sheetCostMode}
-                setSheetCostMode={setSheetCostMode}
                 scrapMinPct={scrapMinPct}
                 setScrapMinPct={setScrapMinPct}
               />

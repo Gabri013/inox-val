@@ -6,6 +6,15 @@ interface BancadasFormProps {
 }
 
 export function BancadasForm({ formData, setFormData }: BancadasFormProps) {
+
+  // Permite vírgula ou ponto e campo vazio
+  const parseInput = (val: string) => {
+    if (val === "") return "";
+    // Troca vírgula por ponto e tenta converter
+    const num = Number(val.replace(",", "."));
+    return isNaN(num) ? "" : num;
+  };
+
   const update = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -29,55 +38,98 @@ export function BancadasForm({ formData, setFormData }: BancadasFormProps) {
           onChange={(e) => update("orcamentoTipo", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
+          <option value="somenteTampo">Somente Tampo</option>
           <option value="somenteCuba">Somente Cuba</option>
           <option value="bancadaSemCuba">Bancada sem Cuba</option>
           <option value="bancadaComCuba">Bancada com Cuba</option>
         </select>
       </FormField>
 
-      {/* Dimensões */}
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Comprimento (mm)" required>
-          <input
-            type="number"
-            value={formData.comprimento || ""}
-            onChange={(e) => update("comprimento", Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </FormField>
-
-        <FormField label="Largura (mm)" required>
-          <input
-            type="number"
-            value={formData.largura || ""}
-            onChange={(e) => update("largura", Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </FormField>
-
-        {/* Altura Frontal apenas para Cuba ou Bancada */}
-        <FormField
-          label={orcamentoTipo === "somenteCuba" ? "Profundidade (mm)" : "Altura Frontal (mm)"}
-          required={orcamentoTipo === "somenteCuba"}
-        >
-          <input
-            type="number"
-            value={formData.alturaFrontal || ""}
-            onChange={(e) => update("alturaFrontal", Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </FormField>
-
-        <FormField label="Espessura Chapa (mm)" required>
-          <input
-            type="number"
-            value={formData.espessuraChapa || ""}
-            onChange={(e) => update("espessuraChapa", Number(e.target.value))}
-            step="0.1"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </FormField>
-      </div>
+      {/* Dimensões - apenas campos essenciais para Somente Tampo */}
+      {orcamentoTipo === "somenteTampo" ? (
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label="Comprimento (mm)" required>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.comprimento === 0 ? "" : formData.comprimento ?? ""}
+              onChange={(e) => update("comprimento", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+          <FormField label="Largura (mm)" required>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.largura === 0 ? "" : formData.largura ?? ""}
+              onChange={(e) => update("largura", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+          <FormField label="Altura Frontal (mm)">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.alturaFrontal === 0 ? "" : formData.alturaFrontal ?? ""}
+              onChange={(e) => update("alturaFrontal", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+          <FormField label="Espessura Chapa (mm)" required>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.espessuraChapa === 0 ? "" : formData.espessuraChapa ?? ""}
+              onChange={(e) => update("espessuraChapa", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4">
+          {/* ...campos existentes para outros tipos... */}
+          <FormField label="Comprimento (mm)" required>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.comprimento === 0 ? "" : formData.comprimento ?? ""}
+              onChange={(e) => update("comprimento", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+          <FormField label="Largura (mm)" required>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.largura === 0 ? "" : formData.largura ?? ""}
+              onChange={(e) => update("largura", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+          {/* Altura Frontal apenas para Cuba ou Bancada */}
+          <FormField
+            label={orcamentoTipo === "somenteCuba" ? "Profundidade (mm)" : "Altura Frontal (mm)"}
+            required={orcamentoTipo === "somenteCuba"}
+          >
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.alturaFrontal === 0 ? "" : formData.alturaFrontal ?? ""}
+              onChange={(e) => update("alturaFrontal", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+          <FormField label="Espessura Chapa (mm)" required>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formData.espessuraChapa === 0 ? "" : formData.espessuraChapa ?? ""}
+              onChange={(e) => update("espessuraChapa", parseInput(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </FormField>
+        </div>
+      )}
 
       {/* Cuba (apenas se bancadaComCuba) */}
       {orcamentoTipo === "bancadaComCuba" && (
@@ -124,8 +176,8 @@ export function BancadasForm({ formData, setFormData }: BancadasFormProps) {
         </div>
       )}
 
-      {/* Estrutura - APENAS se NÃO for somente cuba */}
-      {orcamentoTipo !== "somenteCuba" && (
+      {/* Estrutura - APENAS se NÃO for somente cuba NEM somente tampo */}
+      {orcamentoTipo !== "somenteCuba" && orcamentoTipo !== "somenteTampo" && (
         <>
           <div className="border-t border-gray-200 pt-4 mt-4">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Estrutura</h3>

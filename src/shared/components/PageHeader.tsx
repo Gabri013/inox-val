@@ -2,7 +2,7 @@
  * Componente PageHeader padrão para todas as páginas do ERP
  */
 
-import { ReactNode, isValidElement } from 'react';
+import React, { ReactNode, isValidElement } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -68,20 +68,19 @@ export function PageHeader({
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => {
               const isLast = index === breadcrumbs.length - 1;
-              
               return (
-                <BreadcrumbItem key={index}>
-                  {isLast ? (
-                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                  ) : (
-                    <>
+                <React.Fragment key={index}>
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    ) : (
                       <BreadcrumbLink href={item.href || '#'}>
                         {item.label}
                       </BreadcrumbLink>
-                      <BreadcrumbSeparator />
-                    </>
-                  )}
-                </BreadcrumbItem>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator />}
+                </React.Fragment>
               );
             })}
           </BreadcrumbList>

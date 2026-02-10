@@ -30,9 +30,9 @@ export const DEFAULT_PROCESS_COST_PER_HOUR: Record<ProcessKind, number> = {
 */
 export const DEFAULT_TUBE_KG_PER_METER: Record<string, number> = {
   // Genéricos (apenas para não travar dev; TROQUE pelos reais)
-  tuboRedondo: 0,
-  tuboQuadrado: 0,
-  tuboRetangular: 0,
+  tuboRedondo: 2.5, // valor provisório, ajuste para o real
+  tuboQuadrado: 2.8, // valor provisório
+  tuboRetangular: 2.6, // valor provisório
 
   // Exemplos de chaves detalhadas (coloque kg/m real)
   // "tuboQuadrado_40x40x1.2": 0,
@@ -57,7 +57,7 @@ export const DEFAULT_ANGLE_KG_PER_METER: Record<string, number> = {
   Use os mesmos SKUs que você colocou no builder.
 */
 export const DEFAULT_ACCESSORY_UNIT_PRICE: Record<string, number> = {
-  peNivelador: 0,
+  peNivelador: 5, // valor provisório, ajuste para o real
   maoFrancesa: 0,
   rodizio: 0,
   valvula: 0,
