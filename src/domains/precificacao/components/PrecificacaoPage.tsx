@@ -19,7 +19,7 @@ import { QuoteResults } from "./QuoteResults";
 
 const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
   { id: "bancadas", label: "Bancadas" },
-  { id: "lavatorios", label: "Lavatórios" },
+  { id: "lavatorios", label: "Lavatï¿½rios" },
   { id: "prateleiras", label: "Prateleiras" },
   { id: "mesas", label: "Mesas" },
   { id: "estanteCantoneira", label: "Estante Cantoneira" },
@@ -32,7 +32,7 @@ const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
 ];
 
 export function PrecificacaoPage() {
-  // Recalcula orçamento automaticamente ao mudar qualquer campo relevante
+  // Recalcula orï¿½amento automaticamente ao mudar qualquer campo relevante
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoTipo>("bancadas");
   const [formData, setFormData] = useState<any>({});
   const [quoteResult, setQuoteResult] = useState<any>(null);
@@ -40,8 +40,8 @@ export function PrecificacaoPage() {
   // ...existing code...
 
 
-  // Cálculo automático ao mudar qualquer campo relevante
-  // Remove cálculo automático para evitar toast ao abrir/alterar tipo de orçamento
+  // Cï¿½lculo automï¿½tico ao mudar qualquer campo relevante
+  // Remove cï¿½lculo automï¿½tico para evitar toast ao abrir/alterar tipo de orï¿½amento
   // useEffect(() => {
   //     return;
   //   }
@@ -50,10 +50,10 @@ export function PrecificacaoPage() {
   // }, [formData, produtoSelecionado, precoKgInox, fatorVenda, sheetMode, sheetSelected, scrapMinPct]);
 
   const handleCalcular = () => {
-    // Passo 1: Validações específicas antes de gerar BOM
+    // Passo 1: Validaï¿½ï¿½es especï¿½ficas antes de gerar BOM
     if (produtoSelecionado === "bancadas" && formData.orcamentoTipo === "bancadaComCuba") {
       if (!formData.cuba || !formData.cuba.L || !formData.cuba.W || !formData.cuba.H) {
-        toast.error("Para bancada com cuba, informe as dimensões da cuba (L, W, H).", {
+        toast.error("Para bancada com cuba, informe as dimensï¿½es da cuba (L, W, H).", {
           duration: 4000,
         });
         return;
@@ -62,7 +62,7 @@ export function PrecificacaoPage() {
 
     if (produtoSelecionado === "lavatorios" && formData.tipo === "lavatorioPadrao") {
       if (!formData.modeloPadrao) {
-        toast.error("Para lavatório padrão, selecione o modelo (750/850/FDE).", {
+        toast.error("Para lavatï¿½rio padrï¿½o, selecione o modelo (750/850/FDE).", {
           duration: 4000,
         });
         return;
@@ -84,21 +84,40 @@ export function PrecificacaoPage() {
     }
 
     // Passo 3: Montar tabelas e regras a partir do formData
-    const tables = makeDefaultTables({
-      inoxKgPrice: formData.precoKg || 45,
-      tubeKgPrice: formData.precoKgTubo || formData.precoKg || 45,
-      overheadPercent: formData.overheadPercent || 0,
-    });
-
-    const rules = {
-      markup: formData.markup || 3,
-      minMarginPct: formData.minMarginPct || 0.25,
+    const toNumber = (value: unknown, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
     };
 
-    // Passo 4: Sheet policy (todas as famílias com mesmo modo)
+    const inoxKgPrice = toNumber(formData.precoKg ?? formData.precoKgInox, 45);
+    const tubeKgPrice = toNumber(
+      formData.precoKgTubo ?? formData.precoKgTuboPes ?? formData.precoKg ?? formData.precoKgInox,
+      inoxKgPrice
+    );
+    const overheadRaw = toNumber(formData.overheadPercent, 0);
+    const overheadPercent = overheadRaw > 1 ? overheadRaw / 100 : overheadRaw;
+
+    const tables = makeDefaultTables({
+      inoxKgPrice,
+      tubeKgPrice,
+      overheadPercent,
+      tubeKgPricePes: toNumber(formData.precoKgTuboPes, tubeKgPrice),
+      tubeKgPriceContraventamento: toNumber(formData.precoKgTuboContraventamento, tubeKgPrice),
+    });
+
+    const markup = toNumber(formData.markup ?? formData.fatorVenda, 3);
+    const minMarginRaw = toNumber(formData.minMarginPct, 0.25);
+    const minMarginPct = minMarginRaw > 1 ? minMarginRaw / 100 : minMarginRaw;
+
+    const rules = {
+      markup,
+      minMarginPct,
+    };
+
+    // Passo 4: Sheet policy (todas as famï¿½lias com mesmo modo)
     const families = Array.from(new Set(bom.sheetParts.map((p) => p.family)));
     const sheetPolicyByFamily: Record<string, SheetPolicy> = {};
-    // Lógica automática: se quantidade >= 6, usa "bought"; senão, "used"
+    // Lï¿½gica automï¿½tica: se quantidade >= 6, usa "bought"; senï¿½o, "used"
     let quantidade = 1;
     if (formData.quantidade && Number.isFinite(formData.quantidade)) {
       quantidade = Number(formData.quantidade);
@@ -125,7 +144,7 @@ export function PrecificacaoPage() {
 
     if (errors.length) {
       toast.error(
-        `Não foi possível calcular:\n${errors.slice(0, 5).map((e) => `• ${e.message}`).join("\n")}`,
+        `Nï¿½o foi possï¿½vel calcular:\n${errors.slice(0, 5).map((e) => `ï¿½ ${e.message}`).join("\n")}`,
         { duration: 5000 }
       );
       return;
@@ -142,8 +161,8 @@ export function PrecificacaoPage() {
     setQuoteResult(quote);
 
     if (quote.warnings.length) {
-      toast("Atenção", {
-        description: quote.warnings.slice(0, 3).map((w) => `• ${w}`).join("\n"),
+      toast("Atenï¿½ï¿½o", {
+        description: quote.warnings.slice(0, 3).map((w) => `ï¿½ ${w}`).join("\n"),
         duration: 5000,
       });
     }
@@ -157,11 +176,11 @@ export function PrecificacaoPage() {
             <div className="flex items-center gap-3">
               <Calculator className="w-8 h-8 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Sistema de Precificação Inox</h1>
-                <p className="text-sm text-gray-600">Motor V2 - Cálculo Industrial com Nesting</p>
+                <h1 className="text-2xl font-bold text-gray-900">Sistema de Precificaï¿½ï¿½o Inox</h1>
+                <p className="text-sm text-gray-600">Motor V2 - Cï¿½lculo Industrial com Nesting</p>
               </div>
             </div>
-            {/* Configurações globais removidas. Toda configuração agora está junto ao input do produto. */}
+            {/* Configuraï¿½ï¿½es globais removidas. Toda configuraï¿½ï¿½o agora estï¿½ junto ao input do produto. */}
           </div>
         </div>
       </header>
@@ -194,7 +213,7 @@ export function PrecificacaoPage() {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            {/* ConfigPanel removido: campos de configuração migrarão para o formulário do produto */}
+            {/* ConfigPanel removido: campos de configuraï¿½ï¿½o migrarï¿½o para o formulï¿½rio do produto */}
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -241,7 +260,7 @@ export function PrecificacaoPage() {
                 className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Calculator className="w-5 h-5" />
-                <span>Calcular Orçamento</span>
+                <span>Calcular Orï¿½amento</span>
               </button>
             </div>
 

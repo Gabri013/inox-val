@@ -98,10 +98,19 @@ export const DEFAULT_ACCESSORY_UNIT_PRICE: Record<string, number> = {
   Função que monta as tabelas prontas para o motor.
   Você passa o preço/kg (que vem do form) e pode mostrar overhead.
 */
-export function makeDefaultTables(params: { inoxKgPrice: number; tubeKgPrice?: number; overheadPercent?: number }): PricingTables {
+export function makeDefaultTables(params: {
+  inoxKgPrice: number;
+  tubeKgPrice?: number;
+  tubeKgPricePes?: number;
+  tubeKgPriceContraventamento?: number;
+  overheadPercent?: number;
+}): PricingTables {
   return {
     inoxKgPrice: params.inoxKgPrice,
     tubeKgPrice: params.tubeKgPrice ?? params.inoxKgPrice,
+    tubeKgPricePes: params.tubeKgPricePes ?? params.tubeKgPrice ?? params.inoxKgPrice,
+    tubeKgPriceContraventamento:
+      params.tubeKgPriceContraventamento ?? params.tubeKgPrice ?? params.inoxKgPrice,
     densityKgPerM3: 7900,
     sheetCatalog: DEFAULT_SHEET_CATALOG,
 
