@@ -52,6 +52,65 @@ interface UseOrcamentosOptions {
   clienteId?: string;
 }
 
+const toSafeNumber = (value: unknown, fallback = 0) => {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+};
+
+const sanitizeItens = (itens: Orcamento['itens'] = []) =>
+  itens.map((item) => {
+    const quantidade = Math.max(0.01, toSafeNumber(item.quantidade, 1));
+    const precoUnitario = Math.max(0, toSafeNumber(item.precoUnitario, 0));
+    return {
+      ...item,
+      quantidade,
+      precoUnitario,
+      subtotal: quantidade * precoUnitario,
+    };
+  });
+
+const sanitizeDraftPayload = <T extends {
+  itens?: Orcamento['itens'];
+  desconto?: number;
+  subtotal?: number;
+  total?: number;
+  validade?: unknown;
+}>(payload: T): T => {
+  const hasFinancialFields =
+    Object.prototype.hasOwnProperty.call(payload, 'itens') ||
+    Object.prototype.hasOwnProperty.call(payload, 'desconto') ||
+    Object.prototype.hasOwnProperty.call(payload, 'subtotal') ||
+    Object.prototype.hasOwnProperty.call(payload, 'total');
+
+  const sanitized: Record<string, unknown> = { ...payload };
+
+  if (hasFinancialFields) {
+    const itens = sanitizeItens(payload.itens || []);
+    const subtotal = itens.reduce((sum, item) => sum + item.subtotal, 0);
+    const desconto = Math.min(Math.max(0, toSafeNumber(payload.desconto, 0)), subtotal);
+    const total = subtotal - desconto;
+
+    sanitized.itens = itens;
+    sanitized.subtotal = subtotal;
+    sanitized.desconto = desconto;
+    sanitized.total = total;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'validade')) {
+    const validade = payload.validade;
+    if (validade instanceof Date && Number.isFinite(validade.getTime())) {
+      sanitized.validade = validade;
+    } else if (typeof validade === 'string' || typeof validade === 'number') {
+      const parsed = new Date(validade);
+      if (Number.isFinite(parsed.getTime())) {
+        sanitized.validade = parsed;
+      }
+    }
+  }
+
+  return sanitized as T;
+};
+
 export function useOrcamentos(options: UseOrcamentosOptions = {}) {
   const { autoLoad = true, status, clienteId } = options;
   const isMock = import.meta.env.VITE_USE_MOCK === 'true' && import.meta.env.DEV;
@@ -157,11 +216,11 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
       const numero = `ORC-${Date.now()}`;
 
       if (isMock) {
-        const payload = {
+        const payload = sanitizeDraftPayload({
           id: `orc_${Date.now()}`,
           ...data,
           numero,
-        } as Orcamento;
+        } as Orcamento);
         const created = await httpClient.post<Orcamento>('/api/orcamentos', payload);
         const result = { success: true, data: created } as ServiceResult<Orcamento>;
         setOrcamentos((prev) => [normalizeOrcamento(created), ...prev]);
@@ -169,10 +228,12 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
         return result;
       }
 
-      const result = await orcamentosService.create({
+      const payload = sanitizeDraftPayload({
         ...data,
         numero,
-      } as Orcamento);
+      });
+
+      const result = await orcamentosService.create(payload as Orcamento);
 
       if (result.success && result.data) {
         setOrcamentos((prev) => [normalizeOrcamento(result.data!), ...prev]);
@@ -200,7 +261,8 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
       setLoading(true);
 
       if (isMock) {
-        const updated = await httpClient.put<Orcamento>(`/api/orcamentos/${id}`, updates as Orcamento);
+        const payload = sanitizeDraftPayload(updates as Partial<Orcamento>);
+        const updated = await httpClient.put<Orcamento>(`/api/orcamentos/${id}`, payload as Orcamento);
         const result = { success: true, data: updated } as ServiceResult<Orcamento>;
         setOrcamentos((prev) =>
           prev.map((o) => (o.id === id ? normalizeOrcamento(updated) : o))
@@ -209,7 +271,8 @@ export function useOrcamentos(options: UseOrcamentosOptions = {}) {
         return result;
       }
 
-      const result = await orcamentosService.update(id, updates as Orcamento);
+      const payload = sanitizeDraftPayload(updates as Partial<Orcamento>);
+      const result = await orcamentosService.update(id, payload as Orcamento);
 
       if (result.success && result.data) {
         setOrcamentos((prev) =>

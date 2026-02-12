@@ -56,6 +56,47 @@ export function OrcamentoForm({
   initialData = null,
   submitLabel = 'Criar Orcamento',
 }: OrcamentoFormProps) {
+  const toSafeNumber = (value: unknown, fallback = 0) => {
+    const numeric = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(numeric) ? numeric : fallback;
+  };
+
+  const sanitizeItem = (item: ItemOrcamento): ItemOrcamento => {
+    const quantidade = Math.max(0.01, toSafeNumber(item.quantidade, 1));
+    const precoUnitario = Math.max(0, toSafeNumber(item.precoUnitario, 0));
+
+    return {
+      ...item,
+      quantidade,
+      precoUnitario,
+      subtotal: quantidade * precoUnitario,
+    };
+  };
+
+  const mergeOrAppendItem = (nextItem: ItemOrcamento) => {
+    const normalizedNext = sanitizeItem(nextItem);
+
+    setItens((prev) => {
+      const mergeIndex = prev.findIndex((existing) => {
+        const sameCodigo = (existing.modeloId || '').trim().toLowerCase() === (normalizedNext.modeloId || '').trim().toLowerCase();
+        const sameDescricao = (existing.descricao || '').trim().toLowerCase() === (normalizedNext.descricao || '').trim().toLowerCase();
+        const samePreco = Math.abs((existing.precoUnitario || 0) - normalizedNext.precoUnitario) < 0.0001;
+        return sameCodigo && sameDescricao && samePreco;
+      });
+
+      if (mergeIndex < 0) return [...prev, normalizedNext];
+
+      const merged = [...prev];
+      const itemAtual = sanitizeItem(merged[mergeIndex]);
+      const quantidade = itemAtual.quantidade + normalizedNext.quantidade;
+      merged[mergeIndex] = {
+        ...itemAtual,
+        quantidade,
+        subtotal: quantidade * itemAtual.precoUnitario,
+      };
+      return merged;
+    });
+  };
   const [mode, setMode] = useState<'manual' | 'omei'>(initialMode);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteId, setClienteId] = useState('');
@@ -137,7 +178,7 @@ export function OrcamentoForm({
       subtotal,
     };
 
-    setItens(prev => [...prev, novoItem]);
+    mergeOrAppendItem(novoItem);
     setManualItem({ codigo: '', descricao: '', quantidade: 1, precoUnitario: 0 });
     toast.success('Item manual adicionado');
   };
@@ -176,7 +217,7 @@ export function OrcamentoForm({
       subtotal,
     };
 
-    setItens((prev) => [...prev, novoItem]);
+    mergeOrAppendItem(novoItem);
     setEstoqueItemId('');
     setEstoqueQuantidade(1);
     setEstoquePrecoUnitario(0);
@@ -216,7 +257,7 @@ export function OrcamentoForm({
         const codigo = item.codigo ? item.codigo.trim() : '';
         const quantidade = item.quantidade || 1;
         const precoUnitario = 0;
-        return {
+        return sanitizeItem({
           id,
           modeloId: codigo || id,
           modeloNome: codigo || item.descricao,
@@ -224,7 +265,7 @@ export function OrcamentoForm({
           quantidade,
           precoUnitario,
           subtotal: quantidade * precoUnitario,
-        } as ItemOrcamento;
+        } as ItemOrcamento);
       });
       setItens(imported);
       toast.success(`Importado: ${imported.length} itens`);
@@ -266,19 +307,26 @@ export function OrcamentoForm({
       return;
     }
 
-    const subtotal = itens.reduce((sum, item) => sum + item.subtotal, 0);
-    const total = subtotal - desconto;
+    const itensSanitizados = itens.map(sanitizeItem);
+    const subtotal = itensSanitizados.reduce((sum, item) => sum + item.subtotal, 0);
+    const descontoSeguro = Math.min(Math.max(0, toSafeNumber(desconto, 0)), subtotal);
+    const total = subtotal - descontoSeguro;
     const baseDate = dataEmissao || new Date();
+    const validadeDias = Math.max(1, Math.floor(toSafeNumber(validade, 15)));
+
+    if (descontoSeguro !== desconto) {
+      toast.info('Desconto ajustado para manter o total do orçamento válido');
+    }
 
     const orcamento: Omit<Orcamento, 'id' | 'numero'> = {
       clienteId: clienteId || `cliente-${Date.now()}`,
       clienteNome,
       data: baseDate,
-      validade: new Date(baseDate.getTime() + validade * 24 * 60 * 60 * 1000),
+      validade: new Date(baseDate.getTime() + validadeDias * 24 * 60 * 60 * 1000),
       status: initialData?.status || 'Aguardando Aprovacao',
-      itens,
+      itens: itensSanitizados,
       subtotal,
-      desconto,
+      desconto: descontoSeguro,
       total,
       observacoes: observacoes.trim() || undefined,
       aprovadoEm: initialData?.aprovadoEm,
@@ -287,8 +335,10 @@ export function OrcamentoForm({
     onSubmit(orcamento);
   };
 
-  const subtotal = itens.reduce((sum, item) => sum + item.subtotal, 0);
-  const total = subtotal - desconto;
+  const itensSanitizadosPreview = itens.map(sanitizeItem);
+  const subtotal = itensSanitizadosPreview.reduce((sum, item) => sum + item.subtotal, 0);
+  const descontoSeguroPreview = Math.min(Math.max(0, toSafeNumber(desconto, 0)), subtotal);
+  const total = subtotal - descontoSeguroPreview;
 
   return (
     <>
@@ -389,6 +439,7 @@ export function OrcamentoForm({
                 id="desconto"
                 type="number"
                 min="0"
+                max={subtotal}
                 step="0.01"
                 value={desconto}
                 onChange={(e) => setDesconto(Number(e.target.value))}
@@ -555,10 +606,10 @@ export function OrcamentoForm({
               <span>Subtotal:</span>
               <span className="font-mono">{formatCurrency(subtotal)}</span>
             </div>
-            {desconto > 0 && (
+            {descontoSeguroPreview > 0 && (
               <div className="flex justify-between text-sm text-destructive">
                 <span>Desconto:</span>
-                <span className="font-mono">-{formatCurrency(desconto)}</span>
+                <span className="font-mono">-{formatCurrency(descontoSeguroPreview)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold pt-2 border-t">
