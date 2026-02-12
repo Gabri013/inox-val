@@ -109,7 +109,7 @@ export default function UsuariosApproval() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Badge className="bg-blue-100 text-blue-700">
+        <Badge className="bg-info/15 text-info border border-info/30">
           {pendingCount} pendente(s)
         </Badge>
         <Select value={statusFiltro} onValueChange={(value) => setStatusFiltro(value as any)}>
@@ -133,7 +133,7 @@ export default function UsuariosApproval() {
           {usuarios.map((usuario) => (
             <div
               key={usuario.id}
-              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border rounded-lg bg-white"
+              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border border-border rounded-lg bg-card"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -196,7 +196,7 @@ export default function UsuariosApproval() {
             {historico.map((item) => {
               const data = item.createdAt?.toDate?.() || item.createdAt;
               return (
-                <div key={item.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-3 border rounded-lg bg-white">
+                <div key={item.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-3 border border-border rounded-lg bg-card">
                   <div>
                     <div className="font-medium">
                       {item.nome} — {item.role}

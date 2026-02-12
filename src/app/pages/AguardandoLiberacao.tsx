@@ -23,7 +23,7 @@ export function AguardandoLiberacao() {
   }, [location.state]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-2xl">Aguardando liberaÃ§Ã£o</CardTitle>
@@ -34,8 +34,8 @@ export function AguardandoLiberacao() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>PeÃ§a para o admin ativar seu usuÃ¡rio.</p>
           {email ? (
-            <div className="rounded-md border bg-white px-3 py-2 text-xs text-slate-600">
-              Email: <span className="font-medium text-slate-800">{email}</span>
+            <div className="rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground">
+              Email: <span className="font-medium text-foreground">{email}</span>
             </div>
           ) : null}
         </CardContent>

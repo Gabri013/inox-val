@@ -169,15 +169,15 @@ export function PrecificacaoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Calculator className="w-8 h-8 text-blue-600" />
+              <Calculator className="w-8 h-8 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Sistema de Precifica��o Inox</h1>
-                <p className="text-sm text-gray-600">Motor V2 - C�lculo Industrial com Nesting</p>
+                <h1 className="text-2xl font-bold text-foreground">Sistema de Precifica��o Inox</h1>
+                <p className="text-sm text-muted-foreground">Motor V2 - C�lculo Industrial com Nesting</p>
               </div>
             </div>
             {/* Configura��es globais removidas. Toda configura��o agora est� junto ao input do produto. */}
@@ -188,8 +188,8 @@ export function PrecificacaoPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Tipo de Produto</h2>
+            <div className="bg-card rounded-lg shadow-sm border border-border p-6 sticky top-24">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Tipo de Produto</h2>
               <div className="space-y-2">
                 {PRODUTOS.map((produto) => (
                   <button
@@ -201,8 +201,8 @@ export function PrecificacaoPage() {
                     }}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                       produtoSelecionado === produto.id
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-50 hover:bg-gray-100 text-gray-900"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-accent text-foreground"
                     }`}
                   >
                     {produto.label}
@@ -215,8 +215,8 @@ export function PrecificacaoPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* ConfigPanel removido: campos de configura��o migrar�o para o formul�rio do produto */}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">
                 {PRODUTOS.find((p) => p.id === produtoSelecionado)?.label}
               </h2>
 
@@ -257,7 +257,7 @@ export function PrecificacaoPage() {
 
               <button
                 onClick={handleCalcular}
-                className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="mt-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Calculator className="w-5 h-5" />
                 <span>Calcular Or�amento</span>

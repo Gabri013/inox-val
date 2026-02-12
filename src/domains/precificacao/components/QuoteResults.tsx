@@ -18,34 +18,34 @@ export function QuoteResults({ quote }: QuoteResultsProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-        <DollarSign className="w-6 h-6 text-green-600" />
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-6">
+      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+        <DollarSign className="w-6 h-6 text-success" />
         Resultado do Orçamento
       </h2>
 
       {/* Preço Final */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-6">
+      <div className="bg-gradient-to-br from-success/10 to-primary/10 border border-success/30 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Preço Sugerido</p>
-            <p className="text-4xl font-bold text-green-700">{formatMoney(quote.costs.priceSuggested)}</p>
+            <p className="text-sm text-muted-foreground mb-1">Preço Sugerido</p>
+            <p className="text-4xl font-bold text-success">{formatMoney(quote.costs.priceSuggested)}</p>
           </div>
-          <TrendingUp className="w-12 h-12 text-green-600 opacity-50" />
+          <TrendingUp className="w-12 h-12 text-success opacity-50" />
         </div>
-        <div className="mt-4 pt-4 border-t border-green-200">
-          <p className="text-sm text-gray-600">
-            Preço Mínimo Seguro: <span className="font-semibold text-gray-900">{formatMoney(quote.costs.priceMinSafe)}</span>
+        <div className="mt-4 pt-4 border-t border-border">
+          <p className="text-sm text-muted-foreground">
+            Preço Mínimo Seguro: <span className="font-semibold text-foreground">{formatMoney(quote.costs.priceMinSafe)}</span>
           </p>
-          <p className="text-sm text-gray-600 mt-1">
-            Custo Base: <span className="font-semibold text-gray-900">{formatMoney(quote.costs.costBase)}</span>
+          <p className="text-sm text-muted-foreground mt-1">
+            Custo Base: <span className="font-semibold text-foreground">{formatMoney(quote.costs.costBase)}</span>
           </p>
         </div>
       </div>
 
       {/* Detalhamento de Custos */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
           <Package className="w-5 h-5" />
           Detalhamento de Custos
         </h3>
@@ -54,9 +54,9 @@ export function QuoteResults({ quote }: QuoteResultsProps) {
           <CostRow label="Tubos" value={quote.costs.tubes} />
           {/* Detalhamento dos tubos */}
           {quote.tubeDetails && quote.tubeDetails.length > 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-2">
-              <div className="font-semibold text-gray-700 mb-1">Como foi calculado o custo dos tubos:</div>
-              <ul className="text-xs text-gray-700 space-y-1">
+            <div className="bg-muted/50 border border-border rounded-lg p-3 mt-2">
+              <div className="font-semibold text-foreground/90 mb-1">Como foi calculado o custo dos tubos:</div>
+              <ul className="text-xs text-muted-foreground space-y-1">
                 {quote.tubeDetails.map((t, idx) => (
                   <li key={idx}>
                     {t.label}: {t.metros.toFixed(2)} m × {t.kgpm.toFixed(3)} kg/m × R$ {t.precoKg.toFixed(2)} = <b>R$ {t.custo.toFixed(2)}</b>
@@ -75,35 +75,35 @@ export function QuoteResults({ quote }: QuoteResultsProps) {
       {/* Nesting Details */}
       {quote.nestingByGroup.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Nesting de Chapas</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-3">Nesting de Chapas</h3>
           <div className="space-y-3">
             {quote.nestingByGroup.map((group, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div key={idx} className="bg-muted/50 rounded-lg p-4 border border-border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-foreground">
                     {group.groupKey.split("|")[0]} - {group.groupKey.split("|")[1]}mm
                   </span>
-                  <span className="text-sm text-gray-600">{group.nesting.sheet.label}</span>
+                  <span className="text-sm text-muted-foreground">{group.nesting.sheet.label}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span className="text-gray-600">Chapas usadas:</span>{" "}
+                    <span className="text-muted-foreground">Chapas usadas:</span>{" "}
                     <span className="font-semibold">{group.nesting.sheetsUsed}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Eficiência:</span>{" "}
+                    <span className="text-muted-foreground">Eficiência:</span>{" "}
                     <span className="font-semibold">{formatPercent(group.nesting.efficiency)}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Área útil:</span>{" "}
+                    <span className="text-muted-foreground">Área útil:</span>{" "}
                     <span className="font-semibold">{group.nesting.areaUsedM2.toFixed(2)} m²</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Desperdício:</span>{" "}
+                    <span className="text-muted-foreground">Desperdício:</span>{" "}
                     <span className="font-semibold">{formatPercent(group.nesting.waste)}</span>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-gray-600">Kg comprado:</span>{" "}
+                    <span className="text-muted-foreground">Kg comprado:</span>{" "}
                     <span className="font-semibold">{group.kgBought} kg</span>
                   </div>
                 </div>
@@ -115,14 +115,14 @@ export function QuoteResults({ quote }: QuoteResultsProps) {
 
       {/* Warnings */}
       {quote.warnings.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-warning mb-2 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
             Avisos
           </h3>
           <ul className="space-y-1">
             {quote.warnings.map((warning, idx) => (
-              <li key={idx} className="text-sm text-yellow-700">• {warning}</li>
+              <li key={idx} className="text-sm text-warning">• {warning}</li>
             ))}
           </ul>
         </div>
@@ -142,9 +142,9 @@ function CostRow({ label, value }: { label: string; value: number }) {
   if (value === 0) return null;
 
   return (
-    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-      <span className="text-gray-600">{label}</span>
-      <span className="font-semibold text-gray-900">{formatMoney(value)}</span>
+    <div className="flex justify-between items-center py-2 border-b border-border/60">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold text-foreground">{formatMoney(value)}</span>
     </div>
   );
 }
