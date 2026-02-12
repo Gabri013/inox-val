@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormField } from "./FormField";
 
 interface MesasFormProps {
   formData: any;
   setFormData: (data: any) => void;
 }
+
+type LocalConfig = {
+  precoKg: number;
+  markup: number;
+  overheadPercent: number;
+  minMarginPct: number;
+};
 
 export function MesasForm({ formData, setFormData }: MesasFormProps) {
     // Configuração industrial local
@@ -14,7 +21,7 @@ export function MesasForm({ formData, setFormData }: MesasFormProps) {
       overheadPercent: 0,
       minMarginPct: 0.25,
     };
-    const [config, setConfig] = useState(() => ({
+    const [config, setConfig] = useState<LocalConfig>(() => ({
       precoKg: formData.precoKg ?? configDefaults.precoKg,
       markup: formData.markup ?? configDefaults.markup,
       overheadPercent: formData.overheadPercent ?? configDefaults.overheadPercent,
@@ -25,9 +32,9 @@ export function MesasForm({ formData, setFormData }: MesasFormProps) {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [config]);
     const parseInput = (val: string) => {
-      if (val === "") return "";
+      if (val.trim() === "") return null;
       const num = Number(val.replace(",", "."));
-      return isNaN(num) ? "" : num;
+      return Number.isNaN(num) ? null : num;
     };
   const update = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -44,7 +51,7 @@ export function MesasForm({ formData, setFormData }: MesasFormProps) {
               type="text"
               inputMode="decimal"
               value={config.precoKg === 0 ? "" : config.precoKg ?? ""}
-              onChange={e => setConfig(c => ({ ...c, precoKg: parseInput(e.target.value) }))}
+              onChange={(e) => setConfig((c) => ({ ...c, precoKg: parseInput(e.target.value) ?? 0 }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </FormField>
@@ -53,7 +60,7 @@ export function MesasForm({ formData, setFormData }: MesasFormProps) {
               type="text"
               inputMode="decimal"
               value={config.markup === 0 ? "" : config.markup ?? ""}
-              onChange={e => setConfig(c => ({ ...c, markup: parseInput(e.target.value) }))}
+              onChange={(e) => setConfig((c) => ({ ...c, markup: parseInput(e.target.value) ?? 0 }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </FormField>
@@ -62,7 +69,7 @@ export function MesasForm({ formData, setFormData }: MesasFormProps) {
               type="text"
               inputMode="decimal"
               value={config.overheadPercent === 0 ? "" : config.overheadPercent ?? ""}
-              onChange={e => setConfig(c => ({ ...c, overheadPercent: parseInput(e.target.value) }))}
+              onChange={(e) => setConfig((c) => ({ ...c, overheadPercent: parseInput(e.target.value) ?? 0 }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </FormField>
@@ -71,7 +78,7 @@ export function MesasForm({ formData, setFormData }: MesasFormProps) {
               type="text"
               inputMode="decimal"
               value={config.minMarginPct === 0 ? "" : config.minMarginPct ?? ""}
-              onChange={e => setConfig(c => ({ ...c, minMarginPct: parseInput(e.target.value) }))}
+              onChange={(e) => setConfig((c) => ({ ...c, minMarginPct: parseInput(e.target.value) ?? 0 }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </FormField>

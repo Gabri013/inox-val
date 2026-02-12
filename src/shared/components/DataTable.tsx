@@ -114,6 +114,11 @@ export interface DataTableProps<T> {
    * Mensagem quando não há dados
    */
   emptyMessage?: string;
+
+  /**
+   * Callback ao clicar em uma linha
+   */
+  onRowClick?: (row: T) => void;
 }
 
 export function DataTable<T>({

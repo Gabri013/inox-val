@@ -30,7 +30,7 @@ import { useDashboardMetrics } from "../hooks/useDashboardMetrics";
 export default function Dashboard() {
   const navigate = useNavigate();
   const metrics = useDashboardMetrics();
-  const { ordensProducaoList, ordensConcluidasList, materiaisCriticos, loading, error } = metrics;
+  const { ordensProducaoList, materiaisCriticos, loading, error } = metrics;
 
   // BarChart: Produção e Faturamento dos últimos 6 meses
   const now = new Date();
@@ -408,7 +408,6 @@ export default function Dashboard() {
     </div>
   );
 }
-
 
 
 

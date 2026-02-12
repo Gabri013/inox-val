@@ -79,6 +79,11 @@ export interface PricingTables {
   tubeKgPerMeter: Record<string, number>;
   angleKgPerMeter: Record<string, number>;
 
+  // preços específicos opcionais para tubos
+  tubeKgPrice?: Money;
+  tubeKgPricePes?: Money;
+  tubeKgPriceContraventamento?: Money;
+
   // acessórios
   accessoryUnitPrice: Record<string, Money>;
 
@@ -127,6 +132,7 @@ export interface QuoteResultV2 {
     priceMinSafe: Money;
     priceSuggested: Money;
   };
+  tubeDetails?: Array<{ label: string; metros: number; kgpm: number; precoKg: number; custo: number }>;
   warnings: string[];
 }
 

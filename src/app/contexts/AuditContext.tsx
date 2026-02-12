@@ -7,7 +7,6 @@ import {
   doc,
   getDoc,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   where,
@@ -126,7 +125,7 @@ export function AuditProvider({ children }: { children: ReactNode }) {
         unsubscribe = onSnapshot(ref, (snap) => {
           void (async () => {
             try {
-              const rawLogs = snap.docs.map((docSnap) => ({
+              const rawLogs: Array<Record<string, any>> = snap.docs.map((docSnap) => ({
                 id: docSnap.id,
                 ...(docSnap.data() as Record<string, any>),
               }));

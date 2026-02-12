@@ -12,9 +12,9 @@ export type PrioridadeOrdem = 'Normal' | 'Alta' | 'Urgente';
 
 export type StatusOrdem =
   | 'Pendente'
-  | 'Em Produção'
+  | 'Em Produ\u00e7\u00e3o'
   | 'Pausada'
-  | 'Concluída'
+  | 'Conclu\u00edda'
   | 'Cancelada';
 
 export type StatusCompra =
@@ -28,6 +28,7 @@ export type StatusCompra =
 export interface ItemMaterial {
   id: string;
   produtoId: string;
+  produtoCodigo?: string;
   produtoNome: string;
   quantidade: number;
   unidade: string;

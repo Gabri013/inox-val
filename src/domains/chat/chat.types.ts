@@ -35,6 +35,7 @@ export interface Conversa {
   participantes: string[]; // IDs dos usuários
   ultimaMensagem?: ChatMessage;
   mensagensNaoLidas: number;
+  empresaId?: string;
   criadoEm: string;
   atualizadoEm: string;
 }

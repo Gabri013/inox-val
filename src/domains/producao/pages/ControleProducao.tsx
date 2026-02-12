@@ -98,7 +98,6 @@ export default function ControleProducao() {
         item.produtoNome,
         item.numeroOrdem,
         item.orderId,
-        item.ordemId,
         item.clienteNome,
       ]
         .filter(Boolean)
@@ -134,7 +133,7 @@ export default function ControleProducao() {
 
       const ordens = result.data.items.filter((ordem: any) => ordem?.isDeleted !== true);
       for (const ordem of ordens) {
-        const orderId = ordem?.id || ordem?.ordemId || ordem?.orderId;
+        const orderId = ordem?.id;
         if (!orderId) {
           toast.error(`Ordem sem ID: ${ordem?.numero || 'sem numero'}`);
           continue;
@@ -374,7 +373,7 @@ export default function ControleProducao() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                           <div>
                             <p className="text-muted-foreground">Ordem</p>
-                            <p className="font-medium">{item.numeroOrdem || item.orderId || item.ordemId}</p>
+                            <p className="font-medium">{item.numeroOrdem || item.orderId}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Cliente</p>

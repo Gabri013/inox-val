@@ -1,5 +1,5 @@
-Ôªøimport { useState, useEffect, useRef } from "react";
-import { Calculator, Settings } from "lucide-react";
+import { useState } from "react";
+import { Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { buildBOMByTipo, type ProdutoTipo } from "../domains/precificacao/engine/bomBuilder";
 import { makeDefaultTables } from "../domains/precificacao/engine/defaultTables";
@@ -19,7 +19,7 @@ import { QuoteResults } from "./QuoteResults";
 
 const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
   { id: "bancadas", label: "Bancadas" },
-  { id: "lavatorios", label: "Lavat√≥rios" },
+  { id: "lavatorios", label: "LavatÛrios" },
   { id: "prateleiras", label: "Prateleiras" },
   { id: "mesas", label: "Mesas" },
   { id: "estanteCantoneira", label: "Estante Cantoneira" },
@@ -32,20 +32,17 @@ const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
 ];
 
 export function PrecificacaoPage() {
-  // Recalcula or√ßamento automaticamente ao mudar qualquer campo relevante
+  // Recalcula orÁamento automaticamente ao mudar qualquer campo relevante
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoTipo>("bancadas");
   const [formData, setFormData] = useState<any>({});
   const [quoteResult, setQuoteResult] = useState<any>(null);
 
   // ...existing code...
 
-  const firstRender = useRef(true);
 
-  // C√°lculo autom√°tico ao mudar qualquer campo relevante
-  // Remove c√°lculo autom√°tico para evitar toast ao abrir/alterar tipo de or√ßamento
+  // C·lculo autom·tico ao mudar qualquer campo relevante
+  // Remove c·lculo autom·tico para evitar toast ao abrir/alterar tipo de orÁamento
   // useEffect(() => {
-  //   if (firstRender.current) {
-  //     firstRender.current = false;
   //     return;
   //   }
   //   handleCalcular();
@@ -53,10 +50,10 @@ export function PrecificacaoPage() {
   // }, [formData, produtoSelecionado, precoKgInox, fatorVenda, sheetMode, sheetSelected, scrapMinPct]);
 
   const handleCalcular = () => {
-    // Passo 1: Valida√ß√µes espec√≠ficas antes de gerar BOM
+    // Passo 1: ValidaÁıes especÌficas antes de gerar BOM
     if (produtoSelecionado === "bancadas" && formData.orcamentoTipo === "bancadaComCuba") {
       if (!formData.cuba || !formData.cuba.L || !formData.cuba.W || !formData.cuba.H) {
-        toast.error("Para bancada com cuba, informe as dimens√µes da cuba (L, W, H).", {
+        toast.error("Para bancada com cuba, informe as dimensıes da cuba (L, W, H).", {
           duration: 4000,
         });
         return;
@@ -65,7 +62,7 @@ export function PrecificacaoPage() {
 
     if (produtoSelecionado === "lavatorios" && formData.tipo === "lavatorioPadrao") {
       if (!formData.modeloPadrao) {
-        toast.error("Para lavat√≥rio padr√£o, selecione o modelo (750/850/FDE).", {
+        toast.error("Para lavatÛrio padr„o, selecione o modelo (750/850/FDE).", {
           duration: 4000,
         });
         return;
@@ -98,10 +95,10 @@ export function PrecificacaoPage() {
       minMarginPct: formData.minMarginPct || 0.25,
     };
 
-    // Passo 4: Sheet policy (todas as fam√≠lias com mesmo modo)
+    // Passo 4: Sheet policy (todas as famÌlias com mesmo modo)
     const families = Array.from(new Set(bom.sheetParts.map((p) => p.family)));
     const sheetPolicyByFamily: Record<string, SheetPolicy> = {};
-    // L√≥gica autom√°tica: se quantidade >= 6, usa "bought"; sen√£o, "used"
+    // LÛgica autom·tica: se quantidade >= 6, usa "bought"; sen„o, "used"
     let quantidade = 1;
     if (formData.quantidade && Number.isFinite(formData.quantidade)) {
       quantidade = Number(formData.quantidade);
@@ -128,7 +125,7 @@ export function PrecificacaoPage() {
 
     if (errors.length) {
       toast.error(
-        `N√£o foi poss√≠vel calcular:\n${errors.slice(0, 5).map((e) => `‚Ä¢ ${e.message}`).join("\n")}`,
+        `N„o foi possÌvel calcular:\n${errors.slice(0, 5).map((e) => `ï ${e.message}`).join("\n")}`,
         { duration: 5000 }
       );
       return;
@@ -145,8 +142,8 @@ export function PrecificacaoPage() {
     setQuoteResult(quote);
 
     if (quote.warnings.length) {
-      toast("Aten√ß√£o", {
-        description: quote.warnings.slice(0, 3).map((w) => `‚Ä¢ ${w}`).join("\n"),
+      toast("AtenÁ„o", {
+        description: quote.warnings.slice(0, 3).map((w) => `ï ${w}`).join("\n"),
         duration: 5000,
       });
     }
@@ -160,11 +157,11 @@ export function PrecificacaoPage() {
             <div className="flex items-center gap-3">
               <Calculator className="w-8 h-8 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Sistema de Precifica√ß√£o Inox</h1>
-                <p className="text-sm text-gray-600">Motor V2 - C√°lculo Industrial com Nesting</p>
+                <h1 className="text-2xl font-bold text-gray-900">Sistema de PrecificaÁ„o Inox</h1>
+                <p className="text-sm text-gray-600">Motor V2 - C·lculo Industrial com Nesting</p>
               </div>
             </div>
-            {/* Configura√ß√µes globais removidas. Toda configura√ß√£o agora est√° junto ao input do produto. */}
+            {/* ConfiguraÁıes globais removidas. Toda configuraÁ„o agora est· junto ao input do produto. */}
           </div>
         </div>
       </header>
@@ -197,7 +194,7 @@ export function PrecificacaoPage() {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            {/* ConfigPanel removido: campos de configura√ß√£o migrar√£o para o formul√°rio do produto */}
+            {/* ConfigPanel removido: campos de configuraÁ„o migrar„o para o formul·rio do produto */}
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -244,7 +241,7 @@ export function PrecificacaoPage() {
                 className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Calculator className="w-5 h-5" />
-                <span>Calcular Or√ßamento</span>
+                <span>Calcular OrÁamento</span>
               </button>
             </div>
 

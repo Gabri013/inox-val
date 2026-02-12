@@ -125,7 +125,7 @@ export default function Ordens() {
 
   const getStatusOP = (status: string): StatusOP => {
     switch (status) {
-      case "Em Produção":
+      case "Em Produ\u00e7\u00e3o":
         return "EM_PRODUCAO";
       case "Concluída":
         return "CONCLUIDA";
@@ -199,8 +199,8 @@ export default function Ordens() {
       description: "Ordens cadastradas"
     },
     {
-      title: "Em Produção",
-      value: todasOrdens.filter(o => o.status === "Em Produção").length,
+      title: "Em Produ\u00e7\u00e3o",
+      value: todasOrdens.filter(o => o.status === "Em Produ\u00e7\u00e3o").length,
       description: "Atualmente produzindo",
       className: "border-blue-200 dark:border-blue-800"
     },
@@ -222,7 +222,7 @@ export default function Ordens() {
     switch (status) {
       case "Concluída":
         return <CheckCircle className="size-3" />;
-      case "Em Produção":
+      case "Em Produ\u00e7\u00e3o":
         return <Play className="size-3" />;
       case "Pausada":
         return <Pause className="size-3" />;
@@ -235,7 +235,7 @@ export default function Ordens() {
     switch (status) {
       case "Concluída":
         return "default";
-      case "Em Produção":
+      case "Em Produ\u00e7\u00e3o":
         return "secondary";
       case "Cancelada":
         return "destructive";
@@ -517,7 +517,7 @@ export default function Ordens() {
           toast.error(result.error || "N?o foi poss?vel pausar a ordem");
         }
       },
-      show: (ord: OrdemProducao) => ord.status === "Em Produ??o"
+      show: (ord: OrdemProducao) => ord.status === "Em Produ\u00e7\u00e3o"
     },
     {
       icon: Play,
@@ -543,7 +543,7 @@ export default function Ordens() {
           toast.error(result.error || "N?o foi poss?vel concluir a ordem");
         }
       },
-      show: (ord: OrdemProducao) => ord.status === "Em Produ??o"
+      show: (ord: OrdemProducao) => ord.status === "Em Produ\u00e7\u00e3o"
     },
     {
       icon: AlertTriangle,
@@ -580,7 +580,7 @@ export default function Ordens() {
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="Pendente">Pendente</SelectItem>
-            <SelectItem value="Em Produção">Em Produção</SelectItem>
+            <SelectItem value="Em Produ\u00e7\u00e3o">Em Produ\u00e7\u00e3o</SelectItem>
             <SelectItem value="Pausada">Pausada</SelectItem>
             <SelectItem value="Concluída">Concluída</SelectItem>
             <SelectItem value="Cancelada">Cancelada</SelectItem>

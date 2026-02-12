@@ -304,7 +304,7 @@ class ProducaoItensService {
         empresaId,
         collectionPath: `ordens_producao/${orderId}/itens`,
         documentId: docRef.id,
-        after: payload as FirestoreData,
+        after: payload as unknown as FirestoreData,
       });
     }
   }

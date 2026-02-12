@@ -117,8 +117,8 @@ export function buildBOM_Bancadas(
   // DEBUG: logar input recebido
   console.log('[BOM] input recebido:', JSON.stringify(input));
   // Conversão defensiva dos campos de estrutura
-  input.quantidadePes = Number(input.quantidadePes);
-  input.alturaPes = Number(input.alturaPes);
+  const quantidadePes = Number(input.quantidadePes);
+  const alturaPes = Number(input.alturaPes);
   const tuboValido = ["tuboRedondo", "tuboQuadrado", "tuboRetangular"].includes(input.tipoTuboPes);
 
   // Validação mínima de dimensões
@@ -126,7 +126,7 @@ export function buildBOM_Bancadas(
     throw new Error("Preencha dimensões realistas: comprimento e largura mínimos de 300mm e espessura maior que zero.");
   }
   // Validação defensiva para campos essenciais de estrutura
-  if (!input.alturaPes || !input.quantidadePes || !tuboValido) {
+  if (!alturaPes || !quantidadePes || !tuboValido) {
     throw new Error("Preencha todos os campos de estrutura: quantidade de pés, tipo e altura dos pés.");
   }
   const sheetParts: SheetPartRect[] = [];
@@ -182,10 +182,10 @@ export function buildBOM_Bancadas(
   }
 
   // 1.5 Estrutura tubular (pés + travessas)
-  const qtdPes = input.quantidadePes;
-  const alturaPes = mm(input.alturaPes);
+  const qtdPes = quantidadePes;
+  const alturaPesMm = mm(alturaPes);
 
-  const metrosPes = mFromMm(qtdPes * alturaPes);
+  const metrosPes = mFromMm(qtdPes * alturaPesMm);
 
   const perimetro = mFromMm(2 * (L + W));
   const metrosTravessas = input.temContraventamento ? perimetro : perimetro * 0.5;
@@ -333,6 +333,7 @@ export interface MesasInput {
   alturaPes: number;
   tipoPrateleiraInferior: TipoPrateleira;
   temContraventamento: boolean;
+  usarMaoFrancesa?: boolean;
 }
 
 export function buildBOM_Mesas(input: MesasInput): BuiltBOM {

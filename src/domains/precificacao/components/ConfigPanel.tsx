@@ -35,9 +35,9 @@ export function ConfigPanel({
 }: ConfigPanelProps) {
   // Permite vírgula ou ponto e campo vazio
   const parseInput = (val: string) => {
-    if (val === "") return "";
+    if (val.trim() === "") return null;
     const num = Number(val.replace(",", "."));
-    return isNaN(num) ? "" : num;
+    return Number.isNaN(num) ? null : num;
   };
 
   return (
@@ -53,7 +53,7 @@ export function ConfigPanel({
             type="text"
             inputMode="decimal"
             value={precoKgInox === 0 ? "" : precoKgInox ?? ""}
-            onChange={(e) => setPrecoKgInox(parseInput(e.target.value))}
+            onChange={(e) => setPrecoKgInox(parseInput(e.target.value) ?? 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -65,7 +65,7 @@ export function ConfigPanel({
             type="text"
             inputMode="decimal"
             value={precoKgTuboPes === 0 ? "" : precoKgTuboPes ?? ""}
-            onChange={(e) => setPrecoKgTuboPes(parseInput(e.target.value))}
+            onChange={(e) => setPrecoKgTuboPes(parseInput(e.target.value) ?? 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -77,7 +77,7 @@ export function ConfigPanel({
             type="text"
             inputMode="decimal"
             value={precoKgTuboContraventamento === 0 ? "" : precoKgTuboContraventamento ?? ""}
-            onChange={(e) => setPrecoKgTuboContraventamento(parseInput(e.target.value))}
+            onChange={(e) => setPrecoKgTuboContraventamento(parseInput(e.target.value) ?? 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -89,7 +89,7 @@ export function ConfigPanel({
             type="text"
             inputMode="decimal"
             value={fatorVenda === 0 ? "" : fatorVenda ?? ""}
-            onChange={(e) => setFatorVenda(parseInput(e.target.value))}
+            onChange={(e) => setFatorVenda(parseInput(e.target.value) ?? 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -116,7 +116,7 @@ export function ConfigPanel({
             type="text"
             inputMode="decimal"
             value={scrapMinPct === 0 ? "" : scrapMinPct ?? ""}
-            onChange={(e) => setScrapMinPct(parseInput(e.target.value))}
+            onChange={(e) => setScrapMinPct(parseInput(e.target.value) ?? 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <p className="mt-1 text-xs text-gray-600">
@@ -168,4 +168,3 @@ export function ConfigPanel({
     </div>
   );
 }
-
