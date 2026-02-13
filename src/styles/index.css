@@ -1,3 +1,214 @@
+:root {
+  /* Paleta Base Dark */
+  --bg-primary: #0B0F14;
+  --bg-secondary: #101722;
+  --surface-1: #121826;
+  --surface-2: #1A2233;
+  --border-subtle: #2A3448;
+  
+  /* Cores Primárias */
+  --primary: #2962FF;
+  --primary-hover: #1E4FD9;
+  --primary-light: #4A7AFF;
+  
+  /* Cores Secundárias */
+  --secondary: #FF6D00;
+  --secondary-hover: #E65C00;
+  
+  /* Acento */
+  --accent-cyan: #00C8FF;
+  
+  /* Estados */
+  --success: #00C853;
+  --error: #D32F2F;
+  --warning: #F9A825;
+  
+  /* Texto */
+  --text-primary: #E6EDF7;
+  --text-secondary: #A9B4C6;
+  --text-disabled: #5F6C80;
+  
+  /* Sombras */
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 20px 50px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 30px 70px rgba(0, 0, 0, 0.45);
+  
+  /* Glow */
+  --glow-primary: 0 0 20px rgba(41, 98, 255, 0.35);
+  --glow-secondary: 0 0 20px rgba(255, 109, 0, 0.35);
+  --glow-cyan: 0 0 20px rgba(0, 200, 255, 0.35);
+  
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  
+  /* Transitions */
+  --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* Custom scrollbar premium */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--surface-1);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--surface-1);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary), var(--accent-cyan));
+  border-radius: 10px;
+  border: 2px solid var(--surface-1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--primary-hover), var(--primary));
+}
+
+/* Base */
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Typography Scale */
+h1 {
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Glass Effect Technical */
+.glass-technical {
+  background: rgba(26, 34, 51, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Elevation */
+.elevated {
+  box-shadow: var(--shadow-md);
+}
+
+.elevated-high {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Glow Effects */
+.glow-primary {
+  box-shadow: var(--glow-primary);
+}
+
+.glow-hover:hover {
+  box-shadow: var(--glow-primary);
+  transform: translateY(-2px);
+  transition: all var(--transition-smooth);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(41, 98, 255, 0.3);
+  color: var(--text-primary);
+}
+
+/* Focus */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Animations */
+@keyframes float-technical {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(41, 98, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(41, 98, 255, 0.6);
+  }
+}
+
+@keyframes shimmer-technical {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-float-technical {
+  animation: float-technical 4s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Grid System */
+.grid-industrial {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 120px;
+}
+
+@media (max-width: 1440px) {
+  .grid-industrial {
+    padding: 0 60px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .grid-industrial {
+    padding: 0 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-industrial {
+    padding: 0 16px;
+    gap: 16px;
+  }
+}
