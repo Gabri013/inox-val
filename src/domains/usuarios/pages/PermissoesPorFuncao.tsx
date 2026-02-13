@@ -11,11 +11,11 @@ import {
   defaultPermissionsByRole,
   moduleLabels,
   permissionLabels,
-  useRolePermissions,
   type Module,
   type PermissionsMap,
   type UserRole,
-} from '@/domains/usuarios';
+} from '@/domains/usuarios/usuarios.types';
+import { useRolePermissions } from '@/domains/usuarios/PermissionsProvider';
 import { toast } from 'sonner';
 
 const roles: UserRole[] = [

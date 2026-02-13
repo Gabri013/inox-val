@@ -1,214 +1,191 @@
+import { Suspense, lazy, type ComponentType, type ReactNode } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import Root from "./components/layout/Root";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ResetPassword from "./pages/ResetPassword";
-import AguardandoLiberacao from "./pages/AguardandoLiberacao";
-import Clientes from "./pages/Clientes";
-import Produtos from "./pages/Produtos";
-import Estoque from "./pages/Estoque";
-import Orcamentos from "./pages/Orcamentos";
-import Ordens from "./pages/Ordens";
-import Compras from "./pages/Compras";
-import Auditoria from "./pages/Auditoria";
-import { MinhasConfiguracoes } from "@/domains/vendedores";
-import NotFound from "./pages/NotFound";
-import Ajuda from "./pages/Ajuda";
-import Perfil from "./pages/Perfil";
-import Configuracoes from "./pages/Configuracoes";
-import PrecificacaoPublic from "./pages/PrecificacaoPublic";
-import SemAcesso from "./pages/SemAcesso";
-import PrecificacaoPage from "@/domains/precificacao/pages/Precificacao";
 
-// Importar pÃ¡ginas de Clientes e Produtos
-import { ClienteDetail, ClienteForm } from "@/domains/clientes";
-import { ProdutoDetail, ProdutoForm } from "@/domains/produtos";
-import { EstoqueMovimentos, EstoqueMovimentoForm, EstoqueProdutoDetail } from "@/domains/estoque";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AguardandoLiberacao = lazy(() => import("./pages/AguardandoLiberacao"));
+const Clientes = lazy(() => import("./pages/Clientes"));
+const Produtos = lazy(() => import("./pages/Produtos"));
+const Estoque = lazy(() => import("./pages/Estoque"));
+const Orcamentos = lazy(() => import("./pages/Orcamentos"));
+const Ordens = lazy(() => import("./pages/Ordens"));
+const Compras = lazy(() => import("./pages/Compras"));
+const Auditoria = lazy(() => import("./pages/Auditoria"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Ajuda = lazy(() => import("./pages/Ajuda"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const PrecificacaoPublic = lazy(() => import("./pages/PrecificacaoPublic"));
+const SemAcesso = lazy(() => import("./pages/SemAcesso"));
 
-// Importar pÃ¡ginas de ProduÃ§Ã£o
-import { ApontamentoOP, ControleProducao, DashboardTV } from "@/domains/producao";
+const MinhasConfiguracoes = lazy(async () => {
+  const mod = await import("@/domains/vendedores");
+  return { default: mod.MinhasConfiguracoes };
+});
+const PrecificacaoPage = lazy(() => import("@/domains/precificacao/pages/Precificacao"));
 
-// Importar pÃ¡ginas de UsuÃ¡rios
-import { UsuariosList, UsuarioForm, UsuarioDetail, UsuariosApproval, PermissoesPorFuncao } from "@/domains/usuarios";
+const ClienteDetail = lazy(async () => {
+  const mod = await import("@/domains/clientes");
+  return { default: mod.ClienteDetail };
+});
+const ClienteForm = lazy(async () => {
+  const mod = await import("@/domains/clientes");
+  return { default: mod.ClienteForm };
+});
+const ProdutoDetail = lazy(async () => {
+  const mod = await import("@/domains/produtos");
+  return { default: mod.ProdutoDetail };
+});
+const ProdutoForm = lazy(async () => {
+  const mod = await import("@/domains/produtos");
+  return { default: mod.ProdutoForm };
+});
+const EstoqueMovimentos = lazy(async () => {
+  const mod = await import("@/domains/estoque");
+  return { default: mod.EstoqueMovimentos };
+});
+const EstoqueMovimentoForm = lazy(async () => {
+  const mod = await import("@/domains/estoque");
+  return { default: mod.EstoqueMovimentoForm };
+});
+const EstoqueProdutoDetail = lazy(async () => {
+  const mod = await import("@/domains/estoque");
+  return { default: mod.EstoqueProdutoDetail };
+});
 
-// Importar pÃ¡ginas de Chat
-import { ChatPage } from "@/domains/chat";
+const ApontamentoOP = lazy(async () => {
+  const mod = await import("@/domains/producao");
+  return { default: mod.ApontamentoOP };
+});
+const ControleProducao = lazy(async () => {
+  const mod = await import("@/domains/producao");
+  return { default: mod.ControleProducao };
+});
+const DashboardTV = lazy(async () => {
+  const mod = await import("@/domains/producao");
+  return { default: mod.DashboardTV };
+});
 
-// Importar pÃ¡ginas de AnÃºncios
-import { AnuncioForm, AnunciosList } from "@/domains/anuncios";
+const UsuariosList = lazy(async () => {
+  const mod = await import("@/domains/usuarios");
+  return { default: mod.UsuariosList };
+});
+const UsuarioForm = lazy(async () => {
+  const mod = await import("@/domains/usuarios");
+  return { default: mod.UsuarioForm };
+});
+const UsuarioDetail = lazy(async () => {
+  const mod = await import("@/domains/usuarios");
+  return { default: mod.UsuarioDetail };
+});
+const UsuariosApproval = lazy(async () => {
+  const mod = await import("@/domains/usuarios");
+  return { default: mod.UsuariosApproval };
+});
+const PermissoesPorFuncao = lazy(async () => {
+  const mod = await import("@/domains/usuarios");
+  return { default: mod.PermissoesPorFuncao };
+});
+
+const ChatPage = lazy(async () => {
+  const mod = await import("@/domains/chat");
+  return { default: mod.ChatPage };
+});
+
+const AnuncioForm = lazy(async () => {
+  const mod = await import("@/domains/anuncios");
+  return { default: mod.AnuncioForm };
+});
+const AnunciosList = lazy(async () => {
+  const mod = await import("@/domains/anuncios");
+  return { default: mod.AnunciosList };
+});
+
+function PageLoader() {
+  return <div style={{ padding: "1rem", color: "#6B7280" }}>Carregando...</div>;
+}
+
+function withSuspense(component: ReactNode) {
+  return <Suspense fallback={<PageLoader />}>{component}</Suspense>;
+}
+
+function withProtected(Component: ComponentType, requiredModule?: string) {
+  return withSuspense(
+    <ProtectedRoute requiredModule={requiredModule}>
+      <Component />
+    </ProtectedRoute>,
+  );
+}
 
 export const router = createBrowserRouter([
   {
     path: "/login",
-    Component: Login,
+    element: withSuspense(<Login />),
   },
   {
     path: "/precificacao-teste",
-    Component: PrecificacaoPublic,
+    element: withSuspense(<PrecificacaoPublic />),
   },
   {
     path: "/signup",
-    Component: Signup,
+    element: withSuspense(<Signup />),
   },
   {
     path: "/reset-password",
-    Component: ResetPassword,
+    element: withSuspense(<ResetPassword />),
   },
   {
     path: "/aguardando-liberacao",
-    Component: AguardandoLiberacao,
+    element: withSuspense(<AguardandoLiberacao />),
   },
   {
     path: "/sem-acesso",
-    Component: SemAcesso,
+    element: withSuspense(<SemAcesso />),
   },
   {
     path: "/",
     Component: Root,
     children: [
-      { 
-        index: true, 
-        element: <ProtectedRoute requiredModule="dashboard"><Dashboard /></ProtectedRoute>
-      },
-      { 
-        path: "clientes", 
-        element: <ProtectedRoute requiredModule="clientes"><Clientes /></ProtectedRoute>
-      },
-      { 
-        path: "clientes/novo", 
-        element: <ProtectedRoute requiredModule="clientes"><ClienteForm /></ProtectedRoute>
-      },
-      { 
-        path: "clientes/:id", 
-        element: <ProtectedRoute requiredModule="clientes"><ClienteDetail /></ProtectedRoute>
-      },
-      { 
-        path: "clientes/:id/editar", 
-        element: <ProtectedRoute requiredModule="clientes"><ClienteForm /></ProtectedRoute>
-      },
-      { 
-        path: "produtos", 
-        element: <ProtectedRoute requiredModule="produtos"><Produtos /></ProtectedRoute>
-      },
-      { 
-        path: "produtos/novo", 
-        element: <ProtectedRoute requiredModule="produtos"><ProdutoForm /></ProtectedRoute>
-      },
-      { 
-        path: "produtos/:id", 
-        element: <ProtectedRoute requiredModule="produtos"><ProdutoDetail /></ProtectedRoute>
-      },
-      { 
-        path: "produtos/:id/editar", 
-        element: <ProtectedRoute requiredModule="produtos"><ProdutoForm /></ProtectedRoute>
-      },
-      { 
-        path: "estoque", 
-        element: <ProtectedRoute requiredModule="estoque"><Estoque /></ProtectedRoute>
-      },
-      {
-        path: "estoque/produto/:id",
-        element: <ProtectedRoute requiredModule="estoque"><EstoqueProdutoDetail /></ProtectedRoute>
-      },
-      {
-        path: "estoque/movimentos",
-        element: <ProtectedRoute requiredModule="estoque"><EstoqueMovimentos /></ProtectedRoute>
-      },
-      {
-        path: "estoque/movimento/novo",
-        element: <ProtectedRoute requiredModule="estoque"><EstoqueMovimentoForm /></ProtectedRoute>
-      },
-      { 
-        path: "orcamentos", 
-        element: <ProtectedRoute requiredModule="orcamentos"><Orcamentos /></ProtectedRoute>
-      },
-      { 
-        path: "ordens", 
-        element: <ProtectedRoute requiredModule="ordens"><Ordens /></ProtectedRoute>
-      },
-      { 
-        path: "compras", 
-        element: <ProtectedRoute requiredModule="compras"><Compras /></ProtectedRoute>
-      },
-      { 
-        path: "auditoria", 
-        element: <ProtectedRoute requiredModule="auditoria"><Auditoria /></ProtectedRoute>
-      },
-      { 
-        path: "minhas-configuracoes", 
-        element: <ProtectedRoute><MinhasConfiguracoes /></ProtectedRoute>
-      },
-      { 
-        path: "ajuda", 
-        element: <ProtectedRoute><Ajuda /></ProtectedRoute>
-      },
-      { 
-        path: "perfil", 
-        element: <ProtectedRoute><Perfil /></ProtectedRoute>
-      },
-      { 
-        path: "configuracoes", 
-        element: <ProtectedRoute requiredModule="configuracoes"><Configuracoes /></ProtectedRoute>
-      },
-      { 
-        path: "precificacao", 
-        element: <ProtectedRoute requiredModule="precificacao"><PrecificacaoPage /></ProtectedRoute>
-      },
-      { 
-        path: "controle-producao", 
-        element: <ProtectedRoute requiredModule="producao"><ControleProducao /></ProtectedRoute>
-      },
-      { 
-        path: "dashboard-tv", 
-        element: <ProtectedRoute requiredModule="producao"><DashboardTV /></ProtectedRoute>
-      },
-      { 
-        path: "apontamento-op", 
-        element: <ProtectedRoute requiredModule="producao"><ApontamentoOP /></ProtectedRoute>
-      },
-      { 
-        path: "usuarios", 
-        element: <ProtectedRoute requiredModule="usuarios"><UsuariosList /></ProtectedRoute>
-      },
-      { 
-        path: "usuarios/aprovacoes", 
-        element: <ProtectedRoute requiredModule="usuarios"><UsuariosApproval /></ProtectedRoute>
-      },
-      { 
-        path: "usuarios/permissoes", 
-        element: <ProtectedRoute requiredModule="usuarios"><PermissoesPorFuncao /></ProtectedRoute>
-      },
-      { 
-        path: "usuarios/novo", 
-        element: <ProtectedRoute requiredModule="usuarios"><UsuarioForm /></ProtectedRoute>
-      },
-      { 
-        path: "usuarios/:id", 
-        element: <ProtectedRoute requiredModule="usuarios"><UsuarioDetail /></ProtectedRoute>
-      },
-      { 
-        path: "usuarios/:id/editar", 
-        element: <ProtectedRoute requiredModule="usuarios"><UsuarioForm /></ProtectedRoute>
-      },
-      { 
-        path: "chat", 
-        element: <ProtectedRoute requiredModule="chat"><ChatPage /></ProtectedRoute>
-      },
-      { 
-        path: "anuncios", 
-        element: <ProtectedRoute requiredModule="anuncios"><AnunciosList /></ProtectedRoute>
-      },
-      { 
-        path: "anuncios/novo", 
-        element: <ProtectedRoute requiredModule="anuncios"><AnuncioForm /></ProtectedRoute>
-      },
-      { 
-        path: "anuncios/:id/editar", 
-        element: <ProtectedRoute requiredModule="anuncios"><AnuncioForm /></ProtectedRoute>
-      },
-      { path: "*", Component: NotFound },
+      { index: true, element: withProtected(Dashboard, "dashboard") },
+      { path: "clientes", element: withProtected(Clientes, "clientes") },
+      { path: "clientes/novo", element: withProtected(ClienteForm, "clientes") },
+      { path: "clientes/:id", element: withProtected(ClienteDetail, "clientes") },
+      { path: "clientes/:id/editar", element: withProtected(ClienteForm, "clientes") },
+      { path: "produtos", element: withProtected(Produtos, "produtos") },
+      { path: "produtos/novo", element: withProtected(ProdutoForm, "produtos") },
+      { path: "produtos/:id", element: withProtected(ProdutoDetail, "produtos") },
+      { path: "produtos/:id/editar", element: withProtected(ProdutoForm, "produtos") },
+      { path: "estoque", element: withProtected(Estoque, "estoque") },
+      { path: "estoque/produto/:id", element: withProtected(EstoqueProdutoDetail, "estoque") },
+      { path: "estoque/movimentos", element: withProtected(EstoqueMovimentos, "estoque") },
+      { path: "estoque/movimento/novo", element: withProtected(EstoqueMovimentoForm, "estoque") },
+      { path: "orcamentos", element: withProtected(Orcamentos, "orcamentos") },
+      { path: "ordens", element: withProtected(Ordens, "ordens") },
+      { path: "compras", element: withProtected(Compras, "compras") },
+      { path: "auditoria", element: withProtected(Auditoria, "auditoria") },
+      { path: "minhas-configuracoes", element: withProtected(MinhasConfiguracoes) },
+      { path: "ajuda", element: withProtected(Ajuda) },
+      { path: "perfil", element: withProtected(Perfil) },
+      { path: "configuracoes", element: withProtected(Configuracoes, "configuracoes") },
+      { path: "precificacao", element: withProtected(PrecificacaoPage, "precificacao") },
+      { path: "controle-producao", element: withProtected(ControleProducao, "producao") },
+      { path: "dashboard-tv", element: withProtected(DashboardTV, "producao") },
+      { path: "apontamento-op", element: withProtected(ApontamentoOP, "producao") },
+      { path: "usuarios", element: withProtected(UsuariosList, "usuarios") },
+      { path: "usuarios/aprovacoes", element: withProtected(UsuariosApproval, "usuarios") },
+      { path: "usuarios/permissoes", element: withProtected(PermissoesPorFuncao, "usuarios") },
+      { path: "usuarios/novo", element: withProtected(UsuarioForm, "usuarios") },
+      { path: "usuarios/:id", element: withProtected(UsuarioDetail, "usuarios") },
+      { path: "usuarios/:id/editar", element: withProtected(UsuarioForm, "usuarios") },
+      { path: "chat", element: withProtected(ChatPage, "chat") },
+      { path: "anuncios", element: withProtected(AnunciosList, "anuncios") },
+      { path: "anuncios/novo", element: withProtected(AnuncioForm, "anuncios") },
+      { path: "anuncios/:id/editar", element: withProtected(AnuncioForm, "anuncios") },
+      { path: "*", element: withSuspense(<NotFound />) },
     ],
   },
 ]);
