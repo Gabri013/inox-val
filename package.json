@@ -15,6 +15,7 @@
     "disk-survey": "npm run disk-survey:build && node tools/disk-survey/dist/cli.js",
     "pricing:calibrate": "node scripts/calibrate-hybrid-pricing.mjs",
     "pricing:validate": "node scripts/validate-hybrid-pricing.mjs",
+    "pricing:full": "npm run pricing:calibrate && npm run pricing:validate && npm run typecheck",
     "preview": "vite preview",
     "seed": "node scripts/populate-firestore.js",
     "db:reset": "node scripts/db-reset.js",

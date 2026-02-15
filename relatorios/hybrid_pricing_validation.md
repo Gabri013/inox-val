@@ -1,6 +1,6 @@
 # Validação da Precificação Híbrida
 
-Gerado em: 2026-02-15T14:19:57.759Z
+Gerado em: 2026-02-15T14:21:02.620Z
 
 ## Cobertura
 - Registros avaliados: **1018**
