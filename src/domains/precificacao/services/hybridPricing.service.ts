@@ -135,7 +135,8 @@ export const hybridPricingService = {
 
     const fatorComplexidade = 1 + complexityBonus;
     const fatorUrgencia = input.urgencia === "super" ? 1.12 : input.urgencia === "urgente" ? 1.05 : 1;
-    const fatorHistorico = fatorFamilia * fatorSubfamilia * fatorDimensao * fatorComplexidade * fatorUrgencia;
+    const fatorHistoricoRaw = fatorFamilia * fatorSubfamilia * fatorDimensao * fatorComplexidade * fatorUrgencia;
+    const fatorHistorico = clamp(fatorHistoricoRaw, 0.9, 1.45);
 
     const precoRecomendado = input.precoBaseAtual * fatorHistorico;
     const precoMin = precoRecomendado * hybridConfig.fallbackRange.min;
@@ -163,6 +164,8 @@ export const hybridPricingService = {
       justificativa.push(`Complexidade aplicada (${((fatorComplexidade - 1) * 100).toFixed(0)}%).`);
     if (fatorUrgencia !== 1)
       justificativa.push(`Urgência aplicada (${input.urgencia === "super" ? "super" : "urgente"}).`);
+    if (fatorHistorico !== fatorHistoricoRaw)
+      justificativa.push("Fator histórico ajustado por limite de segurança (0.90–1.45).");
     if (justificativa.length === 0)
       justificativa.push("Sem dados históricos suficientes. Mantido fator neutro (1.00).");
 
@@ -187,5 +190,6 @@ export const hybridPricingService = {
   },
 };
 
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const round2 = (value: number) => Math.round(value * 100) / 100;
 const round4 = (value: number) => Math.round(value * 10000) / 10000;
