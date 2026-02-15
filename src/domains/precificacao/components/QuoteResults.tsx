@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { DollarSign, Package, TrendingUp, AlertTriangle, MessageCircle, ShieldCheck, CreditCard, Wrench } from "lucide-react";
+import { toast } from "sonner";
 import type { QuoteResultV2 } from "../domains/precificacao/engine/quoteV2";
 import type { HybridPricingResult } from "../types/hybridPricing";
 
 interface QuoteResultsProps {
   quote: QuoteResultV2;
   hybrid?: HybridPricingResult;
+  onRegistrarFechamento?: (payload: { status: "ganho" | "perdido"; precoFechado: number; motivo?: string }) => Promise<void> | void;
 }
 
-export function QuoteResults({ quote, hybrid }: QuoteResultsProps) {
+export function QuoteResults({ quote, hybrid, onRegistrarFechamento }: QuoteResultsProps) {
+  const [statusFechamento, setStatusFechamento] = useState<"ganho" | "perdido">("ganho");
+  const [precoFechado, setPrecoFechado] = useState<string>("");
+  const [motivo, setMotivo] = useState<string>("");
+  const [savingFechamento, setSavingFechamento] = useState(false);
   const formatMoney = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -36,6 +43,31 @@ export function QuoteResults({ quote, hybrid }: QuoteResultsProps) {
   const handleWhatsAppShare = () => {
     const url = `https://wa.me/?text=${buildWhatsAppText()}`;
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleRegistrarFechamento = async () => {
+    if (!onRegistrarFechamento) return;
+    const preco = Number(precoFechado);
+    if (!Number.isFinite(preco) || preco <= 0) {
+      toast.error("Informe um preço fechado válido.");
+      return;
+    }
+
+    try {
+      setSavingFechamento(true);
+      await onRegistrarFechamento({
+        status: statusFechamento,
+        precoFechado: preco,
+        motivo: motivo.trim() || undefined,
+      });
+      toast.success("Fechamento registrado com sucesso.");
+      setPrecoFechado("");
+      setMotivo("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao registrar fechamento.");
+    } finally {
+      setSavingFechamento(false);
+    }
   };
 
   return (
@@ -104,6 +136,44 @@ export function QuoteResults({ quote, hybrid }: QuoteResultsProps) {
           Compartilhar proposta no WhatsApp
         </button>
       </div>
+
+      {onRegistrarFechamento && (
+        <div className="border border-border rounded-lg p-4 bg-muted/30">
+          <h3 className="font-semibold text-foreground mb-3">Registrar fechamento (ganho/perdido)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <select
+              value={statusFechamento}
+              onChange={(e) => setStatusFechamento(e.target.value as "ganho" | "perdido")}
+              className="px-3 py-2 rounded-md border border-border bg-background"
+            >
+              <option value="ganho">Ganho</option>
+              <option value="perdido">Perdido</option>
+            </select>
+            <input
+              value={precoFechado}
+              onChange={(e) => setPrecoFechado(e.target.value)}
+              placeholder="Preço fechado"
+              type="number"
+              className="px-3 py-2 rounded-md border border-border bg-background"
+            />
+            <input
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Motivo (opcional)"
+              className="px-3 py-2 rounded-md border border-border bg-background md:col-span-2"
+            />
+          </div>
+          <div className="mt-3">
+            <button
+              onClick={handleRegistrarFechamento}
+              disabled={savingFechamento}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium disabled:opacity-60"
+            >
+              {savingFechamento ? "Salvando..." : "Salvar fechamento"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {hybrid && (
         <div className="bg-primary/5 border border-primary/30 rounded-lg p-6">

@@ -441,6 +441,40 @@ export function PrecificacaoPage() {
     if (classic) setResult(classic);
   };
 
+  const handleRegistrarFechamentoClassico = async (payload: {
+    status: "ganho" | "perdido";
+    precoFechado: number;
+    motivo?: string;
+  }) => {
+    if (!result || result.kind !== "default") return;
+
+    const createResult = await precificacaoService.create({
+      mode: "classic",
+      sheetName: produtoSelecionado,
+      inputFileName: formData.importedFileName,
+      overrides: {
+        pricingProfile: formData.pricingProfile,
+        urgencia: formData.urgencia || "normal",
+      },
+      outputs: {
+        custos: result.quote.costs,
+        historico: result.hybrid,
+        fechamento: {
+          ...payload,
+          deltaPercent: Number(
+            (((payload.precoFechado - (result.hybrid?.precoIdeal ?? result.quote.costs.priceSuggested)) /
+              Math.max(result.hybrid?.precoIdeal ?? result.quote.costs.priceSuggested, 1)) *
+              100).toFixed(2)
+          ),
+        },
+      },
+    } as any);
+
+    if (!createResult.success) {
+      throw new Error(createResult.error || "Não foi possível registrar o fechamento.");
+    }
+  };
+
   const handleSalvarOrcamentoOp = async () => {
     if (!result || result.kind !== "op") return;
     if (!result.estimation.canFinalize) {
@@ -670,7 +704,13 @@ export function PrecificacaoPage() {
               </button>
             </div>
 
-            {result?.kind === "default" && <QuoteResults quote={result.quote} hybrid={result.hybrid} />}
+            {result?.kind === "default" && (
+              <QuoteResults
+                quote={result.quote}
+                hybrid={result.hybrid}
+                onRegistrarFechamento={handleRegistrarFechamentoClassico}
+              />
+            )}
             {result?.kind === "op" && (
               <OpQuoteResults
                 normalization={result.normalization}
