@@ -11,11 +11,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Separator } from '../components/ui/separator';
 import { toast } from 'sonner';
-import { DollarSign, Save, Building2, Calculator } from 'lucide-react';
+import { DollarSign, Save, Building2, Calculator, Settings2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfiguracaoAtiva, useSalvarConfiguracao } from '@/hooks/useConfiguracoes';
 import { VALORES_PADRAO } from '@/domains/calculadora';
 import { custosService } from '@/domains/custos';
+import { ProcessRulesManager } from '@/domains/precificacao/components/ProcessRulesManager';
+import { SheetSpecsManager } from '@/domains/precificacao/components/SheetSpecsManager';
 
 export default function Configuracoes() {
   const { profile } = useAuth();
@@ -116,7 +118,7 @@ export default function Configuracoes() {
         description="Custos, preferências da calculadora e dados gerais"
       />
 
-      <div className="mt-6 max-w-5xl space-y-6">
+      <div className="mt-6 max-w-6xl space-y-6">
         {/* Custos e Matéria-prima */}
         <Card>
           <CardHeader>
@@ -410,6 +412,23 @@ export default function Configuracoes() {
               <Save className="w-4 h-4 mr-2" />
               {salvarGeral.isPending ? 'Salvando...' : 'Salvar Geral'}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Precificação por OP - Regras e Tabela de Chapas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5" />
+              Precificação por OP - Regras e Chapas
+            </CardTitle>
+            <CardDescription>
+              Configure roteamento de processo e tabela de chapas usadas no cálculo por OP.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <ProcessRulesManager />
+            <SheetSpecsManager />
           </CardContent>
         </Card>
       </div>
