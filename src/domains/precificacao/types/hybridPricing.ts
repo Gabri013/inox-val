@@ -7,6 +7,7 @@ export interface HybridPricingInput {
   temProjeto?: boolean;
   temBloco?: boolean;
   temRender?: boolean;
+  urgencia?: "normal" | "urgente" | "super";
   precoBaseAtual: number;
 }
 

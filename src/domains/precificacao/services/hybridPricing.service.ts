@@ -134,7 +134,8 @@ export const hybridPricingService = {
       (temRender ? hybridConfig.complexityBonus.temRender : 0);
 
     const fatorComplexidade = 1 + complexityBonus;
-    const fatorHistorico = fatorFamilia * fatorSubfamilia * fatorDimensao * fatorComplexidade;
+    const fatorUrgencia = input.urgencia === "super" ? 1.12 : input.urgencia === "urgente" ? 1.05 : 1;
+    const fatorHistorico = fatorFamilia * fatorSubfamilia * fatorDimensao * fatorComplexidade * fatorUrgencia;
 
     const precoRecomendado = input.precoBaseAtual * fatorHistorico;
     const precoMin = precoRecomendado * hybridConfig.fallbackRange.min;
@@ -154,6 +155,8 @@ export const hybridPricingService = {
       justificativa.push(`Fator dimensional aplicado (${resolvedDimensao} => ${fatorDimensao.toFixed(2)}).`);
     if (fatorComplexidade !== 1)
       justificativa.push(`Complexidade aplicada (${((fatorComplexidade - 1) * 100).toFixed(0)}%).`);
+    if (fatorUrgencia !== 1)
+      justificativa.push(`Urgência aplicada (${input.urgencia === "super" ? "super" : "urgente"}).`);
     if (justificativa.length === 0)
       justificativa.push("Sem dados históricos suficientes. Mantido fator neutro (1.00).");
 

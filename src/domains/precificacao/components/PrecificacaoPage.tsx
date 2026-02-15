@@ -283,6 +283,7 @@ export function PrecificacaoPage() {
       subfamilia: formData.historicoSubfamilia,
       descricao: formData.descricao,
       dimensao: dimensaoManual,
+      urgencia: formData.urgencia || "normal",
       precoBaseAtual: quote.costs.priceSuggested,
     });
 
@@ -563,6 +564,15 @@ export function PrecificacaoPage() {
                       placeholder="Dimensão (ex.: 1500X700X900)"
                       className="px-3 py-2 rounded-md border border-border bg-background"
                     />
+                    <select
+                      value={formData.urgencia || "normal"}
+                      onChange={(e) => setFormData({ ...formData, urgencia: e.target.value })}
+                      className="px-3 py-2 rounded-md border border-border bg-background"
+                    >
+                      <option value="normal">Urgência: Normal</option>
+                      <option value="urgente">Urgência: Urgente</option>
+                      <option value="super">Urgência: Super urgente</option>
+                    </select>
                   </div>
                 </div>
               )}
