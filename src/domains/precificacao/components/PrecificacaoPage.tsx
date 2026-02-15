@@ -201,6 +201,11 @@ export function PrecificacaoPage() {
   const [formData, setFormData] = useState<any>({});
   const [result, setResult] = useState<CalculationState | null>(null);
   const [savingOrcamento, setSavingOrcamento] = useState(false);
+  const [fechamentoStats, setFechamentoStats] = useState<{
+    total: number;
+    ganhoPct: number;
+    erroMedioPct: number;
+  } | null>(null);
 
   useEffect(() => {
     try {
@@ -215,6 +220,10 @@ export function PrecificacaoPage() {
     } catch {
       setFormData((prev: any) => applyProfileDefaults(getProfileForProduto("bancadas"), prev));
     }
+  }, []);
+
+  useEffect(() => {
+    carregarStatsFechamento();
   }, []);
 
   useEffect(() => {
@@ -430,6 +439,36 @@ export function PrecificacaoPage() {
     };
   };
 
+  const carregarStatsFechamento = async () => {
+    const runs = await precificacaoService.list({
+      where: [{ field: "mode", operator: "==", value: "classic" }],
+      orderBy: [{ field: "createdAt", direction: "desc" }],
+      limit: 120,
+    });
+
+    if (!runs.success || !runs.data) return;
+
+    const rows = runs.data.items
+      .map((item: any) => item?.outputs?.fechamento)
+      .filter((f: any) => f && (f.status === "ganho" || f.status === "perdido"));
+
+    if (rows.length === 0) {
+      setFechamentoStats({ total: 0, ganhoPct: 0, erroMedioPct: 0 });
+      return;
+    }
+
+    const ganhos = rows.filter((r: any) => r.status === "ganho").length;
+    const erroMedio =
+      rows.reduce((acc: number, r: any) => acc + Math.abs(Number(r.deltaPercent) || 0), 0) /
+      Math.max(rows.length, 1);
+
+    setFechamentoStats({
+      total: rows.length,
+      ganhoPct: Number(((ganhos / rows.length) * 100).toFixed(1)),
+      erroMedioPct: Number(erroMedio.toFixed(2)),
+    });
+  };
+
   const handleCalcular = async () => {
     if (produtoSelecionado === "ordemProducaoExcel") {
       const opResult = await handleCalcularPorOp();
@@ -473,6 +512,8 @@ export function PrecificacaoPage() {
     if (!createResult.success) {
       throw new Error(createResult.error || "Não foi possível registrar o fechamento.");
     }
+
+    await carregarStatsFechamento();
   };
 
   const handleSalvarOrcamentoOp = async () => {
@@ -703,6 +744,26 @@ export function PrecificacaoPage() {
                 <span>Calcular Orçamento</span>
               </button>
             </div>
+
+            {fechamentoStats && (
+              <div className="bg-card rounded-lg shadow-sm border border-border p-4">
+                <h3 className="font-semibold text-foreground mb-2">Painel de assertividade (fechamentos)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-md border border-border p-3">
+                    <div className="text-muted-foreground">Amostra</div>
+                    <div className="text-lg font-semibold">{fechamentoStats.total}</div>
+                  </div>
+                  <div className="rounded-md border border-border p-3">
+                    <div className="text-muted-foreground">Taxa de ganho</div>
+                    <div className="text-lg font-semibold text-green-600">{fechamentoStats.ganhoPct}%</div>
+                  </div>
+                  <div className="rounded-md border border-border p-3">
+                    <div className="text-muted-foreground">Erro médio vs recomendado</div>
+                    <div className="text-lg font-semibold">{fechamentoStats.erroMedioPct}%</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {result?.kind === "default" && (
               <QuoteResults

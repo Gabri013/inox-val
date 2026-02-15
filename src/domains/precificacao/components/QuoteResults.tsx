@@ -77,6 +77,16 @@ export function QuoteResults({ quote, hybrid, onRegistrarFechamento }: QuoteResu
         Resultado do Orçamento
       </h2>
 
+      {(quote.costs.priceSuggested < quote.costs.priceMinSafe || (hybrid?.confianca === "baixa")) && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-4 text-red-800 text-sm">
+          <p className="font-semibold">Alerta de risco comercial</p>
+          <ul className="list-disc pl-5 mt-1 space-y-1">
+            {quote.costs.priceSuggested < quote.costs.priceMinSafe && <li>Preço sugerido abaixo do mínimo seguro.</li>}
+            {hybrid?.confianca === "baixa" && <li>Confiança baixa: revisar código/família/dimensão antes de fechar.</li>}
+          </ul>
+        </div>
+      )}
+
       {/* Preço Final */}
       <div className="bg-gradient-to-br from-success/10 to-primary/10 border border-success/30 rounded-lg p-6">
         <div className="flex items-center justify-between">
