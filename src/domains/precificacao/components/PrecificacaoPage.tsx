@@ -73,6 +73,22 @@ type PricingProfilesConfig = {
 
 const pricingProfilesConfig = pricingProfiles as PricingProfilesConfig;
 
+const getProfileForProduto = (produto: ProdutoTipo) =>
+  pricingProfilesConfig.produtoTipoToProfile[produto] || pricingProfilesConfig.defaultProfile;
+
+const applyProfileDefaults = (profileId: string, current: any = {}) => {
+  const profile = pricingProfilesConfig.profiles[profileId] || pricingProfilesConfig.profiles[pricingProfilesConfig.defaultProfile];
+  return {
+    ...current,
+    pricingProfile: profileId,
+    markup: profile.markup,
+    minMarginPct: profile.minMarginPct,
+    scrapMinPct: profile.scrapMinPct,
+    overheadPercent: profile.overheadPercent,
+    urgencia: current.urgencia || "normal",
+  };
+};
+
 type CalculationState =
   | { kind: "default"; quote: QuoteResultV2; hybrid?: HybridPricingResult }
   | {
@@ -189,11 +205,15 @@ export function PrecificacaoPage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem("precificacao_historico_prefill");
-      if (!raw) return;
+      if (!raw) {
+        setFormData((prev: any) => applyProfileDefaults(getProfileForProduto("bancadas"), prev));
+        return;
+      }
       const parsed = JSON.parse(raw);
-      setFormData((prev: any) => ({ ...prev, ...parsed }));
+      const profileId = parsed.pricingProfile || getProfileForProduto("bancadas");
+      setFormData((prev: any) => applyProfileDefaults(profileId, { ...prev, ...parsed }));
     } catch {
-      // ignore
+      setFormData((prev: any) => applyProfileDefaults(getProfileForProduto("bancadas"), prev));
     }
   }, []);
 
@@ -204,10 +224,7 @@ export function PrecificacaoPage() {
       historicoSubfamilia: formData.historicoSubfamilia || "",
       historicoDimensao: formData.historicoDimensao || "",
       urgencia: formData.urgencia || "normal",
-      pricingProfile:
-        formData.pricingProfile ||
-        pricingProfilesConfig.produtoTipoToProfile[produtoSelecionado] ||
-        pricingProfilesConfig.defaultProfile,
+      pricingProfile: formData.pricingProfile || getProfileForProduto(produtoSelecionado),
     };
     localStorage.setItem("precificacao_historico_prefill", JSON.stringify(payload));
   }, [
@@ -541,11 +558,7 @@ export function PrecificacaoPage() {
                     key={produto.id}
                     onClick={() => {
                       setProdutoSelecionado(produto.id);
-                      setFormData({
-                        pricingProfile:
-                          pricingProfilesConfig.produtoTipoToProfile[produto.id] ||
-                          pricingProfilesConfig.defaultProfile,
-                      });
+                      setFormData((prev: any) => applyProfileDefaults(getProfileForProduto(produto.id), prev));
                       setResult(null);
                     }}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
@@ -603,8 +616,8 @@ export function PrecificacaoPage() {
                   <h3 className="font-semibold text-foreground mb-3">Aprimorar com histórico (SolidWorks)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <select
-                      value={formData.pricingProfile || pricingProfilesConfig.produtoTipoToProfile[produtoSelecionado] || pricingProfilesConfig.defaultProfile}
-                      onChange={(e) => setFormData({ ...formData, pricingProfile: e.target.value })}
+                      value={formData.pricingProfile || getProfileForProduto(produtoSelecionado)}
+                      onChange={(e) => setFormData((prev: any) => applyProfileDefaults(e.target.value, prev))}
                       className="px-3 py-2 rounded-md border border-border bg-background"
                     >
                       {Object.entries(pricingProfilesConfig.profiles).map(([id, profile]) => (

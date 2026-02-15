@@ -2,39 +2,39 @@
   "defaultProfile": "padrao",
   "profiles": {
     "padrao": {
-      "label": "Padrão",
-      "markup": 3,
-      "minMarginPct": 0.25,
-      "scrapMinPct": 0.15,
-      "overheadPercent": 0
+      "label": "Padrão (Balanceado)",
+      "markup": 3.15,
+      "minMarginPct": 0.28,
+      "scrapMinPct": 0.14,
+      "overheadPercent": 0.03
     },
     "mobiliario": {
-      "label": "Mobiliário Inox",
-      "markup": 3.1,
-      "minMarginPct": 0.27,
+      "label": "Mobiliário Inox (Recomendado)",
+      "markup": 3.2,
+      "minMarginPct": 0.29,
       "scrapMinPct": 0.12,
       "overheadPercent": 0.03
     },
     "refrigeracao": {
-      "label": "Refrigeração",
-      "markup": 3.25,
-      "minMarginPct": 0.3,
+      "label": "Refrigeração (Recomendado)",
+      "markup": 3.35,
+      "minMarginPct": 0.31,
       "scrapMinPct": 0.16,
-      "overheadPercent": 0.04
+      "overheadPercent": 0.045
     },
     "exaustao": {
-      "label": "Exaustão/Coifas",
-      "markup": 3.2,
-      "minMarginPct": 0.28,
+      "label": "Exaustão/Coifas (Recomendado)",
+      "markup": 3.3,
+      "minMarginPct": 0.3,
       "scrapMinPct": 0.18,
-      "overheadPercent": 0.04
+      "overheadPercent": 0.045
     },
     "estrutura": {
-      "label": "Estrutura (Tubo/Cantoneira)",
-      "markup": 2.9,
-      "minMarginPct": 0.24,
+      "label": "Estrutura (Recomendado)",
+      "markup": 3.05,
+      "minMarginPct": 0.26,
       "scrapMinPct": 0.1,
-      "overheadPercent": 0.02
+      "overheadPercent": 0.025
     }
   },
   "produtoTipoToProfile": {
