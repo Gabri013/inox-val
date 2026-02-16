@@ -13,6 +13,23 @@ import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Orcamento, ItemOrcamento } from '../../types/workflow';
+import type { CustosIndiretos, MargemLucroConfig } from '../../types/precificacao';
+import { validarPrecoMinimoOrcamento } from '@/domains/precificacao/precificacao.minimo';
+// Função para validar custos reais
+function validarCustosReais(itens: ItemOrcamento[]) {
+  for (const item of itens) {
+    if (!item.precoUnitario || item.precoUnitario === 0 || item.precoUnitario === undefined || item.precoUnitario === null) {
+      return { valido: false, alerta: `O item '${item.modeloNome || item.descricao}' não possui custo real comprovado.` };
+    }
+    if (!item.origemCusto || !item.dataAtualizacaoCusto) {
+      return { valido: false, alerta: `O item '${item.modeloNome || item.descricao}' precisa informar origem e data de atualização do custo.` };
+    }
+  }
+  return { valido: true };
+}
+  // Custos indiretos e margem de lucro
+  const [custosIndiretos, setCustosIndiretos] = useState<CustosIndiretos>({ frete: 0, impostos: 0, outros: 0 });
+  const [margemLucro, setMargemLucro] = useState<MargemLucroConfig>({ percentual: 0.15, minimoAbsoluto: 50 });
 import { formatCurrency } from '@/shared/lib/format';
 import { parseOmeiText } from '@/app/lib/omeiImport';
 import { useSaldosEstoque } from '@/domains/estoque';
@@ -310,12 +327,31 @@ export function OrcamentoForm({
     const itensSanitizados = itens.map(sanitizeItem);
     const subtotal = itensSanitizados.reduce((sum, item) => sum + item.subtotal, 0);
     const descontoSeguro = Math.min(Math.max(0, toSafeNumber(desconto, 0)), subtotal);
-    const total = subtotal - descontoSeguro;
+    const totalCustosIndiretos = (custosIndiretos.frete || 0) + (custosIndiretos.impostos || 0) + (custosIndiretos.outros || 0);
+    const baseLucro = subtotal + totalCustosIndiretos - descontoSeguro;
+    let lucro = baseLucro * (margemLucro.percentual || 0);
+    if (margemLucro.minimoAbsoluto && lucro < margemLucro.minimoAbsoluto) {
+      lucro = margemLucro.minimoAbsoluto;
+    }
+    const total = baseLucro + lucro;
     const baseDate = dataEmissao || new Date();
     const validadeDias = Math.max(1, Math.floor(toSafeNumber(validade, 15)));
 
     if (descontoSeguro !== desconto) {
       toast.info('Desconto ajustado para manter o total do orçamento válido');
+    }
+
+    // Validação de custos reais
+    const validacaoCustos = validarCustosReais(itensSanitizados);
+    if (!validacaoCustos.valido) {
+      toast.error(validacaoCustos.alerta);
+      return;
+    }
+    // Validação de preço mínimo
+    const validacaoMinimo = validarPrecoMinimoOrcamento({ itens: itensSanitizados, total });
+    if (!validacaoMinimo.valido) {
+      toast.error(validacaoMinimo.alerta);
+      return;
     }
 
     const orcamento: Omit<Orcamento, 'id' | 'numero'> = {
@@ -327,10 +363,18 @@ export function OrcamentoForm({
       itens: itensSanitizados,
       subtotal,
       desconto: descontoSeguro,
+      custosIndiretos,
+      margemLucro,
+      lucro,
       total,
       observacoes: observacoes.trim() || undefined,
       aprovadoEm: initialData?.aprovadoEm,
     };
+
+    // Alerta de margem baixa
+    if ((lucro / (subtotal + totalCustosIndiretos)) < 0.05) {
+      toast.warning('Atenção: Margem de lucro abaixo de 5%!');
+    }
 
     onSubmit(orcamento);
   };
@@ -338,7 +382,13 @@ export function OrcamentoForm({
   const itensSanitizadosPreview = itens.map(sanitizeItem);
   const subtotal = itensSanitizadosPreview.reduce((sum, item) => sum + item.subtotal, 0);
   const descontoSeguroPreview = Math.min(Math.max(0, toSafeNumber(desconto, 0)), subtotal);
-  const total = subtotal - descontoSeguroPreview;
+  const totalCustosIndiretosPreview = (custosIndiretos.frete || 0) + (custosIndiretos.impostos || 0) + (custosIndiretos.outros || 0);
+  const baseLucroPreview = subtotal + totalCustosIndiretosPreview - descontoSeguroPreview;
+  let lucroPreview = baseLucroPreview * (margemLucro.percentual || 0);
+  if (margemLucro.minimoAbsoluto && lucroPreview < margemLucro.minimoAbsoluto) {
+    lucroPreview = margemLucro.minimoAbsoluto;
+  }
+  const total = baseLucroPreview + lucroPreview;
 
   return (
     <>
@@ -599,6 +649,49 @@ export function OrcamentoForm({
           )}
         </div>
 
+        {/* Custos Indiretos */}
+        {itens.length > 0 && (
+          <div className="space-y-2 p-4 bg-muted/40 rounded-lg">
+            <h4 className="font-semibold">Custos Indiretos</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="frete">Frete (R$)</Label>
+                <Input id="frete" type="number" min="0" step="0.01" value={custosIndiretos.frete}
+                  onChange={e => setCustosIndiretos(prev => ({ ...prev, frete: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label htmlFor="impostos">Impostos (R$)</Label>
+                <Input id="impostos" type="number" min="0" step="0.01" value={custosIndiretos.impostos}
+                  onChange={e => setCustosIndiretos(prev => ({ ...prev, impostos: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label htmlFor="outros">Outros (R$)</Label>
+                <Input id="outros" type="number" min="0" step="0.01" value={custosIndiretos.outros}
+                  onChange={e => setCustosIndiretos(prev => ({ ...prev, outros: Number(e.target.value) }))} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Margem de Lucro */}
+        {itens.length > 0 && (
+          <div className="space-y-2 p-4 bg-muted/40 rounded-lg">
+            <h4 className="font-semibold">Margem de Lucro</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="margemPercentual">Margem (%)</Label>
+                <Input id="margemPercentual" type="number" min="0" max="1" step="0.01" value={margemLucro.percentual}
+                  onChange={e => setMargemLucro(prev => ({ ...prev, percentual: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label htmlFor="margemMin">Lucro mínimo (R$)</Label>
+                <Input id="margemMin" type="number" min="0" step="0.01" value={margemLucro.minimoAbsoluto}
+                  onChange={e => setMargemLucro(prev => ({ ...prev, minimoAbsoluto: Number(e.target.value) }))} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Resumo Financeiro */}
         {itens.length > 0 && (
           <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
@@ -612,10 +705,21 @@ export function OrcamentoForm({
                 <span className="font-mono">-{formatCurrency(descontoSeguroPreview)}</span>
               </div>
             )}
+            <div className="flex justify-between text-sm">
+              <span>Custos Indiretos:</span>
+              <span className="font-mono">{formatCurrency(totalCustosIndiretosPreview)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Lucro:</span>
+              <span className="font-mono">{formatCurrency(lucroPreview)}</span>
+            </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t">
               <span>Total:</span>
               <span className="font-mono">{formatCurrency(total)}</span>
             </div>
+            {lucroPreview / (subtotal + totalCustosIndiretosPreview) < 0.05 && (
+              <div className="text-sm text-destructive font-semibold pt-2">Atenção: Margem de lucro abaixo de 5%!</div>
+            )}
           </div>
         )}
 

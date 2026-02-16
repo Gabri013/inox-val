@@ -69,12 +69,26 @@ const sanitizeItens = (itens: Orcamento['itens'] = []) =>
     };
   });
 
+import type { CustosIndiretos, MargemLucroConfig } from '@/app/types/precificacao';
+import { calcularPrecificacao } from '@/domains/precificacao/precificacao';
+
+// Configuração padrão de custos indiretos e margem de lucro
+const DEFAULT_CUSTOS_INDIRETOS: CustosIndiretos = { frete: 0, impostos: 0, outros: 0 };
+const DEFAULT_MARGEM: MargemLucroConfig = { percentual: 0.15, minimoAbsoluto: 50 };
+
+/**
+ * Calcula o total do orçamento considerando custos indiretos e margem de lucro.
+ * Permite sobrescrever custos e margem por orçamento.
+ */
+
 const sanitizeDraftPayload = <T extends {
   itens?: Orcamento['itens'];
   desconto?: number;
   subtotal?: number;
   total?: number;
   validade?: unknown;
+  custosIndiretos?: CustosIndiretos;
+  margemLucro?: MargemLucroConfig;
 }>(payload: T): T => {
   const hasFinancialFields =
     Object.prototype.hasOwnProperty.call(payload, 'itens') ||
@@ -86,14 +100,25 @@ const sanitizeDraftPayload = <T extends {
 
   if (hasFinancialFields) {
     const itens = sanitizeItens(payload.itens || []);
-    const subtotal = itens.reduce((sum, item) => sum + item.subtotal, 0);
-    const desconto = Math.min(Math.max(0, toSafeNumber(payload.desconto, 0)), subtotal);
-    const total = subtotal - desconto;
-
+    const custosIndiretos = payload.custosIndiretos;
+    const margemLucro = payload.margemLucro;
+    const desconto = payload.desconto;
+    const precificacao = calcularPrecificacao({
+      itens,
+      desconto,
+      custosIndiretos,
+      margemLucro,
+    });
     sanitized.itens = itens;
-    sanitized.subtotal = subtotal;
-    sanitized.desconto = desconto;
-    sanitized.total = total;
+    sanitized.subtotal = precificacao.subtotal;
+    sanitized.desconto = precificacao.desconto;
+    sanitized.custosIndiretos = precificacao.custosIndiretos;
+    sanitized.margemLucro = precificacao.margemLucro;
+    sanitized.lucro = precificacao.lucro;
+    sanitized.total = precificacao.total;
+    if (precificacao.alertaMargem) {
+      sanitized.alertaMargem = precificacao.alertaMargem;
+    }
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, 'validade')) {

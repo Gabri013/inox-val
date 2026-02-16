@@ -13,6 +13,7 @@ import type {
   PricingProfile,
   ProdutoFormDefaults,
 } from "../config/pricingConfig";
+import { DEFAULT_PRICING_CONFIG } from "../config/pricingConfig";
 import type { ProdutoTipo } from "../domains/precificacao/engine/bomBuilder";
 
 const produtoOptions: Array<{ id: ProdutoTipo; label: string }> = [
@@ -194,6 +195,12 @@ export function PricingConfigManager() {
     setSubfamiliaText(formatKeyValue(config.hybridPricing.subfamiliaFactors));
   };
 
+  const handleResetToDefaults = () => {
+    setDraft(DEFAULT_PRICING_CONFIG);
+    setFamiliaText(formatKeyValue(DEFAULT_PRICING_CONFIG.hybridPricing.familiaFactors));
+    setSubfamiliaText(formatKeyValue(DEFAULT_PRICING_CONFIG.hybridPricing.subfamiliaFactors));
+  };
+
   const handleSave = () => {
     const payload: PricingConfig = {
       ...draft,
@@ -233,6 +240,7 @@ export function PricingConfigManager() {
                     e.target.value === "" ? undefined : Number(e.target.value)
                   )
                 }
+                disabled={saveConfig.isPending}
               />
             </div>
           ))}
@@ -265,6 +273,11 @@ export function PricingConfigManager() {
         <CardDescription>
           Perfis comerciais, fatores híbridos e defaults de produtos em um só lugar.
         </CardDescription>
+        {draft.updatedAt && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Última edição: {new Date(draft.updatedAt).toLocaleString("pt-BR")}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Perfis e mapeamento */}
@@ -282,8 +295,9 @@ export function PricingConfigManager() {
                 value={newProfileId}
                 onChange={(e) => setNewProfileId(e.target.value)}
                 className="w-40"
+                disabled={saveConfig.isPending}
               />
-              <Button onClick={handleAddProfile} variant="outline" size="sm">
+              <Button onClick={handleAddProfile} variant="outline" size="sm" disabled={saveConfig.isPending}>
                 <Plus className="w-4 h-4 mr-1" />
                 Adicionar perfil
               </Button>
@@ -301,6 +315,7 @@ export function PricingConfigManager() {
                       <Input
                         value={profile.label}
                         onChange={(e) => updateProfile(id, { label: e.target.value })}
+                        disabled={saveConfig.isPending}
                       />
                     </div>
                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -314,6 +329,7 @@ export function PricingConfigManager() {
                             pricingProfiles: { ...prev.pricingProfiles, defaultProfile: id },
                           }))
                         }
+                        disabled={saveConfig.isPending}
                       />
                       Padrão
                     </label>
@@ -325,6 +341,9 @@ export function PricingConfigManager() {
                         type="number"
                         value={profile.markup}
                         onChange={(e) => updateProfile(id, { markup: Number(e.target.value) })}
+                        min={0}
+                        step={0.01}
+                        disabled={saveConfig.isPending}
                       />
                     </div>
                     <div>
@@ -333,6 +352,9 @@ export function PricingConfigManager() {
                         type="number"
                         value={profile.minMarginPct}
                         onChange={(e) => updateProfile(id, { minMarginPct: Number(e.target.value) })}
+                        min={0}
+                        step={0.01}
+                        disabled={saveConfig.isPending}
                       />
                     </div>
                     <div>
@@ -341,6 +363,9 @@ export function PricingConfigManager() {
                         type="number"
                         value={profile.scrapMinPct}
                         onChange={(e) => updateProfile(id, { scrapMinPct: Number(e.target.value) })}
+                        min={0}
+                        step={0.01}
+                        disabled={saveConfig.isPending}
                       />
                     </div>
                     <div>
@@ -349,6 +374,9 @@ export function PricingConfigManager() {
                         type="number"
                         value={profile.overheadPercent}
                         onChange={(e) => updateProfile(id, { overheadPercent: Number(e.target.value) })}
+                        min={0}
+                        step={0.01}
+                        disabled={saveConfig.isPending}
                       />
                     </div>
                   </div>
@@ -367,6 +395,7 @@ export function PricingConfigManager() {
                     className="w-full border rounded-md px-3 py-2 bg-background"
                     value={draft.pricingProfiles.produtoTipoToProfile[produto.id] || draft.pricingProfiles.defaultProfile}
                     onChange={(e) => updateProdutoProfile(produto.id, e.target.value)}
+                    disabled={saveConfig.isPending}
                   >
                     {profileIds.map((id) => (
                       <option key={id} value={id}>
@@ -409,6 +438,9 @@ export function PricingConfigManager() {
                     hybridPricing: { ...prev.hybridPricing, defaultFactor: Number(e.target.value) },
                   }))
                 }
+                min={0}
+                step={0.01}
+                disabled={saveConfig.isPending}
               />
             </div>
             <div>
@@ -425,6 +457,8 @@ export function PricingConfigManager() {
                     },
                   }))
                 }
+                step={0.01}
+                disabled={saveConfig.isPending}
               />
             </div>
             <div>
@@ -441,6 +475,8 @@ export function PricingConfigManager() {
                     },
                   }))
                 }
+                step={0.01}
+                disabled={saveConfig.isPending}
               />
             </div>
             <div>
@@ -460,6 +496,8 @@ export function PricingConfigManager() {
                     },
                   }))
                 }
+                step={0.01}
+                disabled={saveConfig.isPending}
               />
             </div>
             <div>
@@ -479,6 +517,8 @@ export function PricingConfigManager() {
                     },
                   }))
                 }
+                step={0.01}
+                disabled={saveConfig.isPending}
               />
             </div>
             <div>
@@ -498,6 +538,8 @@ export function PricingConfigManager() {
                     },
                   }))
                 }
+                step={0.01}
+                disabled={saveConfig.isPending}
               />
             </div>
           </div>
@@ -512,21 +554,25 @@ export function PricingConfigManager() {
                 >
                   <div className="flex-1">
                     <Label>Maior lado até (mm)</Label>
-                    <Input
-                      type="number"
-                      value={band.maxMaiorLadoMm}
-                      onChange={(e) => updateBand(idx, "maxMaiorLadoMm", Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Label>Fator</Label>
-                    <Input
-                      type="number"
-                      value={band.factor}
-                      onChange={(e) => updateBand(idx, "factor", Number(e.target.value))}
-                    />
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => removeBand(idx)}>
+                  <Input
+                    type="number"
+                    value={band.maxMaiorLadoMm}
+                    onChange={(e) => updateBand(idx, "maxMaiorLadoMm", Number(e.target.value))}
+                    min={0}
+                    disabled={saveConfig.isPending}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label>Fator</Label>
+                  <Input
+                    type="number"
+                    value={band.factor}
+                    onChange={(e) => updateBand(idx, "factor", Number(e.target.value))}
+                    step={0.01}
+                    disabled={saveConfig.isPending}
+                  />
+                </div>
+                  <Button variant="ghost" size="sm" onClick={() => removeBand(idx)} disabled={saveConfig.isPending}>
                     <RefreshCw className="w-4 h-4" />
                   </Button>
                 </div>
@@ -541,6 +587,7 @@ export function PricingConfigManager() {
                 value={familiaText}
                 onChange={(e) => setFamiliaText(e.target.value)}
                 className="font-mono text-xs min-h-[160px]"
+                disabled={saveConfig.isPending}
               />
             </div>
             <div className="space-y-2">
@@ -549,6 +596,7 @@ export function PricingConfigManager() {
                 value={subfamiliaText}
                 onChange={(e) => setSubfamiliaText(e.target.value)}
                 className="font-mono text-xs min-h-[160px]"
+                disabled={saveConfig.isPending}
               />
             </div>
           </div>
@@ -573,6 +621,10 @@ export function PricingConfigManager() {
           <Button variant="ghost" onClick={handleResetDraft}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Descartar alterações
+          </Button>
+          <Button variant="outline" onClick={handleResetToDefaults} disabled={saveConfig.isPending}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Restaurar padrões
           </Button>
           <Button onClick={handleSave} disabled={saveConfig.isPending}>
             <Save className="w-4 h-4 mr-2" />

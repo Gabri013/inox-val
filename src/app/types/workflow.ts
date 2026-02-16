@@ -60,6 +60,8 @@ export interface ItemOrcamento {
   subtotal: number;
   /** Snapshot do cálculo completo (BOM + Nesting + Precificação) */
   calculoSnapshot?: ResultadoCalculadora;
+  origemCusto?: string; // Ex: 'planilha', 'ERP', 'manual'
+  dataAtualizacaoCusto?: string; // ISO date
 }
 
 // ========================================
