@@ -18,6 +18,7 @@ import { VALORES_PADRAO } from '@/domains/calculadora';
 import { custosService } from '@/domains/custos';
 import { ProcessRulesManager } from '@/domains/precificacao/components/ProcessRulesManager';
 import { SheetSpecsManager } from '@/domains/precificacao/components/SheetSpecsManager';
+import { PricingConfigManager } from '@/domains/precificacao/components/PricingConfigManager';
 
 export default function Configuracoes() {
   const { profile } = useAuth();
@@ -414,6 +415,9 @@ export default function Configuracoes() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Precificação - perfis e fatores */}
+        <PricingConfigManager />
 
         {/* Precificação por OP - Regras e Tabela de Chapas */}
         <Card>

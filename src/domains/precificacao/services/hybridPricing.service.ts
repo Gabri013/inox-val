@@ -1,7 +1,8 @@
 import levantamentoCsvRaw from "../../../../levantamento_ordens_2022.csv?raw";
 import dimensoesCsvRaw from "../../../../ordens_com_dimensoes.csv?raw";
-import hybridConfig from "../config/hybridPricing.config.json";
+import defaultHybridConfig from "../config/hybridPricing.config.json";
 import type { HybridPricingInput, HybridPricingResult } from "../types/hybridPricing";
+import type { HybridPricingConfig } from "../config/pricingConfig";
 import { parseDimension } from "../utils/dimensionParser";
 
 interface CsvRow {
@@ -94,6 +95,12 @@ const buildHistoricalData = (): HistoricalRow[] => {
 
 const historicalData = buildHistoricalData();
 
+let runtimeHybridConfig: HybridPricingConfig = defaultHybridConfig as HybridPricingConfig;
+
+export const setHybridPricingConfig = (config: HybridPricingConfig) => {
+  runtimeHybridConfig = config;
+};
+
 const getRuntimeOverrides = () => {
   try {
     if (typeof window === "undefined") return null;
@@ -110,21 +117,22 @@ const getRuntimeOverrides = () => {
 
 const getEffectiveConfig = () => {
   const overrides = getRuntimeOverrides();
-  if (!overrides) return hybridConfig;
+  const base = runtimeHybridConfig;
+  if (!overrides) return base;
   return {
-    ...hybridConfig,
+    ...base,
     familiaFactors: {
-      ...hybridConfig.familiaFactors,
+      ...base.familiaFactors,
       ...(overrides.familiaFactors || {}),
     },
     subfamiliaFactors: {
-      ...hybridConfig.subfamiliaFactors,
+      ...base.subfamiliaFactors,
       ...(overrides.subfamiliaFactors || {}),
     },
   };
 };
 
-const getDimFactor = (config: typeof hybridConfig, dimensao?: string) => {
+const getDimFactor = (config: HybridPricingConfig, dimensao?: string) => {
   const parsed = parseDimension(dimensao);
   if (!parsed) return 1;
   const maxSide = Math.max(parsed.larguraMm, parsed.profundidadeMm, parsed.alturaMm || 0);

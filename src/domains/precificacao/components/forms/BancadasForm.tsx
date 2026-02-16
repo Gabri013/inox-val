@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormField } from "./FormField";
+import type { ProdutoFormDefaults } from "../../config/pricingConfig";
 
 interface BancadasFormProps {
   formData: any;
   setFormData: (data: any) => void;
+  defaults?: ProdutoFormDefaults;
 }
 
 
-export function BancadasForm({ formData, setFormData }: BancadasFormProps) {
+export function BancadasForm({ formData, setFormData, defaults }: BancadasFormProps) {
     // Garante que campos padrão industriais sempre estão presentes no formData
     useEffect(() => {
       const patch: any = {};
@@ -26,13 +28,36 @@ export function BancadasForm({ formData, setFormData }: BancadasFormProps) {
     scrapMinPct: 15,
   };
 
+  const resolvedDefaults = useMemo(
+    () => ({
+      ...configDefaults,
+      ...(defaults || {}),
+    }),
+    [defaults]
+  );
+
   const [config, setConfig] = useState(() => ({
-    precoKgInox: formData.precoKgInox ?? configDefaults.precoKgInox,
-    precoKgTuboPes: formData.precoKgTuboPes ?? configDefaults.precoKgTuboPes,
-    precoKgTuboContraventamento: formData.precoKgTuboContraventamento ?? configDefaults.precoKgTuboContraventamento,
-    fatorVenda: formData.fatorVenda ?? configDefaults.fatorVenda,
-    scrapMinPct: formData.scrapMinPct ?? configDefaults.scrapMinPct,
+    precoKgInox: formData.precoKgInox ?? resolvedDefaults.precoKgInox,
+    precoKgTuboPes: formData.precoKgTuboPes ?? resolvedDefaults.precoKgTuboPes,
+    precoKgTuboContraventamento: formData.precoKgTuboContraventamento ?? resolvedDefaults.precoKgTuboContraventamento,
+    fatorVenda: formData.fatorVenda ?? resolvedDefaults.fatorVenda,
+    scrapMinPct: formData.scrapMinPct ?? resolvedDefaults.scrapMinPct,
   }));
+
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      precoKgInox: formData.precoKgInox ?? prev.precoKgInox ?? resolvedDefaults.precoKgInox,
+      precoKgTuboPes: formData.precoKgTuboPes ?? prev.precoKgTuboPes ?? resolvedDefaults.precoKgTuboPes,
+      precoKgTuboContraventamento:
+        formData.precoKgTuboContraventamento ??
+        prev.precoKgTuboContraventamento ??
+        resolvedDefaults.precoKgTuboContraventamento,
+      fatorVenda: formData.fatorVenda ?? prev.fatorVenda ?? resolvedDefaults.fatorVenda,
+      scrapMinPct: formData.scrapMinPct ?? prev.scrapMinPct ?? resolvedDefaults.scrapMinPct,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedDefaults]);
 
   // Atualiza formData ao mudar config
   useEffect(() => {

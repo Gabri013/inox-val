@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { buildBOMByTipo, type ProdutoTipo } from "../domains/precificacao/engine/bomBuilder";
@@ -38,9 +38,10 @@ import { sheetSpecsService } from "@/services/firestore/sheetSpecs.service";
 import { processRulesService } from "@/services/firestore/processRules.service";
 import { orcamentosService } from "@/services/firestore/orcamentos.service";
 import { precificacaoService } from "@/services/firestore/precificacao.service";
-import { hybridPricingService } from "../services/hybridPricing.service";
+import { hybridPricingService, setHybridPricingConfig } from "../services/hybridPricing.service";
 import type { HybridPricingResult } from "../types/hybridPricing";
-import pricingProfiles from "../config/pricingProfiles.json";
+import { usePricingConfig } from "../hooks/usePricingConfig";
+import type { PricingFormDefaults } from "../config/pricingConfig";
 
 const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
   { id: "bancadas", label: "Bancadas" },
@@ -56,38 +57,6 @@ const PRODUTOS: Array<{ id: ProdutoTipo; label: string }> = [
   { id: "portasBatentes", label: "Portas e Batentes" },
   { id: "ordemProducaoExcel", label: "Precificação por OP" },
 ];
-
-type PricingProfile = {
-  label: string;
-  markup: number;
-  minMarginPct: number;
-  scrapMinPct: number;
-  overheadPercent: number;
-};
-
-type PricingProfilesConfig = {
-  defaultProfile: string;
-  profiles: Record<string, PricingProfile>;
-  produtoTipoToProfile: Record<string, string>;
-};
-
-const pricingProfilesConfig = pricingProfiles as PricingProfilesConfig;
-
-const getProfileForProduto = (produto: ProdutoTipo) =>
-  pricingProfilesConfig.produtoTipoToProfile[produto] || pricingProfilesConfig.defaultProfile;
-
-const applyProfileDefaults = (profileId: string, current: any = {}) => {
-  const profile = pricingProfilesConfig.profiles[profileId] || pricingProfilesConfig.profiles[pricingProfilesConfig.defaultProfile];
-  return {
-    ...current,
-    pricingProfile: profileId,
-    markup: profile.markup,
-    minMarginPct: profile.minMarginPct,
-    scrapMinPct: profile.scrapMinPct,
-    overheadPercent: profile.overheadPercent,
-    urgencia: current.urgencia || "normal",
-  };
-};
 
 type CalculationState =
   | { kind: "default"; quote: QuoteResultV2; hybrid?: HybridPricingResult }
@@ -215,6 +184,36 @@ const buildOpTotals = (params: {
 };
 
 export function PrecificacaoPage() {
+  const { config: pricingConfig } = usePricingConfig();
+  const pricingProfilesConfig = pricingConfig.pricingProfiles;
+  const formDefaults: PricingFormDefaults = pricingConfig.formDefaults;
+
+  useEffect(() => {
+    setHybridPricingConfig(pricingConfig.hybridPricing);
+  }, [pricingConfig.hybridPricing]);
+
+  const getProfileForProduto = useCallback(
+    (produto: ProdutoTipo) => pricingProfilesConfig.produtoTipoToProfile[produto] || pricingProfilesConfig.defaultProfile,
+    [pricingProfilesConfig]
+  );
+
+  const applyProfileDefaults = useCallback(
+    (profileId: string, current: any = {}) => {
+      const profile =
+        pricingProfilesConfig.profiles[profileId] || pricingProfilesConfig.profiles[pricingProfilesConfig.defaultProfile];
+      return {
+        ...current,
+        pricingProfile: profileId,
+        markup: profile.markup,
+        minMarginPct: profile.minMarginPct,
+        scrapMinPct: profile.scrapMinPct,
+        overheadPercent: profile.overheadPercent,
+        urgencia: current.urgencia || "normal",
+      };
+    },
+    [pricingProfilesConfig]
+  );
+
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoTipo>("bancadas");
   const [formData, setFormData] = useState<any>({});
   const [result, setResult] = useState<CalculationState | null>(null);
@@ -238,7 +237,7 @@ export function PrecificacaoPage() {
     } catch {
       setFormData((prev: any) => applyProfileDefaults(getProfileForProduto("bancadas"), prev));
     }
-  }, []);
+  }, [applyProfileDefaults, getProfileForProduto]);
 
   useEffect(() => {
     carregarStatsFechamento();
@@ -580,9 +579,7 @@ export function PrecificacaoPage() {
       if (stats.count < 2) return;
       const media = stats.sum / Math.max(stats.count, 1);
       const ajuste = Math.max(0.97, Math.min(1.03, media));
-      const atualBase =
-        familiaFactors[familia] ||
-        (pricingProfilesConfig.profiles[pricingProfilesConfig.defaultProfile] ? 1 : 1);
+      const atualBase = familiaFactors[familia] ?? pricingConfig.hybridPricing.familiaFactors[familia] ?? 1;
       familiaFactors[familia] = Number((atualBase * ajuste).toFixed(4));
     });
 
@@ -736,14 +733,18 @@ export function PrecificacaoPage() {
                 {PRODUTOS.find((item) => item.id === produtoSelecionado)?.label}
               </h2>
 
-              {produtoSelecionado === "bancadas" && <BancadasForm formData={formData} setFormData={setFormData} />}
+              {produtoSelecionado === "bancadas" && (
+                <BancadasForm formData={formData} setFormData={setFormData} defaults={formDefaults.bancadas} />
+              )}
               {produtoSelecionado === "lavatorios" && (
-                <LavatoriosForm formData={formData} setFormData={setFormData} />
+                <LavatoriosForm formData={formData} setFormData={setFormData} defaults={formDefaults.lavatorios} />
               )}
               {produtoSelecionado === "prateleiras" && (
-                <PrateleirasForm formData={formData} setFormData={setFormData} />
+                <PrateleirasForm formData={formData} setFormData={setFormData} defaults={formDefaults.prateleiras} />
               )}
-              {produtoSelecionado === "mesas" && <MesasForm formData={formData} setFormData={setFormData} />}
+              {produtoSelecionado === "mesas" && (
+                <MesasForm formData={formData} setFormData={setFormData} defaults={formDefaults.mesas} />
+              )}
               {produtoSelecionado === "estanteCantoneira" && (
                 <EstanteCantoneiraForm formData={formData} setFormData={setFormData} />
               )}

@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormField } from "./FormField";
+import type { ProdutoFormDefaults } from "../../config/pricingConfig";
 
 interface PrateleirasFormProps {
   formData: any;
   setFormData: (data: any) => void;
+  defaults?: ProdutoFormDefaults;
 }
 
 type LocalConfig = {
@@ -13,7 +15,7 @@ type LocalConfig = {
   minMarginPct: number;
 };
 
-export function PrateleirasForm({ formData, setFormData }: PrateleirasFormProps) {
+export function PrateleirasForm({ formData, setFormData, defaults }: PrateleirasFormProps) {
     // Configuração industrial local
     const configDefaults = {
       precoKg: 45,
@@ -21,12 +23,29 @@ export function PrateleirasForm({ formData, setFormData }: PrateleirasFormProps)
       overheadPercent: 0,
       minMarginPct: 0.25,
     };
+    const resolvedDefaults = useMemo(
+      () => ({
+        ...configDefaults,
+        ...(defaults || {}),
+      }),
+      [defaults]
+    );
     const [config, setConfig] = useState<LocalConfig>(() => ({
-      precoKg: formData.precoKg ?? configDefaults.precoKg,
-      markup: formData.markup ?? configDefaults.markup,
-      overheadPercent: formData.overheadPercent ?? configDefaults.overheadPercent,
-      minMarginPct: formData.minMarginPct ?? configDefaults.minMarginPct,
+      precoKg: formData.precoKg ?? resolvedDefaults.precoKg,
+      markup: formData.markup ?? resolvedDefaults.markup,
+      overheadPercent: formData.overheadPercent ?? resolvedDefaults.overheadPercent,
+      minMarginPct: formData.minMarginPct ?? resolvedDefaults.minMarginPct,
     }));
+    useEffect(() => {
+      setConfig((prev) => ({
+        ...prev,
+        precoKg: formData.precoKg ?? prev.precoKg ?? resolvedDefaults.precoKg,
+        markup: formData.markup ?? prev.markup ?? resolvedDefaults.markup,
+        overheadPercent: formData.overheadPercent ?? prev.overheadPercent ?? resolvedDefaults.overheadPercent,
+        minMarginPct: formData.minMarginPct ?? prev.minMarginPct ?? resolvedDefaults.minMarginPct,
+      }));
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [resolvedDefaults]);
     useEffect(() => {
       setFormData({ ...formData, ...config });
       // eslint-disable-next-line react-hooks/exhaustive-deps

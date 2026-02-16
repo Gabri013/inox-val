@@ -1,7 +1,7 @@
 import { FirestoreService } from "./base";
 import { COLLECTIONS } from "@/types/firebase";
 
-export type ConfigTipo = "CUSTOS" | "CALCULADORA" | "GERAL";
+export type ConfigTipo = "CUSTOS" | "CALCULADORA" | "GERAL" | "PRECIFICACAO";
 
 export interface ConfiguracaoDocumento {
   id: string;
