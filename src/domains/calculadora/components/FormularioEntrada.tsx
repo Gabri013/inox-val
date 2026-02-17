@@ -13,7 +13,6 @@ import {
   type DadosPrecificacao,
   VALORES_PADRAO,
 } from '../types';
-import { Info } from 'lucide-react';
 
 interface FormularioEntradaProps {
   onCalcular: (entrada: EntradaCalculadora) => void;

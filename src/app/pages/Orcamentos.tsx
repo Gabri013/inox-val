@@ -426,7 +426,7 @@ export default function Orcamentos() {
         actions={actions as any}
         keyExtractor={(orc: Orcamento) => orc.id}
         filterContent={
-          <Select key="status" value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusOrcamento | "all")}>
+          <Select key="status" value={statusFilter} onValueChange={(v: StatusOrcamento | "all") => setStatusFilter(v)}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>

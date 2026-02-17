@@ -2,15 +2,14 @@
  * Componente de estado vazio reutilizável
  */
 
-import { ReactNode, isValidElement } from 'react';
-import { LucideIcon } from 'lucide-react';
+import { ReactNode, isValidElement, ComponentType } from 'react';
 import { Button } from '@/app/components/ui/button';
 
 export interface EmptyStateProps {
   /**
    * Ícone a ser exibido
    */
-  icon?: LucideIcon;
+  icon?: ComponentType<{ size?: number | string; className?: string }>;
   
   /**
    * Título

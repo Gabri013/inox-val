@@ -113,3 +113,5 @@ export function getFirestore(): Firestore {
 
   return firestoreInstance;
 }
+
+export const db = getFirestore();

@@ -217,7 +217,7 @@ export default function Compras() {
     <div className="flex gap-4">
       <div className="flex-1">
         <label className="text-sm font-medium mb-2 block">Status</label>
-        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+        <Select value={statusFilter} onValueChange={(value: StatusCompra | "all") => setStatusFilter(value)}>
           <SelectTrigger>
             <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>

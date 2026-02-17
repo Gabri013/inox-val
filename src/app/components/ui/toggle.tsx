@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+// VariantProps removido
 
 import { cn } from "./utils";
 
@@ -33,8 +34,10 @@ function Toggle({
   variant,
   size,
   ...props
-}: React.ComponentProps<typeof TogglePrimitive.Root> &
-  VariantProps<typeof toggleVariants>) {
+}: React.ComponentProps<typeof TogglePrimitive.Root> & {
+  variant?: "default" | "outline";
+  size?: "default" | "sm" | "lg";
+}) {
   return (
     <TogglePrimitive.Root
       data-slot="toggle"

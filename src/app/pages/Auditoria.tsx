@@ -217,7 +217,7 @@ export default function Auditoria() {
       onSearchChange={setSearchTerm}
       filterContent={
         <div className="flex gap-2">
-          <Select value={actionFilter} onValueChange={(value) => setActionFilter(value as any)}>
+          <Select value={actionFilter} onValueChange={(value: AuditActionType | "all") => setActionFilter(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar ação" />
             </SelectTrigger>
@@ -232,7 +232,7 @@ export default function Auditoria() {
             </SelectContent>
           </Select>
 
-          <Select value={moduleFilter} onValueChange={(value) => setModuleFilter(value as any)}>
+          <Select value={moduleFilter} onValueChange={(value: AuditModule | "all") => setModuleFilter(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar módulo" />
             </SelectTrigger>

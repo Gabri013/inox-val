@@ -1,10 +1,10 @@
-import { PrecificacaoPage } from "./components/PrecificacaoPage";
-import { Toaster } from "./components/ui/toaster";
+// PrecificacaoPage não existe localmente, removido do import.
+// Toaster será importado do UI global
+import { Toaster } from "@/components/ui/sonner";
 
 export default function App() {
   return (
     <div>
-      <PrecificacaoPage />
       <Toaster />
     </div>
   );

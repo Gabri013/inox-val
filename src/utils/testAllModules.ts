@@ -2,9 +2,9 @@
 // Executa validação e simulação de orçamento para cada ProdutoTipo
 // Resultado: Nenhum NaN, bloqueio/erro se faltar dado obrigatório
 
-import { buildBOMByTipo } from './src/domains/precificacao/domains/precificacao/engine/bomBuilder';
-import { makeDefaultTables } from './src/domains/precificacao/domains/precificacao/engine/defaultTables';
-import { quoteWithSheetSelectionV2, validateBeforeQuoteV2 } from './src/domains/precificacao/domains/precificacao/engine/quoteV2';
+import { buildBOMByTipo } from '@/domains/precificacao/domains/precificacao/engine/bomBuilder';
+import { makeDefaultTables } from '@/domains/precificacao/domains/precificacao/engine/defaultTables';
+import { quoteWithSheetSelectionV2, validateBeforeQuoteV2 } from '@/domains/precificacao/domains/precificacao/engine/quoteV2';
 
 const produtos = [
   {

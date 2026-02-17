@@ -604,7 +604,7 @@ export default function Ordens() {
     <div className="flex gap-4">
       <div className="flex-1">
         <label className="text-sm font-medium mb-2 block">Status</label>
-        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+        <Select value={statusFilter} onValueChange={(value: StatusOrdem | "all") => setStatusFilter(value)}>
           <SelectTrigger>
             <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>

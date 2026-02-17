@@ -170,7 +170,7 @@ export default function CatalogoInsumos() {
       searchValue={busca}
       onSearchChange={setBusca}
       filterContent={
-        <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as any)}>
+        <Select value={filtroTipo} onValueChange={(v: TipoInsumo | 'todos') => setFiltroTipo(v)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>

@@ -431,7 +431,7 @@ export function Nesting2DVisualizer({ resultado }: Nesting2DVisualizerProps) {
           <div className="space-y-1 max-h-60 overflow-y-auto">
             {chapa.pecas.map((peca, idx) => (
               <div
-                key={(peca as any).id || `${chapa.numero}-${idx}`}
+                key={peca.id ? peca.id : `${chapa.numero}-${idx}`}
                 className="text-xs flex justify-between items-center py-2 px-3 hover:bg-accent rounded"
               >
                 <div className="flex items-center gap-3">

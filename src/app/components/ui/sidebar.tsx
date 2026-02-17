@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+// VariantProps removido
 import { PanelLeftIcon } from "lucide-react";
 
 import { useIsMobile } from "./use-mobile";
@@ -507,7 +508,7 @@ function SidebarMenuButton({
   asChild?: boolean;
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-} & VariantProps<typeof sidebarMenuButtonVariants>) {
+} & { variant?: "default" | "outline"; size?: "default" | "sm" | "lg" }) {
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
 

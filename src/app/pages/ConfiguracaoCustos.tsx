@@ -249,7 +249,7 @@ export function ConfiguracaoCustosForm({ embedded = false }: ConfiguracaoCustosF
                 <Label htmlFor="regime">Regime Tributário</Label>
                 <Select
                   value={config.impostos.regime}
-                  onValueChange={(v) => handleChange('impostos.regime', v as RegimeTributario)}
+                  onValueChange={(v: RegimeTributario) => handleChange('impostos.regime', v)}
                 >
                   <SelectTrigger id="regime">
                     <SelectValue />
