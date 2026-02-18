@@ -76,13 +76,15 @@ export default function Dashboard() {
   if (error) return <div className="p-8 text-center text-red-600">Erro: {error}</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="hover:shadow-lg transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Receita Total</CardTitle>
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <DollarSign className="size-5 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {metrics.receitaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
@@ -95,10 +97,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ordens em Aberto</CardTitle>
-            <Factory className="size-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Ordens em Aberto</CardTitle>
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Factory className="size-5 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.ordensEmAberto}</div>
@@ -108,10 +112,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Materiais Críticos</CardTitle>
-            <AlertTriangle className="size-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Materiais Críticos</CardTitle>
+            <div className="p-2 bg-yellow-500/10 rounded-lg">
+              <AlertTriangle className="size-5 text-yellow-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{metrics.materiaisCriticos.length}</div>
@@ -121,10 +127,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compras Pendentes</CardTitle>
-            <ShoppingCart className="size-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Compras Pendentes</CardTitle>
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <ShoppingCart className="size-5 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.comprasPendentes}</div>
@@ -278,8 +286,8 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4 hover:shadow-lg transition-shadow duration-200">
           <CardHeader>
             <CardTitle>Produção e Faturamento</CardTitle>
             <CardDescription>Comparativo dos últimos 6 meses</CardDescription>
@@ -318,7 +326,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-3">
+        <Card className="col-span-3 hover:shadow-lg transition-shadow duration-200">
           <CardHeader>
             <CardTitle>Categorias de Produtos</CardTitle>
             <CardDescription>Distribuição por tipo</CardDescription>

@@ -25,17 +25,19 @@ const PRODUCT_TYPES = [
 export function ProductStep({ data, onChange }: Props) {
   return (
     <div className="space-y-6">
-      <div>
-        <Label className="text-base">Tipo de Produto</Label>
+      <div className="space-y-3">
+        <Label className="text-sm font-medium text-foreground">
+          Tipo de Produto <span className="text-destructive">*</span>
+        </Label>
         <RadioGroup
           value={data.productType}
           onValueChange={(value) => onChange({ productType: value })}
-          className="grid grid-cols-2 gap-4 mt-3"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3"
         >
           {PRODUCT_TYPES.map((type) => (
             <div
               key={type.id}
-              className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-accent"
+              className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-accent transition-colors duration-200"
             >
               <RadioGroupItem value={type.id} id={type.id} />
               <div className="flex-1">
@@ -49,10 +51,15 @@ export function ProductStep({ data, onChange }: Props) {
             </div>
           ))}
         </RadioGroup>
+        {!data.productType && (
+          <p className="text-xs text-destructive">Selecione um tipo de produto</p>
+        )}
       </div>
       
-      <div>
-        <Label htmlFor="productModel">Modelo</Label>
+      <div className="space-y-2">
+        <Label htmlFor="productModel" className="text-sm font-medium text-foreground">
+          Modelo <span className="text-destructive">*</span>
+        </Label>
         <Select
           value={data.productModel}
           onValueChange={(value) => onChange({ productModel: value })}
@@ -90,16 +97,26 @@ export function ProductStep({ data, onChange }: Props) {
             )}
           </SelectContent>
         </Select>
+        {!data.productModel && (
+          <p className="text-xs text-destructive">Selecione um modelo</p>
+        )}
       </div>
       
       {data.productType === 'custom' && (
-        <div>
-          <Label htmlFor="customDescription">Descrição do Produto</Label>
+        <div className="space-y-2">
+          <Label htmlFor="customDescription" className="text-sm font-medium text-foreground">
+            Descrição do Produto <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="customDescription"
             placeholder="Descreva o produto desejado"
             className="mt-1"
+            value={data.customDescription || ''}
+            onChange={(e) => onChange({ customDescription: e.target.value })}
           />
+          {!data.customDescription && (
+            <p className="text-xs text-destructive">Descreva o produto personalizado</p>
+          )}
         </div>
       )}
     </div>

@@ -7,6 +7,15 @@ import { Progress } from '@/app/components/ui/progress';
 import { CalibrationRun, CalibrationRecommendation } from './types';
 import { createCalibrationService } from './calibration.service';
 import { validateCalibrationTarget } from './calibration.engine';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 const calibrationService = createCalibrationService();
 
@@ -243,10 +252,37 @@ export function CalibrationRunPage({ runId }: CalibrationRunPageProps) {
       )}
 
       {/* Error Distribution */}
-      <Card className="p-6">
+      <Card className="p-6 hover:shadow-lg transition-shadow duration-200">
         <h2 className="text-lg font-semibold mb-4">Distribuição de Erros</h2>
-        <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-          <p className="text-gray-500">Gráfico de Histograma - Em desenvolvimento</p>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={run.results.map((result, index) => ({
+              item: `Item ${index + 1}`,
+              error: (result.errorPercent * 100).toFixed(1)
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="item" 
+                className="text-xs" 
+                angle={-45} 
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis className="text-xs" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: "hsl(var(--card))", 
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px"
+                }} 
+              />
+              <Bar 
+                dataKey="error" 
+                fill={({ error }) => parseFloat(error) > 5 ? '#ef4444' : parseFloat(error) < -5 ? '#10b981' : '#3b82f6'}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </Card>
     </div>

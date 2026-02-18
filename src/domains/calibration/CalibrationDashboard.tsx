@@ -4,6 +4,18 @@ import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Baseline, CalibrationRun } from './types';
 import { createCalibrationService } from './calibration.service';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Legend
+} from 'recharts';
 
 const calibrationService = createCalibrationService();
 
@@ -167,15 +179,61 @@ export function CalibrationDashboard() {
       </Card>
 
       {/* Performance Chart */}
-      <Card className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold">Performance das Calibrações</h2>
-        </div>
-        
-        <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-          <p className="text-gray-500">Gráfico de MAPE por Run - Em desenvolvimento</p>
-        </div>
-      </Card>
+       <Card className="p-6 hover:shadow-lg transition-shadow duration-200">
+         <div className="flex justify-between items-center mb-6">
+           <h2 className="text-lg font-semibold">Performance das Calibrações</h2>
+         </div>
+         
+         <div className="h-64">
+           <ResponsiveContainer width="100%" height="100%">
+             <LineChart data={runs.map((run, index) => ({
+               run: `Run ${index + 1}`,
+               mape: (run.metrics.mape * 100).toFixed(1),
+               maxError: (run.metrics.maxError * 100).toFixed(1),
+               minError: (run.metrics.minError * 100).toFixed(1)
+             }))}>
+               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+               <XAxis dataKey="run" className="text-xs" />
+               <YAxis className="text-xs" />
+               <Tooltip 
+                 contentStyle={{ 
+                   backgroundColor: "hsl(var(--card))", 
+                   border: "1px solid hsl(var(--border))",
+                   borderRadius: "8px"
+                 }} 
+               />
+               <Legend />
+               <Line 
+                 type="monotone" 
+                 dataKey="mape" 
+                 stroke="#3b82f6" 
+                 strokeWidth={2}
+                 name="MAPE (%)"
+                 dot={{ r: 3 }}
+                 activeDot={{ r: 5 }}
+               />
+               <Line 
+                 type="monotone" 
+                 dataKey="maxError" 
+                 stroke="#ef4444" 
+                 strokeWidth={2}
+                 name="Erro Máximo (%)"
+                 dot={{ r: 3 }}
+                 activeDot={{ r: 5 }}
+               />
+               <Line 
+                 type="monotone" 
+                 dataKey="minError" 
+                 stroke="#10b981" 
+                 strokeWidth={2}
+                 name="Erro Mínimo (%)"
+                 dot={{ r: 3 }}
+                 activeDot={{ r: 5 }}
+               />
+             </LineChart>
+           </ResponsiveContainer>
+         </div>
+       </Card>
     </div>
   );
 }

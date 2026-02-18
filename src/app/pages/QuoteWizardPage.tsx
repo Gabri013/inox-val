@@ -224,19 +224,42 @@ export default function QuoteWizardPage() {
       </div>
       
       {/* Progress */}
-      <div className="mb-6">
-        <Progress value={progress} className="h-2" />
-        <div className="flex justify-between mt-2">
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
           {STEPS.map((step, index) => (
-            <div
-              key={step.id}
-              className={`text-xs ${
-                index <= currentStep ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              {step.title}
+            <div key={step.id} className="flex-1">
+              <div className="flex items-center gap-2">
+                <div className={`
+                  flex items-center justify-center size-8 rounded-full text-sm font-medium
+                  ${index < currentStep ? 'bg-green-500 text-white' : 
+                    index === currentStep ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}
+                `}>
+                  {index < currentStep ? (
+                    <CheckCircle2 className="size-4" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-foreground">{step.title}</div>
+                  <div className="text-xs text-muted-foreground">{step.description}</div>
+                </div>
+              </div>
+              {index < STEPS.length - 1 && (
+                <div className={`h-0.5 mt-4 ${index < currentStep ? 'bg-green-500' : 'bg-muted'}`} />
+              )}
             </div>
           ))}
+        </div>
+        <div className="mt-4">
+          <Progress 
+            value={progress} 
+            className="h-2"
+            style={{
+              background: 'hsl(var(--muted))',
+              '--tw-progress-bg': index < currentStep ? 'hsl(var(--success))' : 'hsl(var(--primary))'
+            }}
+          />
         </div>
       </div>
       
