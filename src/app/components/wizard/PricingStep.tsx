@@ -21,7 +21,7 @@ export function PricingStep({ data, draftResult, onChange }: Props) {
         <Label className="text-base">Método de Precificação</Label>
         <Select
           value={pricing.method}
-          onValueChange={(value) => onChange({
+          onValueChange={(value: string) => onChange({
             pricing: { ...pricing, method: value }
           })}
         >
@@ -42,7 +42,7 @@ export function PricingStep({ data, draftResult, onChange }: Props) {
           <Input
             type="number"
             value={pricing.targetMargin}
-            onChange={(e) => onChange({
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({
               pricing: { ...pricing, targetMargin: Number(e.target.value) }
             })}
             className="mt-1"
@@ -56,7 +56,7 @@ export function PricingStep({ data, draftResult, onChange }: Props) {
           <Input
             type="number"
             value={pricing.targetMargin}
-            onChange={(e) => onChange({
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({
               pricing: { ...pricing, targetMargin: Number(e.target.value) }
             })}
             className="mt-1"
@@ -70,7 +70,7 @@ export function PricingStep({ data, draftResult, onChange }: Props) {
           <Input
             type="number"
             value={targetPrice}
-            onChange={(e) => onChange({
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({
               pricing: { ...pricing, targetMargin: 0 }
             })}
             className="mt-1"

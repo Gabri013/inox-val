@@ -13,6 +13,18 @@
  * 
  * MIGRAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ES RUNTIME (mantidas)
  */
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { Orcamento, OrdemProducao, SolicitacaoCompra, MovimentacaoEstoque, WorkflowContextType } from "../types/workflow";
+import { useAuth } from "./AuthContext";
+import { useAudit } from "./AuditContext";
+import { useOrcamentos } from "@/hooks/useOrcamentos";
+import { useOrdens } from "@/hooks/useOrdens";
+import type { BOMItem } from "@/bom/types";
+import { estoqueMateriaisService } from "@/domains/estoque/estoque-material.service";
+import type { ResultadoCalculadora } from "@/domains/catalogo/types";
+import { CHAPAS_PADRAO } from "@/domains/engine/nesting";
+import { isModeloValido } from "@/bom/models";
+
 function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; erros: string[] } {
   const erros: string[] = [];
 
@@ -25,6 +37,10 @@ function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; err
   }
 
   orcamento.itens?.forEach((item, index) => {
+    if (!item) {
+      erros.push(`Item ${index + 1}: Item inválido`);
+      return;
+    }
     if (!item.modeloId) {
       erros.push(`Item ${index + 1}: modeloId ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âé obrigatÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³rio`);
     } else if (!isModeloValido(item.modeloId)) {

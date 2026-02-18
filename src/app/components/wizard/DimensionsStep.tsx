@@ -51,7 +51,7 @@ export function DimensionsStep({ data, onChange }: Props) {
           <Label>Espessura (mm)</Label>
           <Select
             value={dimensions.thickness.toString()}
-            onValueChange={(v) => onChange({
+            onValueChange={(v: string) => onChange({
               dimensions: { ...dimensions, thickness: Number(v) }
             })}
           >
@@ -70,7 +70,7 @@ export function DimensionsStep({ data, onChange }: Props) {
           <Label>Acabamento</Label>
           <Select
             value={dimensions.finish}
-            onValueChange={(v) => onChange({
+            onValueChange={(v: string) => onChange({
               dimensions: { ...dimensions, finish: v }
             })}
           >
@@ -90,7 +90,7 @@ export function DimensionsStep({ data, onChange }: Props) {
         <div className="flex items-center gap-2">
           <Switch
             checked={dimensions.hasBacksplash}
-            onCheckedChange={(checked) => onChange({
+            onCheckedChange={(checked: boolean) => onChange({
               dimensions: { ...dimensions, hasBacksplash: checked }
             })}
           />
@@ -99,7 +99,7 @@ export function DimensionsStep({ data, onChange }: Props) {
         <div className="flex items-center gap-2">
           <Switch
             checked={dimensions.hasShelf}
-            onCheckedChange={(checked) => onChange({
+            onCheckedChange={(checked: boolean) => onChange({
               dimensions: { ...dimensions, hasShelf: checked }
             })}
           />

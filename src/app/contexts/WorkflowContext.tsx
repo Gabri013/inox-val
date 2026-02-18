@@ -8,6 +8,8 @@ import {
 } from "../types/workflow";
 import { useAudit } from "./AuditContext";
 import type { BOMItem } from "@/bom/types";
+import { estoqueMateriaisService } from "@/domains/estoque/estoque-material.service";
+import type { ResultadoCalculadora } from "@/domains/catalogo/types";
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 

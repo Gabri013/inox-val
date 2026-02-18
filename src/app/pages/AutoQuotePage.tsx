@@ -2,8 +2,8 @@
 // AUTO QUOTE PAGE - Automatic equipment pricing interface
 // ============================================================
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
+import { useState, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -16,27 +16,21 @@ import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Progress } from '../components/ui/progress';
 import { 
   Calculator, 
-  FileText, 
   Package, 
   Settings, 
   AlertTriangle, 
-  CheckCircle, 
   Download,
   RefreshCw,
   Eye,
   Layers,
   DollarSign,
-  TrendingUp,
   Factory,
   Box
 } from 'lucide-react';
 
 import {
-  EquipmentTemplate,
   EquipmentInputs,
   PricingResult,
-  MaterialCostBreakdown,
-  ProcessCostBreakdown,
 } from '@/domains/pricingSystem/pricing.types';
 import {
   getAllTemplates,

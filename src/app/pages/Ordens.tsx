@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale/pt-BR";
 import { toast } from "sonner";
 import { Orcamento, OrdemProducao, StatusOrdem } from "../types/workflow";
 import type { BOMItem } from "@/bom/types";
+import type { ResultadoCalculadora } from "@/domains/catalogo/types";
 import { estoqueItensService, registrarMovimentoEstoque } from "@/services/firestore/estoque.service";
 import OrdemProducaoPDF, { type OrdemProducaoData, type StatusOP } from "@/components/OrdemProducaoPDF";
 import {

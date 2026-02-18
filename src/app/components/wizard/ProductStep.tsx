@@ -55,7 +55,7 @@ export function ProductStep({ data, onChange }: Props) {
         </Label>
         <Select
           value={data.productModel}
-          onValueChange={(value) => onChange({ productModel: value })}
+          onValueChange={(value: string) => onChange({ productModel: value })}
         >
           <SelectTrigger id="productModel">
             <SelectValue placeholder="Selecione um modelo" />

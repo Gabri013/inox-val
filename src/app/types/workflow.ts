@@ -47,6 +47,8 @@ export type StatusOrcamento =
 // ITEM DO ORÇAMENTO
 // ========================================
 
+import type { ResultadoCalculadora } from '@/domains/catalogo/types';
+
 export interface ItemOrcamento {
   id: string;
   modeloId: string;
@@ -56,7 +58,7 @@ export interface ItemOrcamento {
   precoUnitario: number;
   subtotal: number;
   /** Snapshot do cálculo completo (BOM + Nesting + Precificação) */
-  // calculoSnapshot?: ResultadoCalculadora;
+  calculoSnapshot?: ResultadoCalculadora;
 }
 
 // ========================================
