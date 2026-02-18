@@ -1,16 +1,14 @@
-import { useContext, createContext, ReactNode } from 'react';
-import { User, Company, UserRole, ROLE_PERMISSIONS } from '@/domains/auth/types';
+import { useContext, createContext, ReactNode, createElement } from 'react';
 
 interface AuthContextType {
-  user: User | null;
-  company: Company | null;
+  user: any;
+  company: any;
   isAuthenticated: boolean;
   isLoading: boolean;
   
-  // Permission helpers
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
-  hasRole: (role: UserRole) => boolean;
+  hasRole: (role: string) => boolean;
   isAdmin: () => boolean;
   isManager: () => boolean;
 }
@@ -18,43 +16,38 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // TODO: Implement with Firebase Auth
-  const user: User | null = null;
-  const company: Company | null = null;
+  const user = null;
+  const company = null;
   const isLoading = false;
   
   const hasPermission = (permission: string): boolean => {
-    if (!user) return false;
-    const rolePermissions = ROLE_PERMISSIONS[user.role] || [];
-    return rolePermissions.includes(permission) || user.permissions.includes(permission);
+    return false;
   };
   
   const hasAnyPermission = (permissions: string[]): boolean => {
-    return permissions.some(p => hasPermission(p));
+    return false;
   };
   
-  const hasRole = (role: UserRole): boolean => {
-    return user?.role === role;
+  const hasRole = (role: string): boolean => {
+    return false;
   };
   
-  const isAdmin = (): boolean => hasRole('admin');
-  const isManager = (): boolean => hasRole('gerente') || isAdmin();
+  const isAdmin = (): boolean => false;
+  const isManager = (): boolean => false;
   
-  return (
-    <AuthContext.Provider value={{
+  return createElement(AuthContext.Provider, {
+    value: {
       user,
       company,
-      isAuthenticated: !!user,
+      isAuthenticated: false,
       isLoading,
       hasPermission,
       hasAnyPermission,
       hasRole,
       isAdmin,
       isManager
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    }
+  }, children);
 }
 
 export function useAuth(): AuthContextType {

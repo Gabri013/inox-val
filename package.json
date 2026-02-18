@@ -32,7 +32,10 @@
     "test:firebase": "node scripts/test-firebase.js",
     "check:all": "bash scripts/check-all.sh",
     "validate": "npx tsx scripts/validate/index.ts",
-    "validate:advanced": "npx tsx scripts/validate/advanced/index.ts"
+    "validate:advanced": "npx tsx scripts/validate/advanced/index.ts",
+    "corporate-validate": "npx tsx scripts/corporate-validate.ts",
+    "health-check": "npx tsx scripts/health-check.ts",
+    "validate-all": "npx tsx scripts/validate-all.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

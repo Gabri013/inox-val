@@ -1,26 +1,23 @@
 # Relatório de Validação - INOX-VAL
-**Data/Hora:** 18/02/2026, 09:47:40
-**Resultado Geral:** ✅ PASS
+**Data/Hora:** 18/02/2026, 11:27:18
+**Resultado Geral:** ❌ FAIL
 **Total de Validadores:** 16
-**Passados:** 16
-**Falhos:** 0
+**Passados:** 14
+**Falhos:** 2
 **Avisos:** 0
 
 ## Resultados Detalhados
 
 ### validateEnvironment
-- Status: ✅ Passou
+- Status: ❌ Falhou
 - Duração: 0ms
 
+- Erro: Variáveis de ambiente faltando: VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, NODE_ENV
 
-- Detalhes: {
-  "environment": "development ",
-  "projectId": "test-project "
-}
 
 ### validateBuild
 - Status: ✅ Passou
-- Duração: 0ms
+- Duração: 1ms
 
 
 - Detalhes: {
@@ -59,13 +56,13 @@
   "count": 20,
   "averageCostPerHour": 81.5,
   "types": [
-    "PUNCHAR",
-    "SOBRERROTAR",
-    "DOBRAR",
+    "PINTAR",
     "POLIR",
     "ESCOVAR",
+    "DOBRAR",
+    "SOBRERROTAR",
     "CORTAR",
-    "PINTAR"
+    "PUNCHAR"
   ]
 }
 
@@ -110,32 +107,27 @@
 }
 
 ### validateE2EFlow
-- Status: ✅ Passou
-- Duração: 2884ms
+- Status: ❌ Falhou
+- Duração: 2622ms
 
+- Erro: Teste "Bancada com 2 Cubas" falhou: Falha ao calcular BOM para o template
 
-- Detalhes: {
-  "testCases": 10,
-  "passed": 10,
-  "failed": 0,
-  "averageTimePerTest": 288.4
-}
 
 ### validateSnapshots
 - Status: ✅ Passou
-- Duração: 3196ms
+- Duração: 2887ms
 
 
 - Detalhes: {
   "testCases": 3,
   "passed": 3,
   "failed": 0,
-  "averageTimePerTest": 1065.33
+  "averageTimePerTest": 962.33
 }
 
 ### validatePDF
 - Status: ✅ Passou
-- Duração: 1793ms
+- Duração: 1390ms
 
 
 - Detalhes: {
@@ -146,7 +138,7 @@
 
 ### validatePurchasing
 - Status: ✅ Passou
-- Duração: 1605ms
+- Duração: 1294ms
 
 
 - Detalhes: {
@@ -157,7 +149,7 @@
 
 ### validateProduction
 - Status: ✅ Passou
-- Duração: 1916ms
+- Duração: 1560ms
 
 
 - Detalhes: {
@@ -168,7 +160,7 @@
 
 ### validateSecurity
 - Status: ✅ Passou
-- Duração: 858ms
+- Duração: 623ms
 
 
 - Detalhes: {
@@ -179,19 +171,19 @@
 
 ### validatePerformance
 - Status: ✅ Passou
-- Duração: 9562ms
+- Duração: 11353ms
 
 
 - Detalhes: {
-  "averageTime": 478.05,
-  "p95Time": 744,
-  "memoryUsage": 214.1,
+  "averageTime": 567.65,
+  "p95Time": 762,
+  "memoryUsage": 380.43,
   "testCount": 20
 }
 
 ### validateMemoization
 - Status: ✅ Passou
-- Duração: 27ms
+- Duração: 28ms
 
 
 - Detalhes: {
@@ -199,4 +191,12 @@
   "reportPath": "c:\\Users\\gabri\\Documents\\GitHub\\INOX-VAL\\MEMOIZATION_REPORT.md"
 }
 
+
+## Erros Críticos
+
+### validateEnvironment
+Variáveis de ambiente faltando: VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, NODE_ENV
+
+### validateE2EFlow
+Teste "Bancada com 2 Cubas" falhou: Falha ao calcular BOM para o template
 
