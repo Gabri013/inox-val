@@ -43,8 +43,8 @@ export function computeMassKg(
   // Espessura em mm -> m
   const thicknessM = thicknessMm / 1000;
   
-  // Massa = área * espessura * densidade
-  return areaM2 * thicknessM * densityKgM3;
+  // Massa = área * espessura * densidade * quantidade
+  return areaM2 * thicknessM * densityKgM3 * part.quantity;
 }
 
 /**
@@ -71,8 +71,8 @@ export function computeTubeMassKg(
   // Comprimento em m
   const lengthM = part.lengthMm / 1000;
   
-  // Massa = área * comprimento * densidade
-  return sectionAreaM2 * lengthM * densityKgM3;
+  // Massa = área * comprimento * densidade * quantidade
+  return sectionAreaM2 * lengthM * densityKgM3 * part.quantity;
 }
 
 /**
@@ -109,7 +109,7 @@ export function computeBOMMass(
     const density = getDensity(alloy, material);
     const thickness = material?.thicknessMm || 1.2;
     
-    const mass = computeMassKg(sheet, density, thickness) * sheet.quantity;
+    const mass = computeMassKg(sheet, density, thickness);
     totalKg += mass;
     
     byMaterial.set(sheet.materialKey, (byMaterial.get(sheet.materialKey) || 0) + mass);
@@ -122,7 +122,7 @@ export function computeBOMMass(
     const alloy = material?.alloy || '304';
     const density = getDensity(alloy, material);
     
-    const mass = computeTubeMassKg(tube, density) * tube.quantity;
+    const mass = computeTubeMassKg(tube, density);
     totalKg += mass;
     
     byMaterial.set(tube.materialKey, (byMaterial.get(tube.materialKey) || 0) + mass);
