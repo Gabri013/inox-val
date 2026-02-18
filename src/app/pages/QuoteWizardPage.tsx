@@ -28,7 +28,7 @@ import {
   QuoteDraftInput,
   QuoteDraftResult
 } from '@/domains/engine/quote';
-import { BOM, SheetPart, TubePart } from '@/domains/engine/types';
+import { SheetPart, TubePart, ProcessKey } from '@/domains/engine/types';
 import { DEFAULT_RULESET } from '@/domains/engine/ruleset';
 
 const STEPS = [
@@ -72,8 +72,8 @@ export default function QuoteWizardPage() {
     bom: {
       sheets: [] as SheetPart[],
       tubes: [] as TubePart[],
-      accessories: [] as { id: string; sku: string; quantity: number }[],
-      processes: ['CORTE_LASER', 'DOBRA', 'MONTAGEM', 'EMBALAGEM'] as string[],
+      accessories: [] as { id: string; sku: string; materialKey: string; quantity: number }[],
+      processes: ['CORTE_LASER', 'DOBRA', 'MONTAGEM', 'EMBALAGEM'] as ProcessKey[],
     },
     
     pricing: {
@@ -181,7 +181,6 @@ export default function QuoteWizardPage() {
       case 4:
         return (
           <NestingStep
-            data={formData}
             draftResult={draftResult}
             onCalculate={handleCalculate}
             isCalculating={isCalculating}
@@ -255,10 +254,6 @@ export default function QuoteWizardPage() {
           <Progress 
             value={progress} 
             className="h-2"
-            style={{
-              background: 'hsl(var(--muted))',
-              '--tw-progress-bg': index < currentStep ? 'hsl(var(--success))' : 'hsl(var(--primary))'
-            }}
           />
         </div>
       </div>

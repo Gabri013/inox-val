@@ -1,7 +1,7 @@
 import { WorkflowState, OrchestratorContext, TransitionResult, Snapshot } from './types';
 import { workflowEngine } from './workflow';
 import { healthCheckService } from './healthCheck';
-import crypto from 'crypto';
+// Removido import Node.js: crypto
 
 export class SystemOrchestrator {
   async transitionState(
@@ -25,7 +25,13 @@ export class SystemOrchestrator {
 
   async generateSnapshot(content: any): Promise<Snapshot> {
     const contentStr = JSON.stringify(content);
-    const sha256 = crypto.createHash('sha256').update(contentStr).digest('hex');
+    // Browser: hashCode simples (não seguro)
+    let hash = 0;
+    for (let i = 0; i < contentStr.length; i++) {
+      hash = ((hash << 5) - hash) + contentStr.charCodeAt(i);
+      hash |= 0;
+    }
+    const sha256 = hash.toString(16);
     
     const snapshot: Snapshot = {
       id: `snapshot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -39,24 +45,27 @@ export class SystemOrchestrator {
 
   async validateSnapshot(snapshot: Snapshot): Promise<boolean> {
     const contentStr = JSON.stringify(snapshot.content);
-    const sha256 = crypto.createHash('sha256').update(contentStr).digest('hex');
-    
-    return sha256 === snapshot.sha256;
+    let hash2 = 0;
+    for (let i = 0; i < contentStr.length; i++) {
+      hash2 = ((hash2 << 5) - hash2) + contentStr.charCodeAt(i);
+      hash2 |= 0;
+    }
+    return hash2.toString(16) === snapshot.sha256;
   }
 
-  async generatePDFFromSnapshot(snapshot: Snapshot): Promise<Buffer> {
+  async generatePDFFromSnapshot(snapshot: Snapshot): Promise<string> {
     console.log('Generating PDF from snapshot:', snapshot.id);
-    return Buffer.from('PDF content');
+    return 'PDF content';
   }
 
-  async generatePurchaseOrderFromSnapshot(snapshot: Snapshot): Promise<Buffer> {
+  async generatePurchaseOrderFromSnapshot(snapshot: Snapshot): Promise<string> {
     console.log('Generating Purchase Order from snapshot:', snapshot.id);
-    return Buffer.from('Purchase Order content');
+    return 'Purchase Order content';
   }
 
-  async generateProductionOrderFromSnapshot(snapshot: Snapshot): Promise<Buffer> {
+  async generateProductionOrderFromSnapshot(snapshot: Snapshot): Promise<string> {
     console.log('Generating Production Order from snapshot:', snapshot.id);
-    return Buffer.from('Production Order content');
+    return 'Production Order content';
   }
 
   async performHealthCheck() {

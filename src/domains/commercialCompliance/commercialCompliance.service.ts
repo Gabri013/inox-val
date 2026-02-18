@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+// Removido import Node.js: crypto
 import { CommercialComplianceConfig, CommercialComplianceResult, QuoteSnapshot } from './types';
 
 export class CommercialComplianceService {
@@ -9,7 +9,7 @@ export class CommercialComplianceService {
   }
 
   validateQuote(
-    quoteId: string,
+    _quoteId: string,
     quoteContent: string,
     priceValidityDate: string,
     discountPercentage: number,
@@ -84,13 +84,24 @@ export class CommercialComplianceService {
   }
 
   private generateSHA256(content: string): string {
-    return crypto.createHash('sha256').update(content).digest('hex');
+    // Fallback hashCode (não seguro, apenas para browser)
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      hash = ((hash << 5) - hash) + content.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash.toString(16);
   }
 
   private generateHMAC(content: string): string {
-    return crypto.createHmac('sha256', this.config.hmacSecret)
-      .update(content)
-      .digest('hex');
+    // Fallback HMAC: NÃO seguro, apenas para browser
+    const key = this.config.hmacSecret;
+    let hmac = 0;
+    for (let i = 0; i < content.length; i++) {
+      hmac = ((hmac << 5) - hmac) + content.charCodeAt(i) + key.charCodeAt(i % key.length);
+      hmac |= 0;
+    }
+    return hmac.toString(16);
   }
 }
 

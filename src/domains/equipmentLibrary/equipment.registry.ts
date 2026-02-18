@@ -20,6 +20,7 @@ import {
   AccessoryPartDSL,
   BendDSL,
   PartFeatureDSL,
+  StructuralRuleDSL,
 } from './equipment.dsl.schema';
 import { evaluateExpression, ExpressionError } from './equipment.expression';
 import { validateTemplate } from './equipment.validator';

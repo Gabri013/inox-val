@@ -3,21 +3,19 @@ import { BarChart3, TrendingUp, Target, Calendar, Plus } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Baseline, CalibrationRun } from './types';
-import { createCalibrationService } from './calibration.service';
+
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   Legend
 } from 'recharts';
 
-const calibrationService = createCalibrationService();
+
 
 export function CalibrationDashboard() {
   const [baselines, setBaselines] = useState<Baseline[]>([]);

@@ -23,6 +23,12 @@ import SemAcesso from "./pages/SemAcesso";
 import PrecificacaoPage from "@/domains/precificacao/pages/Precificacao";
 import QuoteWizardPage from "./pages/QuoteWizardPage";
 import AutoQuotePage from "./pages/AutoQuotePage";
+import GestaoMateriaisPage from "./pages/GestaoMateriaisPage";
+import ConfiguracaoCustos from "./pages/ConfiguracaoCustos";
+import CatalogoInsumos from "./pages/CatalogoInsumos";
+import PopularBanco from "./pages/PopularBanco";
+import CriacaoOrcamentoPage from "./pages/CriacaoOrcamentoPage";
+import CorporateValidationPage from "./pages/CorporateValidationPage";
 
 // Importar páginas de Calibração
 import { 
@@ -82,6 +88,30 @@ export const router = createBrowserRouter([
       { 
         index: true, 
         element: <ProtectedRoute requiredModule="dashboard"><Dashboard /></ProtectedRoute>
+      },
+      { 
+        path: "catalogo-insumos", 
+        element: <ProtectedRoute><CatalogoInsumos /></ProtectedRoute>
+      },
+      { 
+        path: "gestao-materiais", 
+        element: <ProtectedRoute><GestaoMateriaisPage /></ProtectedRoute>
+      },
+      { 
+        path: "configuracao-custos", 
+        element: <ProtectedRoute><ConfiguracaoCustos /></ProtectedRoute>
+      },
+      { 
+        path: "validacao-corporativa", 
+        element: <ProtectedRoute requiredModule="configuracoes"><CorporateValidationPage /></ProtectedRoute>
+      },
+      { 
+        path: "popular-banco", 
+        element: <ProtectedRoute><PopularBanco /></ProtectedRoute>
+      },
+      { 
+        path: "criacao-orcamento", 
+        element: <ProtectedRoute><CriacaoOrcamentoPage /></ProtectedRoute>
       },
       { 
         path: "clientes", 

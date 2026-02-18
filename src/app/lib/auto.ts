@@ -17,7 +17,7 @@ import type {
   MovimentacaoEstoque,
   SolicitacaoCompra
 } from "../types/workflow";
-import { gerarId } from "./database";
+
 
 // ========================================
 // CONFIGURAÇÕES DE AUTOMAÇÃO
@@ -279,7 +279,7 @@ export async function autoAcceptOrdem(
   ordemId: string,
   ordens: OrdemProducao[],
   updateFn: (id: string, data: Partial<OrdemProducao>) => Promise<void>,
-  config: AutoConfig = AUTO_CONFIG_PADRAO
+  _config: AutoConfig = AUTO_CONFIG_PADRAO
 ): Promise<AutoResult<OrdemProducao>> {
   try {
     const ordem = ordens.find(o => o.id === ordemId);
@@ -794,7 +794,7 @@ export function autoNotifyAprovar(
  */
 export async function autoFinalizeConcluidos(
   ordens: OrdemProducao[],
-  updateOrdemFn: (id: string, data: Partial<OrdemProducao>) => Promise<void>,
+  _updateOrdemFn: (id: string, data: Partial<OrdemProducao>) => Promise<void>,
   diasParaFinalizar: number = 7
 ): Promise<AutoResult<{ finalizadas: number }>> {
   try {
@@ -811,7 +811,7 @@ export async function autoFinalizeConcluidos(
       return diasPassados >= diasParaFinalizar;
     });
 
-    for (const ordem of ordensConcluidas) {
+    for (const _ordem of ordensConcluidas) {
       // Aqui poderia adicionar lógica adicional de finalização
       // como arquivamento, geração de relatórios, etc.
       finalizadas++;

@@ -8,9 +8,9 @@ import {
   SheetPart,
   TubePart,
   Bend,
-  PartFeature,
+
 } from './pricing.types';
-import { DEFAULT_DENSITIES, getDensity } from '../engine/mass';
+import { DEFAULT_DENSITIES } from '../engine/mass';
 
 // ============================================================
 // Geometry Types
@@ -92,7 +92,7 @@ export function computeCutLengthMm(part: SheetPart): number {
   // With bends, subtract edges that become bends
   // Assume bends are along the width dimension
   let bendEdgeLength = 0;
-  for (const bend of part.bends) {
+  for (const _bend of part.bends) {
     // Each bend replaces a cut edge
     bendEdgeLength += part.blank.height;
   }

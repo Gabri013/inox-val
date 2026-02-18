@@ -12,8 +12,7 @@ import {
   Firestore,
 } from 'firebase/firestore';
 import {
-  EquipmentTemplateDSL,
-  EquipmentPreset,
+
   TemplateDocument,
   PresetDocument,
   SeedResult,

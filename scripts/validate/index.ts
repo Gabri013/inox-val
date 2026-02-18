@@ -1,3 +1,6 @@
+import { loadEnv } from '../_loadEnv';
+loadEnv();
+
 import { writeValidationReport } from './report';
 import { validateEnvironment, validateBuild } from './validators/env';
 import { validateFirestore } from './validators/firestore';

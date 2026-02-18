@@ -2,7 +2,7 @@
 // MASS ENGINE - Calculate mass for sheets, tubes, and accessories
 // ============================================================
 
-import { SheetPart, TubePart, AccessoryPart, Material, EngineResult } from '../types';
+import { SheetPart, TubePart, AccessoryPart, Material } from '../types';
 
 /**
  * Densidades padrão em kg/m³

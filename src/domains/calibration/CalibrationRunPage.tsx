@@ -5,7 +5,7 @@ import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { CalibrationRun, CalibrationRecommendation } from './types';
-import { createCalibrationService } from './calibration.service';
+
 import { validateCalibrationTarget } from './calibration.engine';
 import {
   BarChart,
@@ -16,8 +16,6 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-
-const calibrationService = createCalibrationService();
 
 interface CalibrationRunPageProps {
   runId: string;
@@ -49,7 +47,7 @@ export function CalibrationRunPage({ runId }: CalibrationRunPageProps) {
         {
           id: 'factor-1',
           type: 'global',
-          factors: { material: 1.02, process: 0.98 },
+          factors: { material: 1.02, weld: 0.98, cut: 0.98, finish: 0.98, assembly: 0.98 },
           description: 'Ajuste global de custos',
           effectiveFrom: new Date().toISOString(),
           active: true,
@@ -278,7 +276,7 @@ export function CalibrationRunPage({ runId }: CalibrationRunPageProps) {
               />
               <Bar 
                 dataKey="error" 
-                fill={({ error }) => parseFloat(error) > 5 ? '#ef4444' : parseFloat(error) < -5 ? '#10b981' : '#3b82f6'}
+                fill="#3b82f6"
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

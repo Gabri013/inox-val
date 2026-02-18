@@ -36,17 +36,17 @@ describe('CorporateValidationService', () => {
               otherExpenses: 50,
               totalCost: 2150
             },
-            fiscalSimulations: [
-              {
-                regime: 'SIMPLES',
-                totalRevenue: 3000,
-                totalCost: 2150,
-                taxableIncome: 850,
-                taxPayable: 360,
-                netProfit: 490,
-                effectiveTaxRate: 12
-              }
-            ],
+              fiscalSimulations: [
+                {
+                  regime: 'SIMPLES' as const,
+                  totalRevenue: 3000,
+                  totalCost: 2150,
+                  taxableIncome: 850,
+                  taxPayable: 360,
+                  netProfit: 490,
+                  effectiveTaxRate: 12
+                }
+              ],
             realProfitMeetsTarget: true,
             fiscalProfitPositive: true
           },
@@ -69,13 +69,13 @@ describe('CorporateValidationService', () => {
             errors: [],
             warnings: [],
             versionedItems: [
-              {
-                id: 'TMPL-001',
-                type: 'TEMPLATE',
-                version: '1.0.0',
-                name: 'Orçamento Padrão'
-              }
-            ],
+                {
+                  id: 'TMPL-001',
+                  type: 'TEMPLATE' as const,
+                  version: '1.0.0',
+                  name: 'Orçamento Padrão'
+                }
+              ],
             changelog: [],
             allItemsVersioned: true,
             hasCompleteChangelog: true

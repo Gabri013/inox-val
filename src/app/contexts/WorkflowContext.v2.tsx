@@ -14,15 +14,16 @@
  * MIGRAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ES RUNTIME (mantidas)
  */
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { Orcamento, OrdemProducao, SolicitacaoCompra, MovimentacaoEstoque, WorkflowContextType } from "../types/workflow";
-import { useAuth } from "./AuthContext";
+
+const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
+import { Orcamento, SolicitacaoCompra, MovimentacaoEstoque, WorkflowContextType } from "../types/workflow";
+import { useAuth } from "@/app/hooks/useAuth";
 import { useAudit } from "./AuditContext";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { useOrdens } from "@/hooks/useOrdens";
-import type { BOMItem } from "@/bom/types";
+
 import { estoqueMateriaisService } from "@/domains/estoque/estoque-material.service";
 import type { ResultadoCalculadora } from "@/domains/catalogo/types";
-import { CHAPAS_PADRAO } from "@/domains/engine/nesting";
 import { isModeloValido } from "@/bom/models";
 
 function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; erros: string[] } {
@@ -52,27 +53,8 @@ function validarOrcamento(orcamento: Partial<Orcamento>): { valido: boolean; err
     } else {
       const snapshot = item.calculoSnapshot as ResultadoCalculadora;
       
-      if (!snapshot.bomResult || !snapshot.bomResult.bom || snapshot.bomResult.bom.length === 0) {
-        erros.push(`Item ${index + 1}: BOM vazia ou invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lida`);
-      }
-
-      if (!snapshot.nesting || !snapshot.nesting.melhorOpcao) {
-        erros.push(`Item ${index + 1}: Nesting vazio ou invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lido`);
-      } else {
-        const chapaUsada = snapshot.nesting.melhorOpcao.chapa;
-        const chapaValida = CHAPAS_PADRAO.some(
-          c => c.comprimento === chapaUsada.comprimento && c.largura === chapaUsada.largura
-        );
-        if (!chapaValida) {
-          erros.push(
-            `Item ${index + 1}: Chapa ${chapaUsada.comprimento}ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â${chapaUsada.largura} nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o permitida. ` +
-            `Apenas 2000ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â1250 e 3000ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â1250 sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o aceitas`
-          );
-        }
-      }
-
-      if (!snapshot.custos || snapshot.custos.categorias.length === 0) {
-        erros.push(`Item ${index + 1}: Custos vazios ou invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lidos`);
+      if (!snapshot.consumoMateriais || snapshot.consumoMateriais.length === 0) {
+        erros.push(`Item ${index + 1}: Consumo de materiais vazio ou inválido`);
       }
     }
   });
@@ -281,9 +263,9 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
 
     orcamento.itens.forEach(itemOrcamento => {
       const snapshot = itemOrcamento.calculoSnapshot as ResultadoCalculadora | undefined;
-      if (!snapshot?.bomResult?.bom || snapshot.bomResult.bom.length === 0) return;
+      if (!snapshot?.consumoMateriais || snapshot.consumoMateriais.length === 0) return;
 
-      snapshot.bomResult.bom.forEach((bomItem: BOMItem) => {
+      snapshot.consumoMateriais.forEach((bomItem: any) => {
         const materialId = bomItem.material || "DESCONHECIDO";
         const quantidade = (bomItem.pesoTotal || bomItem.qtd || 0) * itemOrcamento.quantidade;
         const unidade = bomItem.unidade || "un";

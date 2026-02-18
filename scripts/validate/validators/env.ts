@@ -19,7 +19,7 @@ export async function validateEnvironment(): Promise<ValidatorResult> {
 
     requiredEnvVars.forEach(varName => {
       const value = process.env[varName];
-      if (!value) {
+      if (!value || value.trim() === '') {
         missingVars.push(varName);
       } else if (varName === 'VITE_FIREBASE_API_KEY' && value.length < 30) {
         invalidVars.push(`${varName} (muito curta)`);

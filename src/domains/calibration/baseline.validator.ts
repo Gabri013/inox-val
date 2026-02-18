@@ -85,8 +85,7 @@ export function validateBaselineInputs(
 }
 
 export function validateCostBreakdown(
-  baseline: Baseline,
-  tolerance: number = 0.15
+  baseline: Baseline
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];

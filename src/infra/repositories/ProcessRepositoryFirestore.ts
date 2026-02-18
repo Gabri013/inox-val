@@ -44,13 +44,16 @@ export class ProcessRepositoryFirestore implements ProcessRepository {
   }
   
   async createProcess(process: Omit<Process, 'key'> & { key?: ProcessKey }): Promise<Process> {
-    const key = process.key || process.key;
-    const docRef = doc(db, COLLECTION_NAME, key);
+    if (!process.key) {
+      throw new Error('Process key is required');
+    }
+    
+    const docRef = doc(db, COLLECTION_NAME, process.key);
     
     const data = this.processToDoc(process);
     await setDoc(docRef, data);
     
-    return { ...process, key };
+    return { ...process, key: process.key };
   }
   
   async updateProcess(key: ProcessKey, updates: Partial<Process>): Promise<Process> {

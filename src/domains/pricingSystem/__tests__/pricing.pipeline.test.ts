@@ -2,7 +2,7 @@
 // PRICING PIPELINE TESTS
 // ============================================================
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   EquipmentInputs,
   Material,
@@ -18,35 +18,24 @@ import {
   STRUCTURAL_RULES,
   evaluateRule,
   evaluateCondition,
-  applyStructuralRules,
+
 } from '../structural.rules';
 import {
   generateEquipmentBOM,
-  validateInputs,
+
 } from '../equipment.generator';
 import {
-  runGeometryCalculations,
+
   computeAreaMm2,
   computeCutLengthMm,
 } from '../geometry.pipeline';
-import {
-  runNesting,
-} from '../nesting.pipeline';
-import {
-  calculateMaterialCost,
-  calculateFullMaterialCost,
-} from '../material.cost';
-import {
-  calculateProcessCost,
-} from '../process.cost';
-import {
-  calculatePricing,
-  applyOverhead,
-  applyMargin,
-} from '../pricing.engine';
+
+
+
+
 import {
   runPricingPipeline,
-  runPricingPipelineByKey,
+
 } from '../pricing.pipeline';
 import {
   createSnapshot,
@@ -55,7 +44,7 @@ import {
 } from '../snapshot.engine';
 import {
   validatePricingInputs,
-  validateMaterials,
+
   canFinalize,
 } from '../validation.engine';
 import { DEFAULT_RULESET } from '../../engine/ruleset';
@@ -282,7 +271,7 @@ describe('Pricing Pipeline', () => {
         blank: { width: 1000, height: 600 },
         thickness: 1.2,
         allowRotate: true,
-        grainDirection: null as const,
+        grainDirection: null,
         features: [],
         bends: [],
       };
@@ -300,7 +289,7 @@ describe('Pricing Pipeline', () => {
         blank: { width: 1000, height: 600 },
         thickness: 1.2,
         allowRotate: true,
-        grainDirection: null as const,
+        grainDirection: null,
         features: [],
         bends: [],
       };

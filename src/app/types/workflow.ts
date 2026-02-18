@@ -48,6 +48,7 @@ export type StatusOrcamento =
 // ========================================
 
 import type { ResultadoCalculadora } from '@/domains/catalogo/types';
+import type { OpPricingSnapshot } from '@/domains/precificacao/types/opPricing';
 
 export interface ItemOrcamento {
   id: string;

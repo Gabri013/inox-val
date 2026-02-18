@@ -116,7 +116,7 @@ export class AccountingValidationService {
 
   private simulateLucroPresumido(
     costData: QuoteCostData,
-    classification: CostClassification
+    _classification: CostClassification
   ): FiscalSimulationResult {
     const totalRevenue = costData.totalRevenue;
     const totalCost = costData.materials + costData.labor + costData.overhead + costData.otherExpenses;
@@ -140,7 +140,7 @@ export class AccountingValidationService {
 
   private simulateLucroReal(
     costData: QuoteCostData,
-    classification: CostClassification
+    _classification: CostClassification
   ): FiscalSimulationResult {
     const totalRevenue = costData.totalRevenue;
     const totalCost = costData.materials + costData.labor + costData.overhead + costData.otherExpenses;

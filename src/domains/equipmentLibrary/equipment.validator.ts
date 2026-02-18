@@ -18,7 +18,7 @@ import {
   ValidationWarning,
   EquipmentCategory,
 } from './equipment.dsl.schema';
-import { validateExpression, validateExpressionWithVariables, extractVariables } from './equipment.expression';
+import { validateExpressionWithVariables } from './equipment.expression';
 
 /**
  * Valid structural actions
@@ -612,7 +612,7 @@ function validateStructuralRules(
  */
 function validateStructuralRuleParams(
   rule: StructuralRuleDSL,
-  variables: string[],
+  _variables: string[],
   errors: ValidationError[]
 ): void {
   const { action, params } = rule;

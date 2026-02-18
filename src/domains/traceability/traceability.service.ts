@@ -1,6 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+// Removidos imports Node.js: fs, path, crypto
 import { TraceabilityConfig, TraceabilityResult, VersionedItem, ChangelogEntry } from './types';
 
 export class TraceabilityService {
@@ -104,11 +102,8 @@ export class TraceabilityService {
       report.push('');
     }
 
-    const reportContent = report.join('\n');
-    const reportPath = path.join(process.cwd(), 'ISO_TRACE_REPORT.md');
-    fs.writeFileSync(reportPath, reportContent);
-
-    return reportPath;
+    // No browser, apenas retorna o conteúdo do relatório como string
+    return report.join('\n');
   }
 
   createChangelogEntry(
@@ -121,7 +116,9 @@ export class TraceabilityService {
     details: string
   ): ChangelogEntry {
     return {
-      id: crypto.randomUUID(),
+      id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36),
       itemId,
       itemType,
       versionBefore,
@@ -163,11 +160,11 @@ export class TraceabilityService {
 // Default configuration
 export const defaultTraceabilityConfig: TraceabilityConfig = {
   requiredVersions: {
-    templates: true,
-    processes: true,
-    materials: true,
-    settings: true,
-    calibrationFactors: true
+    TEMPLATE: true,
+    PROCESS: true,
+    MATERIAL: true,
+    SETTING: true,
+    CALIBRATION_FACTOR: true
   },
   requireChangelog: true
 };

@@ -1,23 +1,26 @@
 # Relatório de Validação - INOX-VAL
-**Data/Hora:** 18/02/2026, 12:21:56
-**Resultado Geral:** ❌ FAIL
+**Data/Hora:** 18/02/2026, 18:54:50
+**Resultado Geral:** ✅ PASS
 **Total de Validadores:** 16
-**Passados:** 15
-**Falhos:** 1
+**Passados:** 16
+**Falhos:** 0
 **Avisos:** 0
 
 ## Resultados Detalhados
 
 ### validateEnvironment
-- Status: ❌ Falhou
-- Duração: 1ms
+- Status: ✅ Passou
+- Duração: 0ms
 
-- Erro: Variáveis de ambiente faltando: VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, NODE_ENV
 
+- Detalhes: {
+  "environment": "development",
+  "projectId": "erp-industrial-inox"
+}
 
 ### validateBuild
 - Status: ✅ Passou
-- Duração: 0ms
+- Duração: 1ms
 
 
 - Detalhes: {
@@ -49,20 +52,20 @@
 
 ### validateProcesses
 - Status: ✅ Passou
-- Duração: 1ms
+- Duração: 0ms
 
 
 - Detalhes: {
   "count": 20,
   "averageCostPerHour": 81.5,
   "types": [
-    "PUNCHAR",
-    "PINTAR",
-    "SOBRERROTAR",
-    "DOBRAR",
-    "ESCOVAR",
     "POLIR",
-    "CORTAR"
+    "PUNCHAR",
+    "SOBRERROTAR",
+    "CORTAR",
+    "ESCOVAR",
+    "DOBRAR",
+    "PINTAR"
   ]
 }
 
@@ -108,31 +111,31 @@
 
 ### validateE2EFlow
 - Status: ✅ Passou
-- Duração: 3102ms
+- Duração: 3314ms
 
 
 - Detalhes: {
   "testCases": 10,
   "passed": 10,
   "failed": 0,
-  "averageTimePerTest": 310.2
+  "averageTimePerTest": 331.4
 }
 
 ### validateSnapshots
 - Status: ✅ Passou
-- Duração: 2883ms
+- Duração: 2311ms
 
 
 - Detalhes: {
   "testCases": 3,
   "passed": 3,
   "failed": 0,
-  "averageTimePerTest": 961
+  "averageTimePerTest": 770.33
 }
 
 ### validatePDF
 - Status: ✅ Passou
-- Duração: 1557ms
+- Duração: 1854ms
 
 
 - Detalhes: {
@@ -143,7 +146,7 @@
 
 ### validatePurchasing
 - Status: ✅ Passou
-- Duração: 1541ms
+- Duração: 1336ms
 
 
 - Detalhes: {
@@ -154,7 +157,7 @@
 
 ### validateProduction
 - Status: ✅ Passou
-- Duração: 1432ms
+- Duração: 1814ms
 
 
 - Detalhes: {
@@ -165,7 +168,7 @@
 
 ### validateSecurity
 - Status: ✅ Passou
-- Duração: 979ms
+- Duração: 651ms
 
 
 - Detalhes: {
@@ -176,29 +179,24 @@
 
 ### validatePerformance
 - Status: ✅ Passou
-- Duração: 10986ms
+- Duração: 11899ms
 
 
 - Detalhes: {
-  "averageTime": 549.3,
-  "p95Time": 779,
-  "memoryUsage": 301.03,
+  "averageTime": 594.95,
+  "p95Time": 744,
+  "memoryUsage": 239.95,
   "testCount": 20
 }
 
 ### validateMemoization
 - Status: ✅ Passou
-- Duração: 20ms
+- Duração: 21ms
 
 
 - Detalhes: {
   "reportGenerated": true,
-  "reportPath": "C:\\Users\\gabri\\Documents\\GitHub\\INOX-VAL\\MEMOIZATION_REPORT.md"
+  "reportPath": "c:\\Users\\gabri\\Documents\\GitHub\\INOX-VAL\\MEMOIZATION_REPORT.md"
 }
 
-
-## Erros Críticos
-
-### validateEnvironment
-Variáveis de ambiente faltando: VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, NODE_ENV
 

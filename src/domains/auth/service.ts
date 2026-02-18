@@ -23,7 +23,7 @@ export interface AuthService {
 
 export function createAuthService(): AuthService {
   return {
-    async login(email: string, password: string): Promise<User> {
+    async login(_email: string, _password: string): Promise<User> {
       // TODO: Implement with Firebase Auth
       throw new Error('Not implemented');
     },
@@ -38,27 +38,27 @@ export function createAuthService(): AuthService {
       return null;
     },
     
-    async createUser(email: string, role: UserRole, companyId: string): Promise<User> {
+    async createUser(_email: string, _role: UserRole, _companyId: string): Promise<User> {
       // TODO: Implement with Firebase Auth + Firestore
       throw new Error('Not implemented');
     },
     
-    async updateUserRole(userId: string, role: UserRole): Promise<void> {
+    async updateUserRole(_userId: string, _role: UserRole): Promise<void> {
       // TODO: Implement with Firestore
       throw new Error('Not implemented');
     },
     
-    async deactivateUser(userId: string): Promise<void> {
+    async deactivateUser(_userId: string): Promise<void> {
       // TODO: Implement with Firestore
       throw new Error('Not implemented');
     },
     
-    async createCompany(data: Omit<Company, 'id' | 'createdAt' | 'active'>): Promise<Company> {
+    async createCompany(_data: Omit<Company, 'id' | 'createdAt' | 'active'>): Promise<Company> {
       // TODO: Implement with Firestore
       throw new Error('Not implemented');
     },
     
-    async getCompany(companyId: string): Promise<Company | null> {
+    async getCompany(_companyId: string): Promise<Company | null> {
       // TODO: Implement with Firestore
       return null;
     },

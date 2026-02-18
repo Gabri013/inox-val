@@ -4,12 +4,12 @@
 
 import {
   ProcessCostBreakdown,
-  BOM,
+
   BOMWithGeometry,
-  ProcessRequirement,
+
 } from './pricing.types';
 import { Process, ProcessKey } from '../engine/types';
-import { computeCutLengthMm, computeFinishAreaMm2, calculateTotalBends } from './geometry.pipeline';
+
 
 // ============================================================
 // Types
@@ -220,7 +220,7 @@ function calculateSingleProcessCost(
   processKey: ProcessKey,
   process: Process | undefined,
   metrics: ProcessMetrics,
-  bom: BOMWithGeometry
+  _bom: BOMWithGeometry
 ): {
   label: string;
   setupCost: number;

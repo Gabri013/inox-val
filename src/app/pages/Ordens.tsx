@@ -20,7 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { toast } from "sonner";
 import { Orcamento, OrdemProducao, StatusOrdem } from "../types/workflow";
-import type { BOMItem } from "@/bom/types";
+
 import type { ResultadoCalculadora } from "@/domains/catalogo/types";
 import { estoqueItensService, registrarMovimentoEstoque } from "@/services/firestore/estoque.service";
 import OrdemProducaoPDF, { type OrdemProducaoData, type StatusOP } from "@/components/OrdemProducaoPDF";
@@ -83,9 +83,9 @@ export default function Ordens() {
 
     orcamento.itens.forEach((itemOrcamento) => {
       const snapshot = itemOrcamento.calculoSnapshot as ResultadoCalculadora | undefined;
-      if (!snapshot?.bomResult?.bom || snapshot.bomResult.bom.length === 0) return;
+      if (!snapshot?.consumoMateriais || snapshot.consumoMateriais.length === 0) return;
 
-      snapshot.bomResult.bom.forEach((bomItem: BOMItem) => {
+      snapshot.consumoMateriais.forEach((bomItem: any) => {
         const materialId = bomItem.material || "DESCONHECIDO";
         const quantidade = (bomItem.pesoTotal || bomItem.qtd || 0) * itemOrcamento.quantidade;
         const unidade = bomItem.unidade || "un";
@@ -111,7 +111,7 @@ export default function Ordens() {
   const validarBOMConfiavel = (orcamento: Orcamento) => {
     const itensSemSnapshot = (orcamento.itens || []).filter((item) => {
       const snapshot = item.calculoSnapshot as ResultadoCalculadora | undefined;
-      return !snapshot?.bomResult?.bom || snapshot.bomResult.bom.length === 0;
+      return !snapshot?.consumoMateriais || snapshot.consumoMateriais.length === 0;
     });
 
     return {

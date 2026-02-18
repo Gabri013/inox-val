@@ -10,7 +10,8 @@ import {
   PricingResult,
   BOM,
 } from './pricing.types';
-import { Material, Process, Ruleset } from '../engine/types';
+import { Material, Process } from '../engine/types';
+import { Ruleset } from '../engine/ruleset';
 import { DEFAULT_RULESET } from '../engine/ruleset';
 import { validateStructuralRules, STRUCTURAL_RULES } from './structural.rules';
 
@@ -23,7 +24,7 @@ import { validateStructuralRules, STRUCTURAL_RULES } from './structural.rules';
  */
 export function validatePricingInputs(
   inputs: EquipmentInputs,
-  ruleset: Ruleset = DEFAULT_RULESET
+  _ruleset: Ruleset = DEFAULT_RULESET
 ): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
@@ -203,7 +204,7 @@ export function validateMaterials(
     return { valid: false, errors, warnings };
   }
   
-  const dateStr = date.toISOString();
+
   
   for (const material of materials) {
     // Check if material is active

@@ -6,8 +6,8 @@ import {
   PricingResult,
   QuoteSnapshot,
   EquipmentInputs,
-  BOM,
-  NestingResult,
+
+
 } from './pricing.types';
 import { getTemplate } from './equipment.templates';
 
@@ -291,7 +291,7 @@ function createHashFromSnapshotData(snapshot: QuoteSnapshot): string {
  * Rebuild pricing result from snapshot
  */
 export function rebuildFromSnapshot(snapshot: QuoteSnapshot): PricingResult {
-  const template = getTemplate(snapshot.equipmentType);
+
   
   return {
     equipmentType: snapshot.equipmentType,

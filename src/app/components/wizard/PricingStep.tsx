@@ -70,7 +70,7 @@ export function PricingStep({ data, draftResult, onChange }: Props) {
           <Input
             type="number"
             value={targetPrice}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({
+            onChange={() => onChange({
               pricing: { ...pricing, targetMargin: 0 }
             })}
             className="mt-1"

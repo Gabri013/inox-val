@@ -59,8 +59,8 @@ describe('calibration.engine', () => {
       const factors = [
         {
           id: '1',
-          type: 'global',
-          factors: { material: 1.02, process: 0.98 },
+          type: 'global' as const,
+          factors: { material: 1.02, weld: 0.98, cut: 0.98, finish: 0.98, assembly: 0.98 },
           description: 'Global adjustment',
           effectiveFrom: '2024-01-01',
           active: true,
@@ -86,8 +86,8 @@ describe('calibration.engine', () => {
       const factors = [
         {
           id: '1',
-          type: 'global',
-          factors: { material: 1.02, process: 0.98 },
+          type: 'global' as const,
+          factors: { material: 1.02, weld: 0.98, cut: 0.98, finish: 0.98, assembly: 0.98 },
           description: 'Global adjustment',
           effectiveFrom: '2024-01-01',
           active: false,
@@ -111,15 +111,15 @@ describe('calibration.engine', () => {
       const factors = [
         {
           id: '1',
-          type: 'global',
-          factors: { material: 1.02, process: 0.98 },
+          type: 'global' as const,
+          factors: { material: 1.02, weld: 0.98, cut: 0.98, finish: 0.98, assembly: 0.98 },
           description: 'Global adjustment',
           effectiveFrom: '2024-01-01',
           active: true,
         },
         {
           id: '2',
-          type: 'template',
+          type: 'template' as const,
           targetKey: 'template-1',
           factors: { material: 1.05 },
           description: 'Template adjustment',

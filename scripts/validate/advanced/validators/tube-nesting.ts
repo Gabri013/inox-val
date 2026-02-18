@@ -58,6 +58,16 @@ async function runTubeNestingTest(testCase: any): Promise<TubeNestingResult> {
     }
 
     waste = testCase.tubeLength - totalCutLength;
+    
+    // Check for negative waste (invalid)
+    if (waste < 0) {
+      errors.push(`Negative waste detected: ${waste.toFixed(2)}mm`);
+    }
+
+    // Check for exact cut
+    if (waste === 0) {
+      // Exact cut - valid
+    }
 
     const passed = errors.length === 0;
 

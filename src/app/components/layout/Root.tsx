@@ -15,14 +15,15 @@ import {
   UserCog, 
   Settings, 
   Shield, 
-  Calculator,
+  Calculator, 
   HelpCircle, 
   X, 
   Menu, 
   Sun, 
   Moon, 
   User, 
-  LogOut 
+  LogOut,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -40,19 +41,28 @@ import { usePermissions } from "@/app/hooks/usePermissions";
 import type { Module } from "@/domains/usuarios";
 
 const navigation: Array<{ name: string; href: string; icon: any; module?: Module; highlight?: boolean }> = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard, module: "dashboard" },
+  // Cadastro
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, module: "dashboard", highlight: true },
   { name: "Clientes", href: "/clientes", icon: Users, module: "clientes" },
   { name: "Produtos", href: "/produtos", icon: Package, module: "produtos" },
+  { name: "Catálogo de Insumos", href: "/catalogo-insumos", icon: Package, module: "catalogo" },
+  { name: "Gestão de Materiais", href: "/gestao-materiais", icon: Warehouse, module: "catalogo" },
+  // Operações
   { name: "Estoque", href: "/estoque", icon: Warehouse, module: "estoque" },
   { name: "Orçamentos", href: "/orcamentos", icon: FileText, module: "orcamentos" },
+  { name: "Criação de Orçamento", href: "/criacao-orcamento", icon: FileText, module: "orcamentos" },
   { name: "Ordens", href: "/ordens", icon: ClipboardList, module: "ordens" },
   { name: "Compras", href: "/compras", icon: ShoppingCart, module: "compras" },
   { name: "Controle de Produção", href: "/controle-producao", icon: Factory, module: "producao" },
   { name: "Precificação", href: "/precificacao", icon: Calculator, module: "precificacao" },
-  { name: "Chat", href: "/chat", icon: MessageCircle, module: "chat" },
-  { name: "Anúncios", href: "/anuncios", icon: Megaphone, module: "anuncios" },
+  // Configurações
+  { name: "Validação Corporativa", href: "/validacao-corporativa", icon: ShieldAlert, module: "auditoria" },
   { name: "Usuários", href: "/usuarios", icon: UserCog, module: "usuarios" },
   { name: "Auditoria", href: "/auditoria", icon: Shield, module: "auditoria" },
+  // Utilitários
+  { name: "Popular Banco", href: "/popular-banco", icon: Factory },
+  { name: "Chat", href: "/chat", icon: MessageCircle, module: "chat" },
+  { name: "Anúncios", href: "/anuncios", icon: Megaphone, module: "anuncios" },
 ];
 
 export default function Root() {
@@ -62,7 +72,6 @@ export default function Root() {
   const { theme, setTheme } = useTheme();
   const { user, logout, loading } = useAuth();
   const { canAccess } = usePermissions();
-
   // Filtrar menu por permissão do usuário
   const visibleNavigation = navigation.filter(
     (item) => !item.module || canAccess(item.module)

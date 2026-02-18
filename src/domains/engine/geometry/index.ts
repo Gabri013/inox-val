@@ -2,7 +2,7 @@
 // GEOMETRY ENGINE - Calculate area, cut length, blank development
 // ============================================================
 
-import { SheetPart, PartFeature, Bend, EngineResult, ValidationWarning } from '../types';
+import { SheetPart, Bend, ValidationWarning } from '../types';
 import { DEFAULT_RULESET, Ruleset } from '../ruleset';
 
 /**
@@ -40,7 +40,7 @@ export function computeCutLengthMm(part: SheetPart): number {
   
   // Com dobras, subtrair arestas que viram dobras
   let bendLength = 0;
-  for (const bend of part.bends) {
+  for (const _bend of part.bends) {
     // Assumindo dobras ao longo da dimensão menor
     bendLength += part.blank.heightMm;
   }
@@ -93,7 +93,7 @@ export function computeBlank(
  */
 export function validateGeometry(
   part: SheetPart,
-  ruleset: Ruleset = DEFAULT_RULESET
+  _ruleset: Ruleset = DEFAULT_RULESET
 ): ValidationWarning[] {
   const warnings: ValidationWarning[] = [];
   

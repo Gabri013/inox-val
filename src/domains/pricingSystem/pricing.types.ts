@@ -2,7 +2,11 @@
 // PRICING SYSTEM TYPES - Core type definitions for equipment pricing
 // ============================================================
 
-import { ProcessKey, Material, Process, Ruleset } from '../engine/types';
+import { ProcessKey } from '../engine/types';
+import type { Material, Process } from '../engine/types';
+
+export type { Material, Process };
+import { Ruleset } from '../engine/ruleset';
 
 // ============================================================
 // Equipment Template Types
@@ -196,7 +200,7 @@ export interface OverheadBreakdown {
 }
 
 export interface MarginBreakdown {
-  method: 'markup' | 'target-margin' | 'minimum-profit';
+  method: 'markup' | 'target-margin' | 'minimum-profit' | 'max-discount';
   marginPercent: number;
   markupPercent: number;
   marginValue: number;
@@ -338,9 +342,12 @@ export interface PricingContext {
 
 export interface BOMWithGeometry extends BOM {
   geometryData: Map<string, {
+    partId: string;
     areaMm2: number;
     cutLengthMm: number;
     massKg: number;
     blank: { width: number; height: number };
+    bendCount: number;
+    finishAreaMm2: number;
   }>;
 }

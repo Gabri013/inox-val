@@ -7,9 +7,7 @@ import { Label } from '@/app/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import { CalibrationFactor } from './types';
-import { createCalibrationService } from './calibration.service';
 
-const calibrationService = createCalibrationService();
 
 export function FactorsEditor() {
   const [factors, setFactors] = useState<CalibrationFactor[]>([]);
@@ -18,8 +16,22 @@ export function FactorsEditor() {
   const [factorType, setFactorType] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFactor, setEditingFactor] = useState<CalibrationFactor | null>(null);
-  const [formData, setFormData] = useState({
-    type: 'global' as const,
+  const [formData, setFormData] = useState<{
+    type: 'global' | 'template' | 'process';
+    targetKey: string;
+    factors: {
+      weld: number;
+      cut: number;
+      finish: number;
+      assembly: number;
+      material: number;
+    };
+    description: string;
+    effectiveFrom: string;
+    effectiveTo: string;
+    active: boolean;
+  }>({
+    type: 'global',
     targetKey: '',
     factors: {
       weld: 1,
@@ -61,7 +73,7 @@ export function FactorsEditor() {
       {
         id: 'factor-1',
         type: 'global',
-        factors: { material: 1.02, process: 0.98 },
+        factors: { material: 1.02, weld: 0.98, cut: 0.98, finish: 0.98, assembly: 0.98 },
         description: 'Ajuste global de custos',
         effectiveFrom: '2024-01-01',
         active: true,
@@ -112,7 +124,7 @@ export function FactorsEditor() {
   const handleEdit = (factor: CalibrationFactor) => {
     setEditingFactor(factor);
     setFormData({
-      type: factor.type,
+      type: factor.type as 'global',
       targetKey: factor.targetKey || '',
       factors: {
         weld: factor.factors.weld || 1,
@@ -168,12 +180,15 @@ export function FactorsEditor() {
       <Card className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <Input
-              placeholder="Buscar por descrição ou target key..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              prefix={<Search className="h-4 w-4 text-gray-400" />}
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar por descrição ou target key..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
           <Select value={factorType} onValueChange={setFactorType}>
             <SelectTrigger className="w-full md:w-48">

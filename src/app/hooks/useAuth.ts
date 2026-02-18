@@ -20,15 +20,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const company = null;
   const isLoading = false;
   
-  const hasPermission = (permission: string): boolean => {
+  const hasPermission = (_permission: string): boolean => {
     return false;
   };
   
-  const hasAnyPermission = (permissions: string[]): boolean => {
+  const hasAnyPermission = (_permissions: string[]): boolean => {
     return false;
   };
   
-  const hasRole = (role: string): boolean => {
+  const hasRole = (_role: string): boolean => {
     return false;
   };
   

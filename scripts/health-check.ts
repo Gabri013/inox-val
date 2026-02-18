@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { loadEnv } from './_loadEnv';
+loadEnv();
+
 import { healthCheckService } from '../src/domains/systemOrchestrator/healthCheck';
 
 async function runHealthCheck() {

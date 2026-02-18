@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { loadEnv } from './_loadEnv';
+loadEnv();
+
 import { systemOrchestrator } from '../src/domains/systemOrchestrator/orchestrator';
 import { exec } from 'child_process';
 import { promisify } from 'util';

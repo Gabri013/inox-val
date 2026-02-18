@@ -38,28 +38,28 @@ export interface CalibrationService {
 export function createCalibrationService(): CalibrationService {
   // Mock implementation - replace with Firestore implementation
   return {
-    async getFactors(companyId: string, type?: string): Promise<CalibrationFactor[]> {
+    async getFactors(_companyId: string, _type?: string): Promise<CalibrationFactor[]> {
       // TODO: Implement Firestore query
       return [];
     },
-    async createFactor(companyId: string, factor: Omit<CalibrationFactor, 'id' | 'createdAt'>): Promise<CalibrationFactor> {
+    async createFactor(_companyId: string, factor: Omit<CalibrationFactor, 'id' | 'createdAt'>): Promise<CalibrationFactor> {
       // TODO: Implement Firestore create
       return {
         id: 'temp-id',
         ...factor,
       };
     },
-    async updateFactor(companyId: string, factorId: string, updates: Partial<CalibrationFactor>): Promise<void> {
+    async updateFactor(_companyId: string, _factorId: string, _updates: Partial<CalibrationFactor>): Promise<void> {
       // TODO: Implement Firestore update
     },
-    async deactivateFactor(companyId: string, factorId: string): Promise<void> {
+    async deactivateFactor(_companyId: string, _factorId: string): Promise<void> {
       // TODO: Implement Firestore update
     },
-    async getBaselines(companyId: string): Promise<Baseline[]> {
+    async getBaselines(_companyId: string): Promise<Baseline[]> {
       // TODO: Implement Firestore query
       return [];
     },
-    async createBaseline(companyId: string, baseline: Omit<Baseline, 'id' | 'createdAt'>): Promise<Baseline> {
+    async createBaseline(_companyId: string, baseline: Omit<Baseline, 'id' | 'createdAt'>): Promise<Baseline> {
       // TODO: Implement Firestore create
       return {
         id: 'temp-id',
@@ -67,15 +67,15 @@ export function createCalibrationService(): CalibrationService {
         createdAt: new Date().toISOString(),
       };
     },
-    async updateBaseline(companyId: string, baselineId: string, updates: Partial<Baseline>): Promise<void> {
+    async updateBaseline(_companyId: string, _baselineId: string, _updates: Partial<Baseline>): Promise<void> {
       // TODO: Implement Firestore update
     },
-    async createRun(companyId: string, baselineId: string): Promise<CalibrationRun> {
+    async createRun(_companyId: string, _baselineId: string): Promise<CalibrationRun> {
       // TODO: Implement Firestore create
       return {
         id: 'temp-id',
-        companyId,
-        baselineId,
+        companyId: 'temp-company',
+        baselineId: 'temp-baseline',
         results: [],
         calibrationFactors: [],
         adjustments: [],
@@ -89,35 +89,35 @@ export function createCalibrationService(): CalibrationService {
         createdAt: new Date().toISOString(),
       };
     },
-    async getRun(companyId: string, runId: string): Promise<CalibrationRun> {
+    async getRun(_companyId: string, _runId: string): Promise<CalibrationRun> {
       // TODO: Implement Firestore query
       throw new Error('Not implemented');
     },
-    async getRunsByBaseline(companyId: string, baselineId: string): Promise<CalibrationRun[]> {
+    async getRunsByBaseline(_companyId: string, _baselineId: string): Promise<CalibrationRun[]> {
       // TODO: Implement Firestore query
       return [];
     },
-    async runCalibration(companyId: string, runId: string): Promise<CalibrationRun> {
+    async runCalibration(_companyId: string, _runId: string): Promise<CalibrationRun> {
       // TODO: Implement calibration logic
       throw new Error('Not implemented');
     },
-    async applyAdjustment(companyId: string, adjustment: CalibrationAdjustment): Promise<CalibrationAdjustment> {
+    async applyAdjustment(_companyId: string, adjustment: CalibrationAdjustment): Promise<CalibrationAdjustment> {
       // TODO: Implement Firestore create
       return adjustment;
     },
-    async getAdjustments(companyId: string, baselineId?: string): Promise<CalibrationAdjustment[]> {
+    async getAdjustments(_companyId: string, _baselineId?: string): Promise<CalibrationAdjustment[]> {
       // TODO: Implement Firestore query
       return [];
     },
-    generateReport(run: CalibrationRun): CalibrationReport {
+    generateReport(_run: CalibrationRun): CalibrationReport {
       // TODO: Implement report generation
       throw new Error('Not implemented');
     },
-    getRecommendation(run: CalibrationRun): CalibrationRecommendation[] {
+    getRecommendation(_run: CalibrationRun): CalibrationRecommendation[] {
       // TODO: Implement recommendation logic
       return [];
     },
-    exportReport(report: CalibrationReport, format: 'json' | 'csv' | 'pdf'): Blob {
+    exportReport(_report: CalibrationReport, _format: 'json' | 'csv' | 'pdf'): Blob {
       // TODO: Implement export logic
       throw new Error('Not implemented');
     },

@@ -5,17 +5,11 @@
 import {
   EquipmentTemplate,
   EquipmentInputs,
-  BOM,
-  BOMWithGeometry,
   PricingResult,
   NestingResult,
-  MaterialCostBreakdown,
-  ProcessCostBreakdown,
-  OverheadBreakdown,
-  MarginBreakdown,
-  PricingContext,
 } from './pricing.types';
-import { Material, Process, Ruleset, PricingMethod } from '../engine/types';
+import { Material, Process, PricingMethod } from '../engine/types';
+import { Ruleset } from '../engine/ruleset';
 import { DEFAULT_RULESET } from '../engine/ruleset';
 import { getTemplate } from './equipment.templates';
 import { generateEquipmentBOM } from './equipment.generator';
@@ -23,7 +17,7 @@ import { runGeometryCalculations, GeometryResult } from './geometry.pipeline';
 import { runNesting } from './nesting.pipeline';
 import { calculateFullMaterialCost, FullMaterialCostResult } from './material.cost';
 import { calculateProcessCost, ProcessCostResult } from './process.cost';
-import { calculatePricing, applyOverhead, applyMargin, calculateMinPrice } from './pricing.engine';
+import { applyOverhead, applyMargin, calculateMinPrice } from './pricing.engine';
 import { createHashFromResult } from './snapshot.engine';
 
 // ============================================================

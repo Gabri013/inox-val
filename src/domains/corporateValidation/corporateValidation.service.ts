@@ -1,5 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
+// Removido import Node.js: fs
 import { getCommercialComplianceService } from '../commercialCompliance/commercialCompliance.service';
 import { getAccountingValidationService } from '../accountingValidation/accountingValidation.service';
 import { getSecurityAuditService } from '../securityAudit/securityAudit.service';
@@ -102,7 +101,7 @@ export class CorporateValidationService {
       generatedAt: new Date().toISOString()
     };
 
-    // Generate the ISO traceability report
+    // Gera o relatório, mas não salva em disco no browser
     getTraceabilityService().generateISOTraceReport(input.quoteId, traceabilityResult);
 
     return result;
@@ -242,10 +241,9 @@ export class CorporateValidationService {
     return report.join('\n');
   }
 
-  saveReport(result: CorporateValidationResult, outputPath: string = 'CORPORATE_VALIDATION_REPORT.md'): string {
-    const reportContent = this.generateReport(result);
-    fs.writeFileSync(outputPath, reportContent);
-    return outputPath;
+  // No browser, apenas retorna o conteúdo do relatório
+  saveReport(result: CorporateValidationResult): string {
+    return this.generateReport(result);
   }
 }
 

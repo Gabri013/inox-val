@@ -37,7 +37,7 @@ interface Token {
   position: number;
 }
 
-const OPERATORS = ['+', '-', '*', '/', '%', '==', '!=', '<', '>', '<=', '>=', '&&', '||', '!'];
+
 
 class Tokenizer {
   private expression: string;

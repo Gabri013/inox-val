@@ -7,11 +7,11 @@ import {
   createQuoteDraft, 
   finalizeQuote,
   QuoteDraftInput,
-  QuoteDraftResult
+
 } from './index';
 import { BOM, Material, Process } from '../types';
 import { Sheet } from '../nesting';
-import { DEFAULT_RULESET } from '../ruleset';
+
 
 describe('Quote Engine', () => {
   let materials: Map<string, Material>;

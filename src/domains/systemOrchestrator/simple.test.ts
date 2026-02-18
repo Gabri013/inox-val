@@ -1,8 +1,9 @@
-import { it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { systemOrchestrator } from './orchestrator';
 import { WorkflowState } from './types';
 
-it('should create an instance of SystemOrchestrator', () => {
+describe('SystemOrchestrator', () => {
+  it('should create an instance of SystemOrchestrator', () => {
   expect(systemOrchestrator).toBeDefined();
 });
 
@@ -43,10 +44,11 @@ it('should validate snapshot integrity', async () => {
   expect(isValid).toBe(true);
 });
 
-it('should perform health check', async () => {
-  const result = await systemOrchestrator.performHealthCheck();
-  
-  expect(result.healthy).toBeDefined();
-  expect(result.timestamp).toBeInstanceOf(Date);
-  expect(result.checks.length).toBeGreaterThan(0);
+  it('should perform health check', async () => {
+    const result = await systemOrchestrator.performHealthCheck();
+    
+    expect(result.healthy).toBeDefined();
+    expect(result.timestamp).toBeInstanceOf(Date);
+    expect(result.checks.length).toBeGreaterThan(0);
+  });
 });

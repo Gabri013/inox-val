@@ -109,7 +109,6 @@ describe('Audit Engine', () => {
     it('should add timestamp automatically', () => {
       const beforeAdd = new Date().toISOString();
       const updated = addAuditEvent(snapshot, 'QUOTE_FINALIZED', 'user-1', {});
-      const afterAdd = new Date().toISOString();
 
       const eventTimestamp = updated.auditEvents[1].timestamp;
       expect(new Date(eventTimestamp).toISOString()).toBeDefined();

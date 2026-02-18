@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getDensity, computeMassKg, computeTubeMassKg, computeBOMMass } from './mass/index';
-import { SheetPart, TubePart, AccessoryPart, Material } from './types';
+import { SheetPart, TubePart, Material } from './types';
 
 describe('Mass Engine', () => {
   describe('getDensity', () => {

@@ -15,7 +15,7 @@ export * from './equipment.validator';
 export * from './equipment.registry';
 
 // Templates
-export * from './equipment.templates';
+
 
 // Presets
 export * from './equipment.presets';

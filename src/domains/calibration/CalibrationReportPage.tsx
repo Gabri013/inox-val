@@ -3,10 +3,7 @@ import { Download, FileText, BarChart3, Target, AlertCircle } from 'lucide-react
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
-import { CalibrationReport, CalibrationRecommendation } from './types';
-import { createCalibrationService } from './calibration.service';
-
-const calibrationService = createCalibrationService();
+import { CalibrationReport } from './types';
 
 interface CalibrationReportPageProps {
   reportId: string;

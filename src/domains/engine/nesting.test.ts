@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { nestGuillotine, preparePartsForNesting, NestablePart, Sheet } from './nesting/index';
 import { SheetPart } from './types';
-import { DEFAULT_RULESET } from './ruleset';
+
 
 describe('Nesting Engine', () => {
   describe('nestGuillotine', () => {

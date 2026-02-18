@@ -30,23 +30,23 @@ export default function Configuracoes() {
 
   const defaultCustos = {
     materiais: {
-      precoKgInox304: VALORES_PADRAO.precoKgInox304 || 0,
-      precoKgInox430: VALORES_PADRAO.precoKgInox430 || 0,
-      precoKgInox316: VALORES_PADRAO.precoKgInox316 || 0,
-      precoMetroTubo25: VALORES_PADRAO.precoMetroTubo25 || 0,
-      precoMetroTubo38: VALORES_PADRAO.precoMetroTubo38 || 0,
-      precoMetroTubo50: VALORES_PADRAO.precoMetroTubo50 || 0,
-      precoPeRegulavel: VALORES_PADRAO.precoPeRegulavel || 0,
-      precoCasquilho: VALORES_PADRAO.precoCasquilho || 0,
+      precoKgInox304: 0,
+      precoKgInox430: 0,
+      precoKgInox316: 0,
+      precoMetroTubo25: 0,
+      precoMetroTubo38: 0,
+      precoMetroTubo50: 0,
+      precoPeRegulavel: 0,
+      precoCasquilho: 0,
     },
     perdas: {
-      perdaMaterialPercentual: VALORES_PADRAO.perdaMaterial || 0,
+      perdaMaterialPercentual: 0,
     },
     maoObra: {
-      custoHora: VALORES_PADRAO.custoMaoObra || 0,
+      custoHora: 0,
     },
     margens: {
-      margemLucroPercentual: VALORES_PADRAO.margemLucro || 0,
+      margemLucroPercentual: 0,
     },
   };
 
@@ -57,7 +57,7 @@ export default function Configuracoes() {
       dimensoesCasas: 0,
     },
     fatores: {
-      fatorPerda: VALORES_PADRAO.perdaMaterial || 0,
+      fatorPerda: 0,
     },
   };
 

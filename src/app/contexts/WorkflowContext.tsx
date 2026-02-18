@@ -7,7 +7,7 @@ import {
   WorkflowContextType
 } from "../types/workflow";
 import { useAudit } from "./AuditContext";
-import type { BOMItem } from "@/bom/types";
+
 import { estoqueMateriaisService } from "@/domains/estoque/estoque-material.service";
 import type { ResultadoCalculadora } from "@/domains/catalogo/types";
 
@@ -302,10 +302,10 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     // Iterar por cada item do orçamento
     orcamento.itens.forEach(itemOrcamento => {
       const snapshot = itemOrcamento.calculoSnapshot as ResultadoCalculadora | undefined;
-      if (!snapshot?.bomResult?.bom) return;
+      if (!snapshot?.consumoMateriais || snapshot.consumoMateriais.length === 0) return;
       
       // Extrair materiais da BOM
-      snapshot.bomResult.bom.forEach((bomItem: BOMItem) => {
+      snapshot.consumoMateriais.forEach((bomItem: any) => {
         const materialId = bomItem.material || 'DESCONHECIDO';
         const quantidade = (bomItem.pesoTotal || bomItem.qtd || 0) * itemOrcamento.quantidade;
         const unidade = bomItem.unidade || 'un';

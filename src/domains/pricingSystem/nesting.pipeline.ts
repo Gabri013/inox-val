@@ -7,9 +7,10 @@ import {
   NestingResult,
   SheetLayout,
   PlacedPart,
-  BOMWithGeometry,
+
 } from './pricing.types';
-import { Material, Ruleset } from '../engine/types';
+import { Material } from '../engine/types';
+import { Ruleset } from '../engine/ruleset';
 import { DEFAULT_RULESET } from '../engine/ruleset';
 
 // ============================================================
@@ -187,7 +188,7 @@ export function runNesting(
   materials: Material[],
   geometryData: Map<string, { blank: { width: number; height: number } }>,
   options: NestingOptions = DEFAULT_NESTING_OPTIONS,
-  ruleset: Ruleset = DEFAULT_RULESET
+  _ruleset: Ruleset = DEFAULT_RULESET
 ): NestingResult {
   // Prepare parts
   const nestableParts = prepareNestableParts(sheetParts, geometryData);
@@ -404,10 +405,10 @@ function tryPlacePart(
   part: NestablePart,
   x: number,
   y: number,
-  usableWidth: number,
-  usableHeight: number,
-  rowHeight: number,
-  kerf: number,
+  _usableWidth: number,
+  _usableHeight: number,
+  _currentRowHeight: number,
+  _kerf: number,
   margin: number,
   sheet: AvailableSheet,
   rotate: boolean,
@@ -480,7 +481,7 @@ export function estimateSheetCount(
   sheetHeight: number,
   margin: number
 ): number {
-  const sheetArea = sheetWidth * sheetHeight;
+
   const usableArea = (sheetWidth - 2 * margin) * (sheetHeight - 2 * margin);
   
   const totalPartsArea = parts.reduce((sum, p) => sum + p.width * p.height, 0);

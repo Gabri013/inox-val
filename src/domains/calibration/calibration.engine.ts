@@ -53,8 +53,11 @@ export function applyCalibrationFactors(
       if (factor.factors.material) {
         adjusted.material *= factor.factors.material;
       }
-      if (factor.factors.process) {
-        adjusted.process *= factor.factors.process;
+      // Calculate total process factor from individual process factors (weld, cut, finish, assembly)
+      const processFactors = [factor.factors.weld, factor.factors.cut, factor.factors.finish, factor.factors.assembly].filter(f => f !== undefined);
+      if (processFactors.length > 0) {
+        const averageProcessFactor = processFactors.reduce((sum, f) => sum * f, 1);
+        adjusted.process *= averageProcessFactor;
       }
     }
   });

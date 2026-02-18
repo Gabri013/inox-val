@@ -296,7 +296,7 @@ export default function AutoQuotePage() {
                 <Label htmlFor="thickness">Espessura (mm)</Label>
                 <Select 
                   value={inputs.thickness.toString()} 
-                  onValueChange={v => handleInputChange('thickness', Number(v))}
+                  onValueChange={(v: string) => handleInputChange('thickness', Number(v))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -317,7 +317,7 @@ export default function AutoQuotePage() {
                 <Label htmlFor="finish">Acabamento</Label>
                 <Select 
                   value={inputs.finish} 
-                  onValueChange={v => handleInputChange('finish', v)}
+                   onValueChange={(v: string) => handleInputChange('finish', v)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -346,7 +346,7 @@ export default function AutoQuotePage() {
                 <Switch
                   id="hasShelf"
                   checked={inputs.hasShelf}
-                  onCheckedChange={v => handleInputChange('hasShelf', v)}
+                  onCheckedChange={(v: boolean) => handleInputChange('hasShelf', v)}
                 />
               </div>
               
@@ -355,7 +355,7 @@ export default function AutoQuotePage() {
                 <Switch
                   id="hasBacksplash"
                   checked={inputs.hasBacksplash}
-                  onCheckedChange={v => handleInputChange('hasBacksplash', v)}
+                  onCheckedChange={(v: boolean) => handleInputChange('hasBacksplash', v)}
                 />
               </div>
               
@@ -376,7 +376,7 @@ export default function AutoQuotePage() {
                 <Switch
                   id="hasCasters"
                   checked={inputs.hasCasters}
-                  onCheckedChange={v => handleInputChange('hasCasters', v)}
+                  onCheckedChange={(v: boolean) => handleInputChange('hasCasters', v)}
                 />
               </div>
             </CardContent>

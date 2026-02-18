@@ -28,12 +28,6 @@ export interface TraceabilityResult {
 }
 
 export interface TraceabilityConfig {
-  requiredVersions: {
-    templates: boolean;
-    processes: boolean;
-    materials: boolean;
-    settings: boolean;
-    calibrationFactors: boolean;
-  };
+  requiredVersions: Partial<Record<VersionedItem["type"], boolean>>;
   requireChangelog: boolean;
 }

@@ -1,6 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+// Removidos imports Node.js: fs, path, crypto
 import {
   SecurityAuditConfig,
   SecurityAuditResult,
@@ -102,7 +100,7 @@ export class SecurityAuditService {
     const fraudScore = this.calculateFraudScore(securityData);
 
     // Log events
-    this.logEvents(quoteId, events);
+    // No browser, não persiste eventos em disco
 
     const result: SecurityAuditResult = {
       isValid: errors.length === 0,
@@ -176,7 +174,9 @@ export class SecurityAuditService {
     userAgent: string
   ): SecurityEvent {
     return {
-      id: crypto.randomUUID(),
+      id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36),
       quoteId,
       type,
       description,
@@ -188,15 +188,8 @@ export class SecurityAuditService {
     };
   }
 
-  private logEvents(quoteId: string, events: SecurityEvent[]): void {
-    const auditDir = path.join(process.cwd(), 'audit');
-    if (!fs.existsSync(auditDir)) {
-      fs.mkdirSync(auditDir, { recursive: true });
-    }
-
-    const eventsFile = path.join(auditDir, `${quoteId}_events.json`);
-    fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
-  }
+  // No browser, não persiste eventos
+  // logEvents removido pois não é utilizado
 
   private arraysEqual(a: string[], b: string[]): boolean {
     if (a.length !== b.length) return false;
@@ -205,14 +198,8 @@ export class SecurityAuditService {
     return sortedA.every((value, index) => value === sortedB[index]);
   }
 
-  getEventsByQuoteId(quoteId: string): SecurityEvent[] {
-    const eventsFile = path.join(process.cwd(), 'audit', `${quoteId}_events.json`);
-    if (fs.existsSync(eventsFile)) {
-      const content = fs.readFileSync(eventsFile, 'utf8');
-      return JSON.parse(content);
-    }
-    return [];
-  }
+  // No browser, não lê eventos do disco
+  // getEventsByQuoteId removido pois não é utilizado
 }
 
 // Default configuration

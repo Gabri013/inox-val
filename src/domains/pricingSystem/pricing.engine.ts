@@ -6,7 +6,8 @@ import {
   OverheadBreakdown,
   MarginBreakdown,
 } from './pricing.types';
-import { Ruleset, PricingMethod } from '../engine/types';
+import { PricingMethod } from '../engine/types';
+import { Ruleset } from '../engine/ruleset';
 import { DEFAULT_RULESET } from '../engine/ruleset';
 
 // ============================================================

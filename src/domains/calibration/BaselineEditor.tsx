@@ -142,7 +142,7 @@ export function BaselineEditor({ baseline, onSave, onCancel }: BaselineEditorPro
             <Label>Template</Label>
             <Select
               value={formData.templateKey}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, templateKey: value }))}
+              onValueChange={(value: string) => setFormData(prev => ({ ...prev, templateKey: value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um template" />
