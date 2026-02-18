@@ -313,7 +313,7 @@ class ExpressionEvaluator {
   private parseOr(): unknown {
     let left = this.parseAnd();
 
-    while (this.current().type === 'OPERATOR && this.current().value === '||') {
+    while (this.current().type === 'OPERATOR' && this.current().value === '||') {
       this.pos++;
       const right = this.parseAnd();
       left = left || right;
@@ -657,10 +657,13 @@ export function validateExpressionWithVariables(
       .filter(t => t.type === 'IDENTIFIER')
       .map(t => t.value as string);
 
-    // Check for unknown variables (excluding functions)
+    // Check for unknown variables (excluding functions and boolean literals)
     const knownFunctions = Object.keys(ALLOWED_FUNCTIONS);
+    const booleanLiterals = ['true', 'false'];
     const unknownVariables = identifiers.filter(
-      id => !allowedVariables.includes(id) && !knownFunctions.includes(id)
+      id => !allowedVariables.includes(id) && 
+            !knownFunctions.includes(id) && 
+            !booleanLiterals.includes(id)
     );
 
     if (unknownVariables.length > 0) {

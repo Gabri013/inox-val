@@ -84,7 +84,7 @@ export const MESA_LISA: EquipmentTemplateDSL = {
 
   derived: [
     { key: 'skirtHeight', expression: '50', description: 'Altura da saia' },
-    { key: 'legLength', expression: 'height - thickness - skirtHeight', description: 'Comprimento das pernas' },
+    { key: 'legLength', expression: 'height - thickness - 50', description: 'Comprimento das pernas' },
   ],
 
   bom: {
@@ -257,7 +257,7 @@ export const MESA_COM_PRATELEIRA: EquipmentTemplateDSL = {
 
   derived: [
     { key: 'skirtHeight', expression: '50', description: 'Altura da saia' },
-    { key: 'legLength', expression: 'height - thickness - skirtHeight', description: 'Comprimento das pernas' },
+    { key: 'legLength', expression: 'height - thickness - 50', description: 'Comprimento das pernas' },
     { key: 'shelfPosition', expression: 'floor(height * 0.4)', description: 'Posição da prateleira' },
   ],
 
@@ -446,7 +446,7 @@ export const MESA_CONTRAVENTADA_U: EquipmentTemplateDSL = {
 
   derived: [
     { key: 'skirtHeight', expression: '60', description: 'Altura da saia reforçada' },
-    { key: 'legLength', expression: 'height - thickness - skirtHeight', description: 'Comprimento das pernas' },
+    { key: 'legLength', expression: 'height - thickness - 60', description: 'Comprimento das pernas' },
   ],
 
   bom: {
@@ -731,7 +731,7 @@ export const MESA_COM_RODIZIOS: EquipmentTemplateDSL = {
 
   derived: [
     { key: 'skirtHeight', expression: '50', description: 'Altura da saia' },
-    { key: 'legLength', expression: 'height - thickness - skirtHeight - 100', description: 'Comprimento das pernas (desconta rodízio)' },
+    { key: 'legLength', expression: 'height - thickness - 50 - 100', description: 'Comprimento das pernas (desconta rodízio)' },
   ],
 
   bom: {
@@ -876,7 +876,7 @@ export const BANCADA_CENTRAL: EquipmentTemplateDSL = {
 
   derived: [
     { key: 'skirtHeight', expression: '50', description: 'Altura da saia' },
-    { key: 'legLength', expression: 'height - thickness - skirtHeight', description: 'Comprimento das pernas' },
+    { key: 'legLength', expression: 'height - thickness - 50', description: 'Comprimento das pernas' },
   ],
 
   bom: {
@@ -1193,7 +1193,7 @@ export const BANCADA_ESTREITA: EquipmentTemplateDSL = {
 
   derived: [
     { key: 'skirtHeight', expression: '40', description: 'Altura da saia' },
-    { key: 'legLength', expression: 'height - thickness - skirtHeight', description: 'Comprimento das pernas' },
+    { key: 'legLength', expression: 'height - thickness - 40', description: 'Comprimento das pernas' },
   ],
 
   bom: {
